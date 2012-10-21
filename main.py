@@ -6,8 +6,8 @@
 #                   pyfpm par PacMiam
 #                   version 0.1a
 #
-# Gestionnaire de paquets pour la distribution GNU/Linux
-# Frugalware basé sur le travail de Gaetan Gourdin.
+# Gestionnaire de paquets pour la distribution GNU/Linux Frugalware
+# basé sur le travail de Gaetan Gourdin.
 #
 # Commencé le : 23 aout 2012
 #
@@ -139,9 +139,9 @@ class INTERFACE:
         self.toolbar.insert_stock(gtk.STOCK_REFRESH, divers.getATrad("refresh_pkg"), None, self.updateDatabase, None, 2)
         self.toolbar.insert_space(3)
         self.search_entry = gtk.Entry()
-        # TODO : Ajouter l'action d'effacer l'entry via le bouton
         self.search_entry.set_icon_from_stock(1, gtk.STOCK_CLEAR)
         self.search_entry.connect("activate", self.search, gtk.RESPONSE_OK)
+        self.search_entry.connect("icon-press", self.clearEntry)
         self.toolbar.insert_widget(self.search_entry, divers.getATrad("write_search"), None, 4)
         self.toolbar.insert_stock(gtk.STOCK_FIND, divers.getATrad("search"), None, self.search, None, 5)
         self.toolbar.insert_space(6)
@@ -175,21 +175,9 @@ class INTERFACE:
         # List view - Packages
         self.packages_list = gtk.ListStore(int, str, str)
         self.packages = gtk.TreeView(self.packages_list)
-        self.packages.set_size_request(0,300)
+        self.packages.set_size_request(0, 300)
         self.packages.set_search_column(1)
-        self.packages_list.set_sort_column_id(1,gtk.SORT_ASCENDING) # Trie la liste de paquet alphabetiquement
-
-        self.packages_checkbox = gtk.TreeViewColumn(" ")
-        self.packages_checkbox.set_sort_column_id(0)
-        self.packages_nom = gtk.TreeViewColumn(divers.getATrad("name"))
-        self.packages_nom.set_min_width(300)
-        self.packages_nom.set_sort_column_id(1)
-        self.packages_version = gtk.TreeViewColumn(divers.getATrad("version"))
-        self.packages_version.set_sort_column_id(2)
-
-        self.packages.append_column(self.packages_checkbox)
-        self.packages.append_column(self.packages_nom)
-        self.packages.append_column(self.packages_version)
+        self.packages_list.set_sort_column_id(1, gtk.SORT_ASCENDING) # Trie la liste de paquet alphabetiquement
 
         self.packages_cellule_checkbox = gtk.CellRendererToggle()
         self.packages_cellule_checkbox.set_property('active', 1)
@@ -198,9 +186,20 @@ class INTERFACE:
         self.packages_cellule_nom = gtk.CellRendererText()
         self.packages_cellule_version = gtk.CellRendererText()
 
+        self.packages_checkbox = gtk.TreeViewColumn(" ")
         self.packages_checkbox.pack_start(self.packages_cellule_checkbox, True)
+        self.packages_checkbox.set_sort_column_id(0)
+        self.packages_nom = gtk.TreeViewColumn(divers.getATrad("name"))
         self.packages_nom.pack_start(self.packages_cellule_nom, True)
+        self.packages_nom.set_min_width(300)
+        self.packages_nom.set_sort_column_id(1)
+        self.packages_version = gtk.TreeViewColumn(divers.getATrad("version"))
         self.packages_version.pack_start(self.packages_cellule_version, True)
+        self.packages_version.set_sort_column_id(2)
+
+        self.packages.append_column(self.packages_checkbox)
+        self.packages.append_column(self.packages_nom)
+        self.packages.append_column(self.packages_version)
 
         self.packages_checkbox.add_attribute(self.packages_cellule_checkbox, 'active', 0)
         self.packages_nom.add_attribute(self.packages_cellule_nom, 'text', 1)
@@ -282,7 +281,7 @@ class INTERFACE:
         self.groups_packages.add2(self.packages_notebook)
 
         # Fonctions
-        self.init_Grp()
+        self.initGrp()
 
         # Ajout de la grille principale dans la fenêtre principale
         self.mainwindow.add(self.main_table)
@@ -297,18 +296,18 @@ class INTERFACE:
 
         # Sélection du groupe
         self.groups_selection = self.groups.get_selection()
-        self.groups_selection.connect('changed', self.selection_grp, self.groups_list)
+        self.groups_selection.connect('changed', self.selectionGrp, self.groups_list)
 
         # Sélection du paquet
         self.packages_selection = self.packages.get_selection()
-        self.packages_selection.connect('changed', self.selection_pkg, self.packages_list)
+        self.packages_selection.connect('changed', self.selectionPkg, self.packages_list)
 
         # Fonction pour l'ouverture de page internet
         self.info_selection = self.information_text.get_selection()
         self.information_text.connect('row-activated', self.gotourl)
 
     ####################################################################
-    #                           Windows
+    #                           Windows (not the OS :p)
     ####################################################################
 
     def about(self, widget, *event):
@@ -435,29 +434,29 @@ class INTERFACE:
         Clean cache
         '''
         sysexec(config.Read("su_command") + " python " + PYFPM_INST + " cleancache")
-        self.init_Grp()
+        self.initGrp()
 
     def updateDatabase(self,*args):
         '''
         Update database
         '''
         sysexec(config.Read("su_command") + " python " + PYFPM_INST + " updatedb")
-        self.init_Grp()
+        self.initGrp()
 
     def checkUpdate(self,*args):
         '''
         Check update
         '''
         sysexec("python " + PYFPM_FUN)
-        self.init_Grp()
+        self.initGrp()
 
     def search(self,*args):
         # FIXME : Impossible d'empêcher la recherche quand l'entry est vide
-        if self.search_entry.get_text != '':
+        if self.search_entry.get_text != None:
             self.packages_list.clear()
             search = self.search_entry.get_text()
             print "'" + search + "'"
-            self.print_info_statusbar(divers.getATrad("search_package") + " " + search)
+            self.printInfoStatusbar(divers.getATrad("search_package") + " " + search)
             pkgs = pacman_search_pkg(search)
             if len(pkgs) == 0:
                 return
@@ -471,7 +470,7 @@ class INTERFACE:
     #                          Functions
     ####################################################################
 
-    def init_Grp(self):
+    def initGrp(self):
         """
         Write the groups into the groups list
         """
@@ -497,8 +496,8 @@ class INTERFACE:
                     bo_inst = 0
                 if self.verifyPkgInst(pacman_pkg_get_info(pkg,PM_PKG_NAME), pacman_pkg_get_info(pkg,PM_PKG_VERSION)) == False:
                     # Pour éviter les doublons, le paquet est ajouté dans la liste instPkgList
-                    self.instPkgList.append([pacman_pkg_get_info(pkg,PM_PKG_NAME),pacman_pkg_get_info(pkg,PM_PKG_VERSION)])
-                    self.packages_list.append([bo_inst,pacman_pkg_get_info(pkg,PM_PKG_NAME),pacman_pkg_get_info(pkg,PM_PKG_VERSION)])
+                    self.instPkgList.append([pacman_pkg_get_info(pkg,PM_PKG_NAME), pacman_pkg_get_info(pkg,PM_PKG_VERSION)])
+                    self.packages_list.append([bo_inst, pacman_pkg_get_info(pkg,PM_PKG_NAME), pacman_pkg_get_info(pkg,PM_PKG_VERSION)])
             else:
                 if divers.inList(self.listInstall, pacman_pkg_get_info(pkg,PM_PKG_NAME)) == 0:
                     bo_inst = 0
@@ -539,7 +538,7 @@ class INTERFACE:
                 break
         return value
 
-    def selection_grp(self, selection, model):
+    def selectionGrp(self, selection, model):
         sel = selection.get_selected()
         if sel == ():
             return
@@ -547,10 +546,10 @@ class INTERFACE:
         treeiter = sel[1]
         model = self.groups.get_model()
         grpselected = model.get_value(treeiter, 0)
-        self.show_group(grpselected)
+        self.showGrp(grpselected)
         return True
 
-    def selection_pkg(self, selection, model):
+    def selectionPkg(self, selection, model):
         sel = selection.get_selected()
         if sel == ():
             return
@@ -558,29 +557,28 @@ class INTERFACE:
         treeiter = sel[1]
         try :
             pkgname, pkgver = model.get(treeiter, 1, 2)
-            self.show_package(pkgname, pkgver)
+            self.showPkg(pkgname, pkgver)
         except :
             # not a problem
             return True
         return True
 
     def gotourl(self, widget, *event):
-        self.information_text.get_model()
+        # TODO : Faire en sorte d'ouvrir le navigateur internet lors du double clic sur l'url
+        test = self.information_text.get_model()
         try :
-            pkgname, pkgver = model.get(self.info_selection[1], 1, 2)
-            print pkgver
+            print test
         except :
-            # not a problem
             return True
         return True
 
-    def show_group(self, grp):
-        self.print_info_statusbar(divers.getATrad("read_grp") + " " + grp)
+    def showGrp(self, grp):
+        self.printInfoStatusbar(divers.getATrad("read_grp") + " " + grp)
         pkgs = pypacman.GetPkgFromGrp(grp)
         self.pkgtoListsore(pkgs)
 
-    def show_package(self, pkgname, pkgver):
-        self.print_info_statusbar(divers.getATrad("read_pkg") + " " + pkgname)
+    def showPkg(self, pkgname, pkgver):
+        self.printInfoStatusbar(divers.getATrad("read_pkg") + " " + pkgname)
         bo_find = 0
         try:
             pkgs = pacman_search_pkg(pkgname)
@@ -588,16 +586,16 @@ class INTERFACE:
             for pkg in pkgs:
                 if pacman_pkg_get_info(pkg,PM_PKG_NAME) == pkgname and pacman_pkg_get_info(pkg,PM_PKG_VERSION) == pkgver:
                     bo_find = 1
-                    self.show_packagedetails(pkgname, pkgver, pkg)
+                    self.showPkgDetails(pkgname, pkgver, pkg)
                     break
         except:
             pass
         if bo_find == 0:
             # nobuild package or not in fdb read local information
             pkg = pacman_db_readpkg(db_list[0], pkgname)
-            self.show_packagedetails(pkgname, pkgver, pkg)
+            self.showPkgDetails(pkgname, pkgver, pkg)
 
-    def show_packagedetails(self, pkgname, pkgver, pkg):
+    def showPkgDetails(self, pkgname, pkgver, pkg):
         """
         Show the package informations
         """
@@ -616,18 +614,16 @@ class INTERFACE:
         self.info_store.append(None, [divers.getATrad("description"), pacman_pkg_get_info(pkg,PM_PKG_DESC)])
         if pkgl <> None:
             self.info_store.append(None, [divers.getATrad("url"), pointer_to_string(pacman_pkg_get_info(pkgl,PM_PKG_URL))])
-            #~ gtk.LinkButton("http://www.pygtk.org/", "PyGtk")
-            self.info_store.append(None, ["SHA1SUMS\t\t", pacman_pkg_get_info(pkg,PM_PKG_SHA1SUM)])
+        self.info_store.append(None, ["SHA1SUMS", pacman_pkg_get_info(pkg,PM_PKG_SHA1SUM)])
 
         # Depends
-        if pacman_package_intalled(pkgname,pkgver) == 1:
-            deps = pacman_pkg_getinfo(pkg, PM_PKG_DEPENDS)
-            while deps != 0:
-                text += pointer_to_string(pacman_list_getdata(deps))
-                deps = pacman_list_next(deps)
-                if deps != 0:
-                    text += ", "    # Evite d'avoir une virgule à la fin de la liste
-            viewColumn = self.info_store.append(None, [divers.getATrad("depends"), text])
+        deps = pacman_pkg_getinfo(pkg, PM_PKG_DEPENDS)
+        while deps != 0:
+            text += pointer_to_string(pacman_list_getdata(deps))
+            deps = pacman_list_next(deps)
+            if deps != 0:
+                text += ", "    # Evite d'avoir une virgule à la fin de la liste
+        viewColumn = self.info_store.append(None, [divers.getATrad("depends"), text])
 
         text = ""
         # Files
@@ -637,15 +633,17 @@ class INTERFACE:
             while i != 0:
                 text = text + "  /" + pointer_to_string(pacman_list_getdata(i)) + "\n"
                 i = pacman_list_next(i)
+        else:
+            text = divers.getATrad("no_install")
         textbuffer.set_text(text)
         text = ""
 
         # Changelog
-        # FIXME : Les changelog apparaissent avec iso-8859-15 mais conservent les problèmes d'accents
+        # FIXME : Les changelog apparaissent avec iso-8859-15 mais conservent les problèmes d'accents (exemple : perl)
         textbuffer = self.changelog_text.get_buffer()
         fileChangeLog = PM_ROOT + PM_DBPATH + "/" + repo_list[0] + "/" + pkgname + "-" + pkgver + "/changelog"
         if os.path.exists(fileChangeLog) == True:
-            file = codecs.open(fileChangeLog,"r","iso-8859-15")
+            file = codecs.open(fileChangeLog, 'r', 'iso-8859-15')
             for line in file:
                 if line <> "":
                     text += line
@@ -668,11 +666,11 @@ class INTERFACE:
         except :
             pass
 
-    def print_info_statusbar(self, text):
+    def printInfoStatusbar(self, text):
         """
         Write a new text in the statusbar
         """
-        self.statusbar.push(0,text)
+        self.statusbar.push(0, text)
 
     def toggled(self, cell_renderer, col, treeview):
         """
@@ -685,7 +683,7 @@ class INTERFACE:
 
         if model[col][0] == 0:
             # Uncheck
-            if pacman_package_intalled(model[col][1],model[col][2]) == 1:
+            if pacman_package_intalled(model[col][1], model[col][2]) == 1:
                 if rowR == 0:
                     self.listRemove.append(model[col][1])
             else:
@@ -693,7 +691,7 @@ class INTERFACE:
                     self.listInstall.remove(rowI)
         else:
             # Check
-            if pacman_package_intalled(model[col][1],model[col][2]) == 1:
+            if pacman_package_intalled(model[col][1], model[col][2]) == 1:
                 if rowR != 0:
                     self.listRemove.remove(rowR)
             else:
