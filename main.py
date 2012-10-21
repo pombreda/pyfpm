@@ -176,7 +176,8 @@ class INTERFACE:
         self.packages_list = gtk.ListStore(int, str, str)
         self.packages = gtk.TreeView(self.packages_list)
         self.packages.set_size_request(0,300)
-        self.packages.set_search_column(0)
+        self.packages.set_search_column(1)
+        self.packages_list.set_sort_column_id(1,gtk.SORT_ASCENDING) # Trie la liste de paquet alphabetiquement
 
         self.packages_checkbox = gtk.TreeViewColumn(" ")
         self.packages_checkbox.set_sort_column_id(0)
@@ -222,8 +223,6 @@ class INTERFACE:
         self.info_cell.set_property('weight', pango.WEIGHT_BOLD)
         self.info_column2 = gtk.TreeViewColumn()
         self.info_cell2 = gtk.CellRendererText()
-        #~ self.info_cell2.props.wrap_width = 300
-        #~ self.info_cell2.wrap_mode = gtk.WRAP_CHAR
         self.info_column.pack_start(self.info_cell, True)
         self.info_column.add_attribute(self.info_cell, "text", 0)
         self.info_column2.pack_start(self.info_cell2, True)
@@ -304,6 +303,10 @@ class INTERFACE:
         self.packages_selection = self.packages.get_selection()
         self.packages_selection.connect('changed', self.selection_pkg, self.packages_list)
 
+        # Fonction pour l'ouverture de page internet
+        self.info_selection = self.information_text.get_selection()
+        self.information_text.connect('row-activated', self.gotourl)
+
     ####################################################################
     #                           Windows
     ####################################################################
@@ -318,7 +321,7 @@ class INTERFACE:
         about.set_comments(divers.getATrad("about_desc"))
         about.set_copyright("Copyright (c) 2012\nGaetan Gourdin\nAurélien Lubert")
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer\net/ou le modifier conformément aux dispositions de la Licence Publique\nGénérale GNU, telle que publiée par la Free Software Foundation.")
-        logo = gtk.gdk.pixbuf_new_from_file(LOGO)
+        logo = gtk.gdk.pixbuf_new_from_file("logo.png")
         about.set_logo(logo)
         about.run()
         about.destroy()
@@ -453,10 +456,10 @@ class INTERFACE:
         if self.search_entry.get_text != '':
             self.packages_list.clear()
             search = self.search_entry.get_text()
-            print "Recherche: '" + search + "'"
+            print "'" + search + "'"
             self.print_info_statusbar(divers.getATrad("search_package") + " " + search)
             pkgs = pacman_search_pkg(search)
-            if len(pkgs)==0:
+            if len(pkgs) == 0:
                 return
             pacman_trans_release()
             self.pkgtoListsore(pkgs)
@@ -485,7 +488,6 @@ class INTERFACE:
         self.instPkgList = []
         self.packages_list.clear()
         # Read packages list
-        pkgs.sort()
         for pkg in pkgs:
             # If package is allready install
             if pacman_package_intalled(pacman_pkg_get_info(pkg,PM_PKG_NAME),pacman_pkg_get_info(pkg,PM_PKG_VERSION)) == 1:
@@ -503,6 +505,7 @@ class INTERFACE:
                 else:
                     bo_inst = 1
                 self.packages_list.append([bo_inst,pacman_pkg_get_info(pkg,PM_PKG_NAME),pacman_pkg_get_info(pkg,PM_PKG_VERSION)])
+        pkgs.sort()
         self.eraseData()
 
     def eraseData(self):
@@ -561,6 +564,16 @@ class INTERFACE:
             return True
         return True
 
+    def gotourl(self, widget, *event):
+        self.information_text.get_model()
+        try :
+            pkgname, pkgver = model.get(self.info_selection[1], 1, 2)
+            print pkgver
+        except :
+            # not a problem
+            return True
+        return True
+
     def show_group(self, grp):
         self.print_info_statusbar(divers.getATrad("read_grp") + " " + grp)
         pkgs = pypacman.GetPkgFromGrp(grp)
@@ -610,8 +623,10 @@ class INTERFACE:
         if pacman_package_intalled(pkgname,pkgver) == 1:
             deps = pacman_pkg_getinfo(pkg, PM_PKG_DEPENDS)
             while deps != 0:
-                text += pointer_to_string(pacman_list_getdata(deps)) + "  "
+                text += pointer_to_string(pacman_list_getdata(deps))
                 deps = pacman_list_next(deps)
+                if deps != 0:
+                    text += ", "    # Evite d'avoir une virgule à la fin de la liste
             viewColumn = self.info_store.append(None, [divers.getATrad("depends"), text])
 
         text = ""
