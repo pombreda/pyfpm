@@ -1,0 +1,13 @@
+--- display.py ---
+
+    FIXME (fenetrePrincipale:283) : Redimensionnement des panneaux " GtkWarning: gtk_widget_size_allocate(): attempt to allocate widget with width -5 and height 18 "
+    TODO  (fenetrePrincipale:114) : Remise à zéro de l'interface lors d'une mise à jour de la base de données
+
+--- action.py ---
+
+    FIXME (obtenirDetailsPaquet:122) : Le pointeur du groupe ne semble pas se convertir en string
+    FIXME (obtenirDetailsPaquet:127) : Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
+
+--- lang.py ---
+
+    TODO : Intégrer le format .po/mo
