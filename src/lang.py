@@ -17,7 +17,11 @@ fctConfig = fonctionsConfiguration()
 # ----------------------------------------------------------------------
 
 class fonctionsLang:
-    def traduire (objet, mot):
+    def traduire (objet, mot):   
+        """
+        Récupère la traduction du mot dans le fichier de langue 
+        correspondant
+        """
 
         if mot != "":
             langue = fctConfig.lireConfig("pyfpm", "lang")

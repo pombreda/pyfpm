@@ -26,8 +26,8 @@ fctLang = fonctionsLang()
 # ----------------------------------------------------------------------
 #   fonctionsEvenement
 #       ajouterGroupes (objet, liste)
-#       ajouterPaquets (objet, interface, paquets)
-#       dansListe (objet, liste, nom)
+#       remplirPaquets (objet, interface, paquets)
+#       verifierDonnee (objet, liste, nom)
 #       detruire (objet, fenetre)
 #       lancerMiseajourBaseDonnees (objet, interface)
 #       lancerNettoyerCache (objet, interface)
@@ -35,13 +35,19 @@ fctLang = fonctionsLang()
 # ----------------------------------------------------------------------
 
 class fonctionsEvenement:
-    def detruire (objet, fenetre):
+    def detruire (objet, fenetre):        
+        """
+        Détruit l'interface et termine pyFPM
+        """
 
         fctPaquets.terminerPacman()
         gtk.main_quit()
 
 
-    def ajouterGroupes (objet, interface):
+    def ajouterGroupes (objet, interface):   
+        """
+        Ajouter les groupes dans l'interface
+        """
 
         interface.listeColonnePaquets.clear()
         ensembleGroupes = fctPaquets.initialiserGroupes()
@@ -50,43 +56,63 @@ class fonctionsEvenement:
             interface.listeColonneGroupes.append([nom])
 
 
-    def obtenirGroupe (objet, interface, groupe):
+    def obtenirGroupe (objet, interface, groupe):   
+        """
+        Obtenir les paquets correspondant au groupe sélectionné
+        """
 
         interface.barreStatus.push(0, (" " + fctLang.traduire("read_grp") + " " + groupe))
 
-        paquets = fctPaquets.initialiserPaquets(groupe)
-        objet.ajouterPaquets(interface, paquets)
+        paquets = fctPaquets.initialiserPaquets(groupe)        
+        objet.remplirPaquets(interface, paquets)
 
 
-    def ajouterPaquets (objet, interface, paquets):
+    def remplirPaquets (objet, interface, paquets):   
+        """
+        Ajoute les paquets dans l'interface
+        """
 
         objetTrouve = 0
+        listeMiseAJour = []
 
         interface.listePaquetsInstalles = []
         interface.listeColonnePaquets.clear()
-
-        for paquet in paquets:
-            if pacman_package_intalled(pacman_pkg_get_info(paquet, PM_PKG_NAME), pacman_pkg_get_info(paquet, PM_PKG_VERSION)) == 1:
-                if objet.dansListe(interface.listeSuppression, pacman_pkg_get_info(paquet, PM_PKG_NAME)) == 0:
-                    objetTrouve = 1
-                else:
-                    objetTrouve = 0
-                if fctPaquets.verifierInstallationPaquet(interface, pacman_pkg_get_info(paquet, PM_PKG_NAME), pacman_pkg_get_info(paquet, PM_PKG_VERSION)) == False:
-                    interface.listePaquetsInstalles.append([pacman_pkg_get_info(paquet, PM_PKG_NAME), pacman_pkg_get_info(paquet, PM_PKG_VERSION)])
-                    interface.listeColonnePaquets.append([objetTrouve, pacman_pkg_get_info(paquet, PM_PKG_NAME), pacman_pkg_get_info(paquet, PM_PKG_VERSION)])
+        
+        for element in paquets:
+            if pacman_package_intalled(pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION)):
+                # Le paquet est installé
+               if not fctPaquets.verifierInstallationPaquet (interface, pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION)):
+                   interface.listePaquetsInstalles.append([1, pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION), ""])
             else:
-                if objet.dansListe(interface.listeInstallation, pacman_pkg_get_info(paquet, PM_PKG_NAME)) == 0:
-                    objetTrouve = 0
+                # Le paquet n'est pas installé
+                if not pacman_pkg_get_info(element, PM_PKG_NAME) in interface.listeMiseAJour:
+                    # Le paquet n'est pas une mise à jour
+                    interface.listePaquetsInstalles.append([0, pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION), ""])
                 else:
-                    objetTrouve = 1
-                interface.listeColonnePaquets.append([objetTrouve, pacman_pkg_get_info(paquet, PM_PKG_NAME), pacman_pkg_get_info(paquet, PM_PKG_VERSION)])
+                    interface.listeMiseAJour.append([pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION)])
+        
+        indexInstall = 0
+        while indexInstall < len(interface.listePaquetsInstalles):
+            indexMiseAJour = 0
+            image = ""
+            while indexMiseAJour < len(interface.listeMiseAJour):
+                if interface.listePaquetsInstalles[indexInstall][1] == interface.listeMiseAJour[indexMiseAJour][0]:
+                    interface.listePaquetsInstalles[indexInstall][3] = interface.listeMiseAJour[indexMiseAJour][1]
+                    image = gtk.STOCK_NEW
+                indexMiseAJour += 1
+                
+            modificationPaquet = interface.listePaquetsInstalles[indexInstall][0]
+            if interface.listePaquetsInstalles[indexInstall][1] in interface.listeSuppression or interface.listePaquetsInstalles[indexInstall][1] in interface.listeInstallation:
+                modificationPaquet = not modificationPaquet
+                
+            interface.listeColonnePaquets.append([modificationPaquet, image, interface.listePaquetsInstalles[indexInstall][1], interface.listePaquetsInstalles[indexInstall][2], interface.listePaquetsInstalles[indexInstall][3]])
+            indexInstall += 1
+                    
 
-        paquets.sort()
-
-        #~ self.eraseData()
-
-
-    def obtenirPaquet (objet, interface, nomPaquet, versionPaquet):
+    def obtenirPaquet (objet, interface, nomPaquet, versionPaquet):   
+        """
+        FIXME : Fusioner avec obtenirDetailsPaquet
+        """
         
         interface.barreStatus.push(0, (fctLang.traduire("read_pkg") + " " + nomPaquet))
         objetTrouve = 0
@@ -109,7 +135,17 @@ class fonctionsEvenement:
             objet.obtenirDetailsPaquet(interface, nomPaquet, versionPaquet, paquet)
             
     
-    def obtenirDetailsPaquet (objet, interface, nomPaquet, versionPaquet, paquet):
+    def obtenirDetailsPaquet (objet, interface, nomPaquet, versionPaquet, paquet):   
+        """
+        Récupérer les informations correspondant au paquet délectionné :
+            - nom
+            - version
+            - description
+            - dépendances    
+            Si installé :
+            - site du projet
+            - SHA1SUMS    
+        """
 
         texte = ""
         paquetInstalle = None
@@ -123,45 +159,76 @@ class fonctionsEvenement:
         interface.contenuInformations.append(None, [fctLang.traduire("version"), versionPaquet])
         
         interface.contenuInformations.append(None, [fctLang.traduire("description"), pacman_pkg_get_info(paquet, PM_PKG_DESC)])
-        #~ interface.contenuInformations.append(None, [fctLang.traduire("groups"), pointer_to_string(pacman_pkg_get_info(paquet, PM_PKG_GROUPS))])
+        #~ interface.contenuInformations.append(None, [fctLang.traduire("groups"), pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_GROUPS))])
         
-        try:
-            if paquetInstalle <> None:
-                interface.contenuInformations.append(None, [fctLang.traduire("url"), pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL))])
-                #~ interface.contenuInformations.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
+        if paquetInstalle <> None:
+            interface.contenuInformations.append(None, [fctLang.traduire("url"), pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL))])
+            interface.contenuInformations.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
+            
+        dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
+        
+        while dependances != 0:
+            nomDependance = pointer_to_string(pacman_list_getdata(dependances))
 
-                dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
+            nomDependance = nomDependance.split('=')
+            nomDependance = nomDependance[0].split('<')
+            nomDependance = nomDependance[0].split('>')
+            
+            texte += nomDependance[0]
+            
+            dependances = pacman_list_next(dependances)
+            if dependances != 0:
+                texte += ", "
                 
-                while dependances != 0:
-                    texte += pointer_to_string(pacman_list_getdata(dependances))
-                    dependances = pacman_list_next(dependances)
-                    if dependances != 0:
-                        texte += ", "
-                        
-                interface.contenuInformations.append(None, [fctLang.traduire("depends"), texte])
-        except:
-            pass
+        interface.contenuInformations.append(None, [fctLang.traduire("depends"), texte])
 
 
-    def dansListe (objet, liste, nom):
+    def verifierDonnee (objet, liste, donnee):   
+        """
+        Vérifie si nom est dans liste
+        """
 
         objetTrouve = 0
 
-        for donnee in liste:
-            if nom == donnee:
-                objetTrouve = donnee
+        for element in liste:
+            if donnee == element:
+                objetTrouve = element
                 break
 
         return objetTrouve
         
     
-    def lancerNettoyerCache (objet, interface):
+    def verifierUtilisateur (objet):
+        """
+        Verifie quel utilisateur est en train d'utiliser pyFPM
+        """
         
-        os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
+        if not os.geteuid() == 0:
+            return 0
+            
+        return 1
+        
+    
+    def lancerNettoyerCache (objet, interface):   
+        """
+        Lancer la commande de nettoyage du cache
+        """
+        
+        if objet.verifierUtilisateur() == 0:
+            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
+        else:
+            os.system("python ./src/package.py cleancache")
+            
         #~ fonctionsInterface.effacerInterface()
 
     
-    def lancerMiseajourBaseDonnees (objet, interface):
+    def lancerMiseajourBaseDonnees (objet, interface):   
+        """
+        Lancer la commande de mise à jour des dépôts de paquets
+        """
         
-        os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
+        if objet.verifierUtilisateur() == 0:
+            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
+        else:
+            os.system("python ./src/package.py updatedb")
         #~ fonctionsInterface.effacerInterface()
