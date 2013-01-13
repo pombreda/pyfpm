@@ -8,6 +8,7 @@
 # ----------------------------------------------------------------------
 
 from config import *
+
 fctConfig = fonctionsConfiguration()
 
 
@@ -17,9 +18,9 @@ fctConfig = fonctionsConfiguration()
 # ----------------------------------------------------------------------
 
 class fonctionsLang:
-    def traduire (objet, mot):   
+    def traduire (objet, mot):
         """
-        Récupère la traduction du mot dans le fichier de langue 
+        Récupère la traduction du mot dans le fichier de langue
         correspondant
         """
 

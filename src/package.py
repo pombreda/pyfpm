@@ -13,6 +13,7 @@ import pacmang2.libpacman
 from pacmang2.libpacman import *
 
 from lang import *
+
 fctLang = fonctionsLang()
 
 pacmang2.libpacman.printconsole=0
@@ -31,7 +32,7 @@ pacmang2.libpacman.debug=0
 # ----------------------------------------------------------------------
 
 class fonctionsPaquets:
-    def initialiserPacman (objet):   
+    def initialiserPacman (objet):
         """
         Initialise pacman-g2 pour permettre d'être utilisé
         """
@@ -42,29 +43,27 @@ class fonctionsPaquets:
         pacman_init_database()
         print "Mise en place de la base de données"
         pacman_register_all_database()
-        
-    
-    def nettoyerCache (objet):   
+
+
+    def nettoyerCache (objet):
         """
         Nettoye le cache de pacman-g2
         """
-        
+
         print "Nettoyage du cache"
         pacman_sync_cleancache()
-        
-        fonctionsInterface().fenetreInformation(fctLang.traduire("clean_cache"), fctLang.traduire("clean_cache_done"))
-        
-        
-    def miseajourBaseDonnees (objet):   
+
+
+    def miseajourBaseDonnees (objet):
         """
         Met à jour les dépôts de paquets
         """
-        
+
         print "Mise à jour des bases de paquets"
         pacman_update_db(1)
 
 
-    def terminerPacman (objet):   
+    def terminerPacman (objet):
         """
         Termine l'instance de pacman-g2
         """
@@ -73,7 +72,7 @@ class fonctionsPaquets:
         pacman_finally()
 
 
-    def initialiserGroupes (objet):   
+    def initialiserGroupes (objet):
         """
         Initialise la liste des groupes
         """
@@ -97,7 +96,7 @@ class fonctionsPaquets:
         return ensembleGroupes
 
 
-    def initialiserPaquets (objet, groupe):   
+    def initialiserPaquets (objet, groupe):
         """
         Initialise les paquets correspondant au groupe sélectionné
         """
@@ -121,7 +120,7 @@ class fonctionsPaquets:
         return ensemblePaquets
 
 
-    def verifierInstallationPaquet (objet, interface, nom, version):   
+    def verifierInstallationPaquet (objet, interface, nom, version):
         """
         Vérifie si un paquet particulier est installé sur le système
         """
@@ -134,30 +133,30 @@ class fonctionsPaquets:
                 break
 
         return objetTrouve
-        
-    
+
+
     def recupererDependances (objet, paquet):
         """
         Récupère les dépendances non installés d'un paquet
         """
         dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
         listeDependances = []
-        
+
         while dependances != 0:
             # Améliorer la séparation des caractères >, =, <
             nom = pointer_to_string(pacman_list_getdata(dependances)).split('=')
             nom = nom[0].split('<')
             nom = nom[0].split('>')
-            
+
             paquetsDependance = pacman_search_pkg(nom[0])
-            
+
             for element in paquetsDependance:
                 if pacman_package_is_installed(pacman_pkg_get_info(element, PM_PKG_NAME)) == 0:
                     listeDependances.append(nom[0])
                     break
-                
+
             dependances = pacman_list_next(dependances)
-            
+
         print "Dependances : " + str(listeDependances)
 
 
@@ -165,21 +164,21 @@ class fonctionsPaquets:
         """
         Récupère les paquets dont une mise à jour est disponible
         """
-        
+
         print "Obtention de la liste des paquets à mettre à jour"
-        
+
         for element in pacman_check_update():
             liste.append(pointer_to_string(element))
-        
+
         print liste
 
-def main (*args):   
+def main (*args):
     """
     Partie nécessaire pour l'execution de certaines commandes avec les
     droits super-utilisateur
     """
     fctPaquets = fonctionsPaquets()
-    
+
     for arg in sys.argv:
         if arg=="cleancache":
             fctPaquets.nettoyerCache()

@@ -18,9 +18,9 @@
 import os, sys
 
 from package import *
-fctPaquets = fonctionsPaquets()
-
 from display import *
+
+fctPaquets = fonctionsPaquets()
 fctInterface = fonctionsInterface()
 
 
