@@ -41,7 +41,30 @@ class fonctionsEvenement:
 
         fctPaquets.terminerPacman()
         gtk.main_quit()
-
+        
+        
+    def ajouterDepots (objet, interface):
+        """
+        Récupère les dépots disponible sur le système
+        """
+        
+        # Met le dépôt du système en choix principal
+        index = 0
+        if "frugalware" in repo_list:
+            index = repo_list.index("frugalware")
+        elif "frugalware-current" in repo_list:
+            index = repo_list.index("frugalware-current")
+        
+        # Intègre les dépôts dans la liste
+        for element in repo_list:
+            if element == "local":
+                element = fctLang.traduire("installed_packages")
+                
+            interface.listeSelectionGroupe.append_text(element)
+        
+        # Met le dépôt du système en actif
+        interface.listeSelectionGroupe.set_active(index)
+        
 
     def ajouterGroupes (objet, interface):
         """
@@ -49,7 +72,7 @@ class fonctionsEvenement:
         """
 
         interface.listeColonnePaquets.clear()
-        ensembleGroupes = fctPaquets.initialiserGroupes()
+        ensembleGroupes = fctPaquets.initialiserGroupes(interface)
 
         for nom in ensembleGroupes:
             interface.listeColonneGroupes.append([nom])
@@ -59,10 +82,8 @@ class fonctionsEvenement:
         """
         Obtenir les paquets correspondant au groupe sélectionné
         """
-
-        interface.barreStatus.push(0, (" " + fctLang.traduire("read_grp") + " " + groupe))
-
-        paquets = fctPaquets.initialiserPaquets(groupe)
+        
+        paquets = fctPaquets.initialiserPaquets(interface, groupe)
         objet.remplirPaquets(interface, paquets)
 
 
@@ -72,46 +93,40 @@ class fonctionsEvenement:
         """
 
         objetTrouve = 0
-        listeMiseAJour = []
-
-        interface.listePaquetsInstalles = []
         interface.listeColonnePaquets.clear()
-
+            
         for element in paquets:
-            if pacman_package_intalled(pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION)):
+            nomPaquet = pacman_pkg_get_info(element, PM_PKG_NAME)
+            versionPaquet = pacman_pkg_get_info(element, PM_PKG_VERSION)
+            
+            if pacman_package_intalled(nomPaquet, versionPaquet):
                 # Le paquet est installé
-               if not fctPaquets.verifierInstallationPaquet (interface, pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION)):
-                   interface.listePaquetsInstalles.append([1, pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION), ""])
+                objetTrouve = 1
+                image = " "
+                nouvelleVersion = " "
+            elif nomPaquet in interface.listeMiseAJour:
+                # Le paquet à une mise à jour
+                objetTrouve = 1
+                image = gtk.STOCK_REFRESH
+                information = pacman_db_readpkg(db_list[0], nomPaquet)
+                nouvelleVersion = versionPaquet
+                versionPaquet = pacman_pkg_get_info(information, PM_PKG_VERSION)
             else:
                 # Le paquet n'est pas installé
-                if not pacman_pkg_get_info(element, PM_PKG_NAME) in interface.listeMiseAJour:
-                    # Le paquet n'est pas une mise à jour
-                    interface.listePaquetsInstalles.append([0, pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION), ""])
-                else:
-                    interface.listeMiseAJour.append([pacman_pkg_get_info(element, PM_PKG_NAME), pacman_pkg_get_info(element, PM_PKG_VERSION)])
-
-        indexInstall = 0
-        while indexInstall < len(interface.listePaquetsInstalles):
-            indexMiseAJour = 0
-            image = ""
-            while indexMiseAJour < len(interface.listeMiseAJour):
-                if interface.listePaquetsInstalles[indexInstall][1] == interface.listeMiseAJour[indexMiseAJour][0]:
-                    interface.listePaquetsInstalles[indexInstall][3] = interface.listeMiseAJour[indexMiseAJour][1]
-                    image = gtk.STOCK_REFRESH
-
-                indexMiseAJour += 1
-
-            modificationPaquet = interface.listePaquetsInstalles[indexInstall][0]
-            if interface.listePaquetsInstalles[indexInstall][1] in interface.listeSuppression or interface.listePaquetsInstalles[indexInstall][1] in interface.listeInstallation:
-                modificationPaquet = not modificationPaquet
-
-                if interface.listePaquetsInstalles[indexInstall][1] in interface.listeInstallation:
-                    image = gtk.STOCK_YES
-                elif interface.listePaquetsInstalles[indexInstall][1] in interface.listeSuppression:
-                    image = gtk.STOCK_NO
-
-            interface.listeColonnePaquets.append([modificationPaquet, image, interface.listePaquetsInstalles[indexInstall][1], interface.listePaquetsInstalles[indexInstall][2], interface.listePaquetsInstalles[indexInstall][3]])
-            indexInstall += 1
+                objetTrouve = 0
+                image = " "
+                nouvelleVersion = " "
+                
+            if nomPaquet in interface.listeInstallation:
+                objetTrouve = 1
+                image = gtk.STOCK_YES
+            elif nomPaquet in interface.listeSuppression:
+                objetTrouve = 0
+                image = gtk.STOCK_NO
+                
+            interface.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
+            
+        interface.barreStatus.push(0, str(len(interface.listeColonnePaquets)) + " " + fctLang.traduire("read_packages_done"))
 
 
     def obtenirPaquet (objet, interface, nomPaquet, versionPaquet):
@@ -164,10 +179,10 @@ class fonctionsEvenement:
         interface.contenuInformations.append(None, [fctLang.traduire("version"), versionPaquet])
 
         interface.contenuInformations.append(None, [fctLang.traduire("description"), pacman_pkg_get_info(paquet, PM_PKG_DESC)])
-        #~ interface.contenuInformations.append(None, [fctLang.traduire("groups"), pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_GROUPS))])
+        #~ interface.contenuInformations.append(None, [fctLang.traduire("groups"), str(pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_GROUPS)))])
 
         if paquetInstalle <> None:
-            interface.contenuInformations.append(None, [fctLang.traduire("url"), pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL))])
+            interface.contenuInformations.append(None, [fctLang.traduire("url"), "<b>" + pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL)) + "<b>"])
             interface.contenuInformations.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
 
         dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)

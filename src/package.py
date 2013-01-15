@@ -72,48 +72,46 @@ class fonctionsPaquets:
         pacman_finally()
 
 
-    def initialiserGroupes (objet):
+    def initialiserGroupes (objet, interface):
         """
         Initialise la liste des groupes
         """
 
-        baseDonnees = db_list[0]
+        baseDonnees = db_list[interface.listeSelectionGroupe.get_active()]
         ensembleGroupes = []
 
-        for baseDonnees in db_list:
-            i = pacman_db_getgrpcache(baseDonnees)
+        i = pacman_db_getgrpcache(baseDonnees)
 
-            while i != 0:
-                groupe = pacman_list_getdata(i)
+        while i != 0:
+            groupe = pacman_list_getdata(i)
 
-                if not pointer_to_string(groupe) in ensembleGroupes:
-                    ensembleGroupes.append(pointer_to_string(groupe))
+            if not pointer_to_string(groupe) in ensembleGroupes:
+                ensembleGroupes.append(pointer_to_string(groupe))
 
-                i = pacman_list_next(i)
+            i = pacman_list_next(i)
 
         ensembleGroupes.sort()
 
         return ensembleGroupes
 
 
-    def initialiserPaquets (objet, groupe):
+    def initialiserPaquets (objet, interface, groupe):
         """
         Initialise les paquets correspondant au groupe sélectionné
         """
 
         ensemblePaquets = []
 
-        for baseDonnees in db_list:
-            pm_group = pacman_db_readgrp (baseDonnees, groupe)
-            i = pacman_grp_getinfo (pm_group, PM_GRP_PKGNAMES)
+        pm_group = pacman_db_readgrp (db_list[interface.listeSelectionGroupe.get_active()], groupe)
+        i = pacman_grp_getinfo (pm_group, PM_GRP_PKGNAMES)
 
-            while i != 0:
-                paquet = pacman_db_readpkg (baseDonnees, pacman_list_getdata(i))
+        while i != 0:
+            paquet = pacman_db_readpkg (db_list[interface.listeSelectionGroupe.get_active()], pacman_list_getdata(i))
 
-                if not paquet in ensemblePaquets:
-                    ensemblePaquets.append(paquet)
+            if not paquet in ensemblePaquets:
+                ensemblePaquets.append(paquet)
 
-                i = pacman_list_next(i)
+            i = pacman_list_next(i)
 
         ensemblePaquets.sort()
 
@@ -135,42 +133,40 @@ class fonctionsPaquets:
         return objetTrouve
 
 
-    def recupererDependances (objet, paquet):
+    def recupererDependances (objet, paquet, listePaquets):
         """
         Récupère les dépendances non installés d'un paquet
         """
-        dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
+        
         listeDependances = []
-
-        while dependances != 0:
-            # Améliorer la séparation des caractères >, =, <
-            nom = pointer_to_string(pacman_list_getdata(dependances)).split('=')
-            nom = nom[0].split('<')
-            nom = nom[0].split('>')
-
-            paquetsDependance = pacman_search_pkg(nom[0])
-
-            for element in paquetsDependance:
-                if pacman_package_is_installed(pacman_pkg_get_info(element, PM_PKG_NAME)) == 0:
-                    listeDependances.append(nom[0])
-                    break
-
-            dependances = pacman_list_next(dependances)
-
-        print "Dependances : " + str(listeDependances)
-
+        
+        dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
+        
+        for element in dependances:
+            nomDependance = pointer_to_string(pacman_list_getdata(dependances))
+            nomPaquet = pacman_pkg_get_info(nomDependance, PM_PKG_NAME)
+            versionPaquet = pacman_pkg_get_info(nomDependance, PM_PKG_VERSION)            
+            
+            if not pacman_package_intalled(nomPaquet, versionPaquet):
+                listeDependances.append(nomPaquet)
+                
+        print listeDependances
+                
 
     def obtenirMiseAJour (objet, liste):
         """
         Récupère les paquets dont une mise à jour est disponible
         """
 
-        print "Obtention de la liste des paquets à mettre à jour"
-
-        for element in pacman_check_update():
+        print fctLang.traduire("add_update_list")
+        
+        listePaquetsMiseAJour = pacman_check_update()
+        listeTmp = []
+        
+        for element in listePaquetsMiseAJour:
             liste.append(pointer_to_string(element))
 
-        print liste
+        #~ print liste
 
 def main (*args):
     """

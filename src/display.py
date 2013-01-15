@@ -48,6 +48,7 @@ class fonctionsInterface:
 
             interface.fenetre = gtk.Window()
             interface.grille = gtk.Table(1,4)
+            interface.groupes = gtk.Table(1,2)
 
             interface.menu = gtk.MenuBar()
             interface.menu_action = gtk.MenuItem(label=fctLang.traduire("action"))
@@ -66,8 +67,11 @@ class fonctionsInterface:
 
             interface.outils = gtk.Toolbar()
             interface.texteRecherche = gtk.Entry()
+    
+            interface.zoneSelectionGroupe = gtk.Frame(fctLang.traduire("select_group"))
+            interface.listeSelectionGroupe = gtk.combo_box_new_text()
 
-            interface.zoneGroupes = gtk.Frame(fctLang.traduire("groups"))
+            interface.zoneGroupes = gtk.Frame(fctLang.traduire("list_groups"))
             interface.listeColonneGroupes = gtk.ListStore(str)
             interface.colonneGroupes = gtk.TreeView(interface.listeColonneGroupes)
             interface.colonneGroupesNom = gtk.TreeViewColumn(fctLang.traduire("groups"))
@@ -79,9 +83,10 @@ class fonctionsInterface:
             interface.colonnePaquets = gtk.TreeView(interface.listeColonnePaquets)
             interface.colonnePaquetsCheckbox = gtk.TreeViewColumn(" ")
             interface.cellulePaquetsCheckbox = gtk.CellRendererToggle()
+            interface.colonnePaquetsImage = gtk.TreeViewColumn(" ")
+            interface.cellulePaquetsImage = gtk.CellRendererPixbuf()
             interface.colonnePaquetsNom = gtk.TreeViewColumn(fctLang.traduire("name"))
             interface.cellulePaquetsNom = gtk.CellRendererText()
-            interface.cellulePaquetsImage = gtk.CellRendererPixbuf()
             interface.colonnePaquetsVersionActuelle = gtk.TreeViewColumn(fctLang.traduire("actual_version"))
             interface.cellulePaquetsVersionActuelle = gtk.CellRendererText()
             interface.colonnePaquetsVersionDisponible = gtk.TreeViewColumn(fctLang.traduire("current_version"))
@@ -109,6 +114,15 @@ class fonctionsInterface:
         hauteur = fctConfig.lireConfig("screen", "height")
 
         if int(longueur) >= 800 and int(hauteur) >= 600:
+
+            # ------------------------------------------------------------------
+            #       Fenetre
+            # ------------------------------------------------------------------
+
+            interface.fenetre.set_title(fctLang.traduire("title"))
+            interface.fenetre.set_size_request(int(longueur), int(hauteur))
+            interface.fenetre.set_resizable(True)
+            interface.fenetre.set_position(gtk.WIN_POS_CENTER)
 
             # ------------------------------------------------------------------
             #       Menu
@@ -141,7 +155,7 @@ class fonctionsInterface:
             interface.menu_action.set_submenu(interface.menu_action_list)
 
             interface.menu_edit_clear_changes.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
-            #~ menu_edit_clear_changes.connect("activate", resetSelect)
+            interface.menu_edit_clear_changes.connect("activate", interface.effacerListesPaquets)
 
             interface.menu_edit_preference.set_image(gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU))
             #~ menu_edit_preference.connect("activate", preferences)
@@ -170,7 +184,7 @@ class fonctionsInterface:
             interface.outils.set_style(gtk.TOOLBAR_ICONS)
 
             interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreInstallation, interface, 0)
-            interface.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("refresh_pkg"), None, fctEvent.lancerMiseajourBaseDonnees, None, 2)
+            interface.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("refresh_pkg"), None, fctEvent.lancerMiseajourBaseDonnees, interface, 2)
             interface.outils.insert_space(3)
             interface.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
             interface.texteRecherche.connect("activate", interface.effectuerRecherche, gtk.RESPONSE_OK)
@@ -183,9 +197,20 @@ class fonctionsInterface:
 
 
             # ------------------------------------------------------------------
-            #       Colonnes des groupes
+            #       Liste des groupes
             # ------------------------------------------------------------------
 
+            interface.zoneSelectionGroupe.add(interface.listeSelectionGroupe)
+            interface.zoneSelectionGroupe.set_border_width(4)
+            interface.listeSelectionGroupe.connect('changed', interface.changementDepot, interface)
+            
+            fctEvent.ajouterDepots(interface)
+
+
+            # ------------------------------------------------------------------
+            #       Colonnes des groupes
+            # ------------------------------------------------------------------
+            
             interface.listeColonneGroupes.clear()
 
             interface.colonneGroupes.set_headers_visible(False)
@@ -222,6 +247,7 @@ class fonctionsInterface:
             interface.colonnePaquets.set_search_column(2)
 
             interface.colonnePaquetsCheckbox.set_sort_column_id(0)
+            interface.colonnePaquetsImage.set_sort_column_id(1)
             interface.colonnePaquetsNom.set_min_width(300)
             interface.colonnePaquetsNom.set_sort_column_id(2)
             #~ interface.colonnePaquetsNom.set_resizable(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
@@ -236,8 +262,8 @@ class fonctionsInterface:
 
             interface.colonnePaquetsCheckbox.pack_start(interface.cellulePaquetsCheckbox, True)
             interface.colonnePaquetsCheckbox.add_attribute(interface.cellulePaquetsCheckbox, 'active', 0)
-            interface.colonnePaquetsNom.pack_start(interface.cellulePaquetsImage, False)
-            interface.colonnePaquetsNom.add_attribute(interface.cellulePaquetsImage, 'stock_id', 1)
+            interface.colonnePaquetsImage.pack_start(interface.cellulePaquetsImage, False)
+            interface.colonnePaquetsImage.add_attribute(interface.cellulePaquetsImage, 'stock_id', 1)
             interface.colonnePaquetsNom.pack_start(interface.cellulePaquetsNom, True)
             interface.colonnePaquetsNom.add_attribute(interface.cellulePaquetsNom, 'text', 2)
             interface.colonnePaquetsVersionActuelle.pack_start(interface.cellulePaquetsVersionActuelle, True)
@@ -246,6 +272,7 @@ class fonctionsInterface:
             interface.colonnePaquetsVersionDisponible.add_attribute(interface.cellulePaquetsVersionDisponible, 'text', 4)
 
             interface.colonnePaquets.append_column(interface.colonnePaquetsCheckbox)
+            interface.colonnePaquets.append_column(interface.colonnePaquetsImage)
             interface.colonnePaquets.append_column(interface.colonnePaquetsNom)
             interface.colonnePaquets.append_column(interface.colonnePaquetsVersionActuelle)
             interface.colonnePaquets.append_column(interface.colonnePaquetsVersionDisponible)
@@ -275,7 +302,9 @@ class fonctionsInterface:
             interface.colonneValeur.pack_start(interface.celluleValeur, True)
             interface.colonneValeur.add_attribute(interface.celluleValeur, "text", 1)
 
-            interface.celluleValeur.set_property("wrap-mode", pango.WRAP_WORD)
+            interface.celluleValeur.set_property('wrap-mode', pango.WRAP_WORD)
+            interface.celluleValeur.set_property('markup', 1)
+            interface.celluleValeur.set_property('editable', True)
 
             interface.listeInformations.append_column(interface.colonneLabel)
             interface.listeInformations.append_column(interface.colonneValeur)
@@ -297,13 +326,11 @@ class fonctionsInterface:
             interface.zonePaquetsInformations.add1(interface.zonePaquets)
             interface.zonePaquetsInformations.add2(interface.zoneInformations)
 
-            interface.zoneColonnePaquets.attach(interface.zoneGroupes, 0, 1, 0, 1, xoptions=gtk.FILL)
-            interface.zoneColonnePaquets.attach(interface.zonePaquetsInformations, 1, 2, 0, 1)
+            interface.groupes.attach(interface.zoneSelectionGroupe, 0, 1, 0, 1, yoptions=gtk.FILL)
+            interface.groupes.attach(interface.zoneGroupes, 0, 1, 1, 2)
 
-            interface.fenetre.set_title(fctLang.traduire("title"))
-            interface.fenetre.set_size_request(int(longueur), int(hauteur))
-            interface.fenetre.set_resizable(True)
-            interface.fenetre.set_position(gtk.WIN_POS_CENTER)
+            interface.zoneColonnePaquets.attach(interface.groupes, 0, 1, 0, 1, xoptions=gtk.FILL)
+            interface.zoneColonnePaquets.attach(interface.zonePaquetsInformations, 1, 2, 0, 1)
 
             interface.grille.attach(interface.menu, 0, 1, 0, 1, yoptions=gtk.FILL)
             interface.grille.attach(interface.outils, 0, 1, 1, 2, yoptions=gtk.FILL)
@@ -329,16 +356,17 @@ class fonctionsInterface:
         sélectionné.
         """
 
-        choix = selection.get_selected()
-        treeiter = choix[1]
+        try:
+            choix = selection.get_selected()
+            treeiter = choix[1]
 
-        modele = interface.colonneGroupes.get_model()
+            modele = interface.colonneGroupes.get_model()
 
-        selectionGroupe = modele.get_value(treeiter, 0)
+            selectionGroupe = modele.get_value(treeiter, 0)
 
-        fctEvent.obtenirGroupe(interface, selectionGroupe)
-
-        return True
+            fctEvent.obtenirGroupe(interface, selectionGroupe)
+        except:
+            return True
 
 
     def selectionnerPaquet (interface, selection, modele):
@@ -387,7 +415,7 @@ class fonctionsInterface:
                 if elementAjouter != 0:
                     # Le paquet est enlevé de la liste des paquets à installer
                     interface.listeInstallation.remove(elementAjouter)
-                    modele[colonne][1] = ""
+                    modele[colonne][1] = " "
 
         else:
             # Le paquet en question à été coché
@@ -396,7 +424,10 @@ class fonctionsInterface:
                 if elementEnlever != 0:
                     # Le paquet est enlevé de la liste des paquets à supprimer
                     interface.listeSuppression.remove(elementEnlever)
-                    modele[colonne][1] = ""
+                    if modele[colonne][2] in interface.listeMiseAJour:
+                        modele[colonne][1] = gtk.STOCK_REFRESH
+                    else:
+                        modele[colonne][1] = " "
             else:
                 if elementAjouter == 0:
                     # Le paquet est mis dans la liste des paquets à installer
@@ -413,6 +444,10 @@ class fonctionsInterface:
             interface.listeColonnePaquets.clear()
             objetRechercher = interface.texteRecherche.get_text()
 
+            # FIXME : La recherche ne prenant pas en compte le dépot local
+            # il est imposible d'afficher le paquet dans la liste lorsque celui-ci
+            # fait partie de la liste des paquets à mettre à jour. Même chose
+            # pour ceux d'un autre dépot.
             paquets = pacman_search_pkg(objetRechercher)
 
             print str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher
@@ -421,6 +456,8 @@ class fonctionsInterface:
             if len(paquets) > 0:
                 pacman_trans_release()
                 fctEvent.remplirPaquets(interface, paquets)
+
+            interface.effacerRecherche()
 
 
     def effacerRecherche (interface, *args):
@@ -440,6 +477,33 @@ class fonctionsInterface:
         interface.barreStatus.push(0, "")
 
 
+    def effacerListesPaquets (interface, *args):
+        """
+        Remet à zéro la liste des paquets à installer et désinstaller
+        """
+
+        interface.listeInstallation = []
+        interface.listeSuppression  = []
+
+        try:
+            interface.selectionGroupe = interface.colonneGroupes.get_selection()
+            interface.selectionnerGroupe(interface.selectionGroupe, interface.listeColonneGroupes)
+        except:
+            pass
+
+        interface.barreStatus.push(0, fctLang.traduire("clear_changes_done"))
+
+    
+    def changementDepot (interface, *args):
+        """
+        Permet de changer de dépôt
+        """
+        
+        interface.listeColonnePaquets.clear()
+        interface.listeColonneGroupes.clear()
+        fctEvent.ajouterGroupes(interface)
+
+
     def redimensionnement (interface, *args):
         """
         Redimensionne la largueur de celluleValeur afin que le texte
@@ -452,6 +516,12 @@ class fonctionsInterface:
         interface.colonnePaquetsNom.set_min_width(interface.fenetre.get_size()[0]/2)
         interface.colonnePaquets.set_size_request(0, interface.fenetre.get_size()[1]/2)
 
+
+# ------------------------------------------------------------------------------------------------------------
+#
+#                Fenêtres supplémentaires
+#
+# ------------------------------------------------------------------------------------------------------------
 
     def fenetreAPropos (objet, widget, *event):
         """
@@ -489,8 +559,11 @@ class fonctionsInterface:
 
 
     def fenetreInstallation (objet, widget, interface, *event):
+        """
+        Affiche les modifications à effectuer sur les paquets
+        """
 
-        if len(interface.listeInstallation) != 0 or len(interface.listeSuppression) != 0:
+        if len(interface.listeInstallation) != 0 or len(interface.listeSuppression) != 0 or len(interface.listeMiseAJour) != 0:
             fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
             zoneInstallation = gtk.TreeView()
             listeInstallation = gtk.TreeStore(str)
@@ -524,6 +597,12 @@ class fonctionsInterface:
                 titre = listeInstallation.append(None, [fctLang.traduire("remove_pkg")])
 
                 for element in interface.listeSuppression:
+                    listeInstallation.append(titre, [element])
+
+            if len(interface.listeMiseAJour) != 0:
+                titre = listeInstallation.append(None, [fctLang.traduire("update_pkg")])
+
+                for element in interface.listeMiseAJour:
                     listeInstallation.append(titre, [element])
 
             fenetre.vbox.pack_start(defilementInstallation)

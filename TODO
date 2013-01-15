@@ -1,16 +1,23 @@
 Affichage (display.py)
 
-    FIXME : Le redimensionnement des panneaux dans les limites extérieurs de la fenêtre affiche des erreurs
+    FIXME
+        - Le redimensionnement des panneaux dans les limites extérieurs de la fenêtre affiche des erreurs
+        - Remise à zéro de l'interface lors d'une mise à jour de la base de données [DONE]
+    
+    TODO
+        - Afficher une fenêtre avec barre de progrès lors de la recherche des dépendances
+        - Améliorer le nom des groupes affichés (merci Munto :p)
 
-    OK   : Remise à zéro de l'interface lors d'une mise à jour de la base de données
-    TODO : Afficher une fenêtre avec barre de progrès lors de la recherche des dépendances
 
 Evénements (action.py)
 
-    FIXME : Impossible d'affiche correctement le groupe du paquet dans les informations du paquet
-    FIXME : Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
-    FIXME : Lors d'une recherche, si l'un des paquets fait partie d'une mise à jour il n'est pas affiché
+    FIXME
+        - Impossible d'affiche correctement le groupe du paquet dans les informations du paquet
+        - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
+        - Lors d'une recherche, si l'un des paquets fait partie d'une mise à jour il n'est pas affiché [DONE]
+
 
 Langue (lang.py)
 
-    TODO : Intégrer une meilleure solution de traduction d'interface
+    TODO
+        - Intégrer une meilleure solution de traduction d'interface
