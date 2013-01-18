@@ -17,10 +17,12 @@ except ImportError:
 from config import *
 from lang import *
 from action import *
+from preferences import *
 
 fctConfig = fonctionsConfiguration()
 fctLang = fonctionsLang()
 fctEvent = fonctionsEvenement()
+fctPrefs = fonctionsPreferences()
 
 """
     fonctionsInterface
@@ -159,7 +161,7 @@ class fonctionsInterface:
             interface.menu_edit_clear_changes.connect("activate", interface.effacerListesPaquets)
 
             interface.menu_edit_preference.set_image(gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU))
-            #~ menu_edit_preference.connect("activate", preferences)
+            interface.menu_edit_preference.connect("activate", fctPrefs.fenetrePreferences)
 
             interface.menu.add(interface.menu_edit)
 
@@ -194,7 +196,7 @@ class fonctionsInterface:
             interface.outils.insert_widget(interface.texteRecherche, fctLang.traduire("write_search"), None, 4)
             interface.outils.insert_stock(gtk.STOCK_FIND, fctLang.traduire("search"), None, interface.effectuerRecherche, None, 5)
             interface.outils.insert_space(6)
-            interface.outils.insert_stock(gtk.STOCK_PREFERENCES, fctLang.traduire("preferences"), None, None, None, 7)
+            interface.outils.insert_stock(gtk.STOCK_PREFERENCES, fctLang.traduire("preferences"), None, fctPrefs.fenetrePreferences, None, 7)
             interface.outils.insert_stock(gtk.STOCK_QUIT, fctLang.traduire("quit"), None, fctEvent.detruire, None, 8)
 
 
@@ -255,11 +257,8 @@ class fonctionsInterface:
             interface.colonnePaquetsImage.set_sort_column_id(1)
             interface.colonnePaquetsNom.set_min_width(300)
             interface.colonnePaquetsNom.set_sort_column_id(2)
-            #~ interface.colonnePaquetsNom.set_resizable(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
             interface.colonnePaquetsVersionActuelle.set_sort_column_id(3)
-            #~ interface.colonnePaquetsVersionActuelle.set_resizable(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
             interface.colonnePaquetsVersionDisponible.set_sort_column_id(4)
-            #~ interface.colonnePaquetsVersionDisponible.set_resizable(gtk.TREE_VIEW_COLUMN_AUTOSIZE)
 
             interface.cellulePaquetsCheckbox.set_property('active', 1)
             interface.cellulePaquetsCheckbox.set_property('activatable', True)
@@ -354,7 +353,8 @@ class fonctionsInterface:
 
             interface.fenetre.show_all()
 
-            #~ interface.fenetreMiseAJour()
+            if len(interface.listeMiseAJour) > 0:
+                interface.fenetreMiseAJour()
 
         else:
             try:
@@ -415,7 +415,7 @@ class fonctionsInterface:
             modele = liste.get_model()
 
             if modele[colonne][0] == fctLang.traduire("url"):
-                print "test"
+                print ("test")
         except:
             pass
 
@@ -479,7 +479,7 @@ class fonctionsInterface:
             # pour ceux d'un autre dépot.
             paquets = pacman_search_pkg(objetRechercher)
 
-            print str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher
+            print (str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
             interface.barreStatus.push(0, (str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher))
 
             if len(paquets) > 0:
@@ -644,45 +644,22 @@ class fonctionsInterface:
             interface.fenetreInformation(fctLang.traduire("apply_pkg"), fctLang.traduire("no_change"))
 
 
-    def fenetreDependances (objet, widget, interface, *event):
-        """
-        """
-
-        dependance = gtk.Dialog(fctLang.traduire("search_deps"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
-        progresDependances = gtk.ProgressBar()
-        texteDependances = gtk.Label("test")
-        zoneDependances = gtk.Table(1,2)
-
-        dependance.set_has_separator(True)
-        dependance.set_default_response(gtk.RESPONSE_OK)
-        dependance.set_size_request(300,90)
-
-        zoneDependances.attach(texteDependances, 0, 1, 0, 1)
-        zoneDependances.attach(progresDependances, 0, 1, 1, 2, yoptions=gtk.FILL)
-
-        dependance.vbox.pack_start(zoneDependances)
-
-        dependance.show_all()
-        dependance.run()
-
-        dependance.destroy()
-
-
     def fenetreMiseAJour (interface):
         """
         Prévient qu'il y a des mises à jour et propose de les installer
         """
 
-        miseajour = gtk.Dialog(fctLang.traduire("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+        miseajour = gtk.Dialog(fctLang.traduire("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_OK, gtk.RESPONSE_OK))
         miseajour.set_has_separator(True)
         miseajour.set_default_response(gtk.RESPONSE_OK)
 
         texteInfo = gtk.Label(fctLang.traduire("update_available"))
 
-        print interface.listeMiseAJour
+        #~ print (interface.listeMiseAJour)
+
         texte = ""
         for element in interface.listeMiseAJour:
-            texte += " " + str(element)
+            texte += "- " + str(element) + "\n"
 
         textePaquets = gtk.Label(texte)
 
@@ -701,3 +678,4 @@ class fonctionsInterface:
             miseajour.destroy()
         else:
             miseajour.destroy()
+

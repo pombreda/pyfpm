@@ -37,11 +37,11 @@ class fonctionsPaquets:
         Initialise pacman-g2 pour permettre d'être utilisé
         """
 
-        print "Initialisation de pacman"
+        print ("Initialisation de pacman")
         pacman_init()
-        print "Initialisation de la base de données"
+        print ("Initialisation de la base de données")
         pacman_init_database()
-        print "Mise en place de la base de données"
+        print ("Mise en place de la base de données")
         pacman_register_all_database()
 
 
@@ -50,7 +50,7 @@ class fonctionsPaquets:
         Nettoye le cache de pacman-g2
         """
 
-        print "Nettoyage du cache"
+        print ("Nettoyage du cache")
         pacman_sync_cleancache()
 
 
@@ -59,7 +59,7 @@ class fonctionsPaquets:
         Met à jour les dépôts de paquets
         """
 
-        print "Mise à jour des bases de paquets"
+        print ("Mise à jour des bases de paquets")
         objet.terminerPacman()
         objet.initialiserPacman()
 
@@ -71,7 +71,7 @@ class fonctionsPaquets:
         Termine l'instance de pacman-g2
         """
 
-        print "Fermeture de l'instance"
+        print ("Fermeture de l'instance")
         pacman_finally()
 
 
@@ -80,7 +80,7 @@ class fonctionsPaquets:
         Initialise la liste des groupes
         """
 
-        print "Initialisation des groupes"
+        #~ print ("Initialisation des groupes")
         baseDonnees = db_list[interface.listeSelectionGroupe.get_active()]
         ensembleGroupes = []
 
@@ -104,7 +104,7 @@ class fonctionsPaquets:
         Initialise les paquets correspondant au groupe sélectionné
         """
 
-        print "Initialisation des paquets"
+        #~ print ("Initialisation des paquets")
         ensemblePaquets = []
 
         pm_group = pacman_db_readgrp (db_list[interface.listeSelectionGroupe.get_active()], groupe)
@@ -155,7 +155,7 @@ class fonctionsPaquets:
             if not pacman_package_intalled(nomPaquet, versionPaquet):
                 listeDependances.append(nomPaquet)
 
-        print listeDependances
+        print (listeDependances)
 
 
     def obtenirMiseAJour (objet, liste):
@@ -163,7 +163,7 @@ class fonctionsPaquets:
         Récupère les paquets dont une mise à jour est disponible
         """
 
-        print fctLang.traduire("add_update_list")
+        print (fctLang.traduire("add_update_list"))
 
         if len(liste) > 0:
             liste = []
@@ -173,7 +173,7 @@ class fonctionsPaquets:
         for element in listePaquetsMiseAJour:
             liste.append(pointer_to_string(element))
 
-        print liste
+        #~ print (liste)
 
 
 def main (*args):

@@ -1,7 +1,14 @@
 
+    pyFPM 0001_r4 : 18 janvier 2013
+        - La mise a jour des depots est maintenant possible
+        - Correction de la fonction de recuperation des mises a jour
+
+
     pyFPM 0001_r3 : 15 janvier 2013
         - Reecriture de la fonction de remplissage des paquets
         - Ajout d'une fonction pour choisir son depot
+        - Revision du fichier de langue francaise
+        - Mise en place de la structure de mise a jour du systeme
 
 
     pyFPM 0001_r2 : 11 janvier 2013
