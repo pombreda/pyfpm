@@ -16,20 +16,20 @@ from lang import *
 
 fctLang = fonctionsLang()
 
-pacmang2.libpacman.printconsole=0
+pacmang2.libpacman.printconsole=1
 pacmang2.libpacman.debug=0
 
-# ----------------------------------------------------------------------
-#   fonctionsPaquets
-#       initialiserGroupes (objet)
-#       initialiserPacman (objet)
-#       initialiserPaquets (objet, groupe)
-#       miseajourBaseDonnees (objet)
-#       nettoyerCache (objet)
-#       terminerPacman (objet)
-#       verifierElements (objet, tableau, listeElements)
-#       verifierInstallationPaquet (objet, interface, nom, version)
-# ----------------------------------------------------------------------
+"""
+    fonctionsPaquets
+        initialiserGroupes (objet)
+        initialiserPacman (objet)
+        initialiserPaquets (objet, groupe)
+        miseajourBaseDonnees (objet)
+        nettoyerCache (objet)
+        terminerPacman (objet)
+        verifierElements (objet, tableau, listeElements)
+        verifierInstallationPaquet (objet, interface, nom, version)
+"""
 
 class fonctionsPaquets:
     def initialiserPacman (objet):
@@ -60,7 +60,10 @@ class fonctionsPaquets:
         """
 
         print "Mise à jour des bases de paquets"
-        pacman_update_db(1)
+        objet.terminerPacman()
+        objet.initialiserPacman()
+
+        pacman_update_db()
 
 
     def terminerPacman (objet):
@@ -77,6 +80,7 @@ class fonctionsPaquets:
         Initialise la liste des groupes
         """
 
+        print "Initialisation des groupes"
         baseDonnees = db_list[interface.listeSelectionGroupe.get_active()]
         ensembleGroupes = []
 
@@ -100,6 +104,7 @@ class fonctionsPaquets:
         Initialise les paquets correspondant au groupe sélectionné
         """
 
+        print "Initialisation des paquets"
         ensemblePaquets = []
 
         pm_group = pacman_db_readgrp (db_list[interface.listeSelectionGroupe.get_active()], groupe)
@@ -137,21 +142,21 @@ class fonctionsPaquets:
         """
         Récupère les dépendances non installés d'un paquet
         """
-        
+
         listeDependances = []
-        
+
         dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
-        
+
         for element in dependances:
             nomDependance = pointer_to_string(pacman_list_getdata(dependances))
             nomPaquet = pacman_pkg_get_info(nomDependance, PM_PKG_NAME)
-            versionPaquet = pacman_pkg_get_info(nomDependance, PM_PKG_VERSION)            
-            
+            versionPaquet = pacman_pkg_get_info(nomDependance, PM_PKG_VERSION)
+
             if not pacman_package_intalled(nomPaquet, versionPaquet):
                 listeDependances.append(nomPaquet)
-                
+
         print listeDependances
-                
+
 
     def obtenirMiseAJour (objet, liste):
         """
@@ -159,14 +164,17 @@ class fonctionsPaquets:
         """
 
         print fctLang.traduire("add_update_list")
-        
+
+        if len(liste) > 0:
+            liste = []
+
         listePaquetsMiseAJour = pacman_check_update()
-        listeTmp = []
-        
+
         for element in listePaquetsMiseAJour:
             liste.append(pointer_to_string(element))
 
-        #~ print liste
+        print liste
+
 
 def main (*args):
     """

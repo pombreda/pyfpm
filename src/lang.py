@@ -12,10 +12,10 @@ from config import *
 fctConfig = fonctionsConfiguration()
 
 
-# ----------------------------------------------------------------------
-#   fonctionsLang
-#       traduire (objet, mot)
-# ----------------------------------------------------------------------
+"""
+    fonctionsLang
+        traduire (objet, mot)
+"""
 
 class fonctionsLang:
     def traduire (objet, mot):

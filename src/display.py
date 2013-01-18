@@ -22,18 +22,18 @@ fctConfig = fonctionsConfiguration()
 fctLang = fonctionsLang()
 fctEvent = fonctionsEvenement()
 
-# ----------------------------------------------------------------------
-#   fonctionsInterface
-#       cocherPaquet (interface, cell_renderer, colonne, liste)
-#       effacerRecherche (interface, *args)
-#       effectuerRecherche (interface, *args)
-#       fenetreAPropos (objet, widget, *event)
-#       fenetreInformation (objet, titre, texte)
-#       fenetreInstallation (objet, widget, interface, *event)
-#       fenetrePrincipale (objet)
-#       selectionnerGroupe (interface, selection, modele)
-#       selectionnerPaquet (interface, selection, modele)
-# ----------------------------------------------------------------------
+"""
+    fonctionsInterface
+        cocherPaquet (interface, cell_renderer, colonne, liste)
+        effacerRecherche (interface, *args)
+        effectuerRecherche (interface, *args)
+        fenetreAPropos (objet, widget, *event)
+        fenetreInformation (objet, titre, texte)
+        fenetreInstallation (objet, widget, interface, *event)
+        fenetrePrincipale (objet)
+        selectionnerGroupe (interface, selection, modele)
+        selectionnerPaquet (interface, selection, modele)
+"""
 
 class fonctionsInterface:
     def __init__(interface):
@@ -65,7 +65,7 @@ class fonctionsInterface:
 
             interface.outils = gtk.Toolbar()
             interface.texteRecherche = gtk.Entry()
-    
+
             interface.zoneSelectionGroupe = gtk.Frame(fctLang.traduire("select_group"))
             interface.listeSelectionGroupe = gtk.combo_box_new_text()
 
@@ -205,14 +205,14 @@ class fonctionsInterface:
             interface.zoneSelectionGroupe.add(interface.listeSelectionGroupe)
             interface.zoneSelectionGroupe.set_border_width(4)
             interface.listeSelectionGroupe.connect('changed', interface.changementDepot, interface)
-            
+
             fctEvent.ajouterDepots(interface)
 
 
             # ------------------------------------------------------------------
             #       Colonnes des groupes
             # ------------------------------------------------------------------
-            
+
             interface.listeColonneGroupes.clear()
 
             interface.colonneGroupes.set_headers_visible(False)
@@ -329,7 +329,7 @@ class fonctionsInterface:
             interface.defilementInformations.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementInformations.add(interface.listeInformations)
             interface.defilementInformations.set_border_width(4)
-            
+
             #~ interface.zoneBoutonInformation.attach(interface.outilsPaquet, 0, 1, 0, 1, xoptions=gtk.FILL)
             interface.zoneBoutonInformation.attach(interface.defilementInformations, 1, 2, 0, 1)
 
@@ -341,7 +341,7 @@ class fonctionsInterface:
             # ------------------------------------------------------------------
             #       Intégration des widgets
             # ------------------------------------------------------------------
-            
+
             interface.zonePaquetsInformations.add1(interface.zonePaquets)
             interface.zonePaquetsInformations.add2(interface.zoneInformations)
 
@@ -353,6 +353,8 @@ class fonctionsInterface:
             interface.fenetre.add(interface.grille)
 
             interface.fenetre.show_all()
+
+            #~ interface.fenetreMiseAJour()
 
         else:
             try:
@@ -402,21 +404,21 @@ class fonctionsInterface:
             return True
 
         return True
-    
-    
+
+
     def ouvrirNavigateur (interface, cell_renderer, colonne, liste):
         """
         Ouvre le navigateur internet lorsque l'on clique sur le lien
         """
-        
+
         try:
             modele = liste.get_model()
-            
+
             if modele[colonne][0] == fctLang.traduire("url"):
                 print "test"
         except:
             pass
-        
+
 
     def cocherPaquet (interface, cell_renderer, colonne, liste):
         """
@@ -520,12 +522,12 @@ class fonctionsInterface:
 
         interface.barreStatus.push(0, fctLang.traduire("clear_changes_done"))
 
-    
+
     def changementDepot (interface, *args):
         """
         Permet de changer de dépôt
         """
-        
+
         interface.listeColonnePaquets.clear()
         interface.listeColonneGroupes.clear()
         fctEvent.ajouterGroupes(interface)
@@ -542,7 +544,7 @@ class fonctionsInterface:
         interface.celluleValeur.set_property("wrap-width", interface.fenetre.get_size()[0]/2)
         interface.colonnePaquetsNom.set_min_width(interface.fenetre.get_size()[0]/2)
         interface.colonnePaquets.set_size_request(0, interface.fenetre.get_size()[1]/2)
-    
+
 
 # ------------------------------------------------------------------------------------------------------------
 #
@@ -559,7 +561,7 @@ class fonctionsInterface:
         logo = gtk.gdk.pixbuf_new_from_file("./data/logo.png")
 
         about.set_program_name("pyFPM")
-        about.set_version("0001_r3")
+        about.set_version("0001")
         about.set_comments(fctLang.traduire("about_desc"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer\net/ou le modifier conformément aux dispositions de la Licence Publique\nGénérale GNU, telle que publiée par la Free Software Foundation.")
@@ -666,3 +668,36 @@ class fonctionsInterface:
         dependance.destroy()
 
 
+    def fenetreMiseAJour (interface):
+        """
+        Prévient qu'il y a des mises à jour et propose de les installer
+        """
+
+        miseajour = gtk.Dialog(fctLang.traduire("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+        miseajour.set_has_separator(True)
+        miseajour.set_default_response(gtk.RESPONSE_OK)
+
+        texteInfo = gtk.Label(fctLang.traduire("update_available"))
+
+        print interface.listeMiseAJour
+        texte = ""
+        for element in interface.listeMiseAJour:
+            texte += " " + str(element)
+
+        textePaquets = gtk.Label(texte)
+
+        grille = gtk.Table(2,2)
+        grille.set_border_width(4)
+
+        miseajour.vbox.pack_start(grille)
+
+        grille.attach(texteInfo, 0, 1, 0, 1)
+        grille.attach(textePaquets, 0, 1, 1, 2, yoptions=gtk.FILL)
+
+        miseajour.show_all()
+        choix = miseajour.run()
+
+        if choix == gtk.RESPONSE_OK:
+            miseajour.destroy()
+        else:
+            miseajour.destroy()
