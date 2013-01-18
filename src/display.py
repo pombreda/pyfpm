@@ -7,7 +7,7 @@
 #
 # ----------------------------------------------------------------------
 
-import sys, pango, cairo
+import sys, pango
 
 try:
     import pygtk, gtk
@@ -43,8 +43,6 @@ class fonctionsInterface:
             interface.listeSuppression = []
             interface.listeMiseAJour = []
             interface.paquetSelectionne = ""
-
-            interface.imagePaquetInstalle = gtk.image_new_from_icon_name('emblem-favorite', gtk.ICON_SIZE_BUTTON)
 
             interface.fenetre = gtk.Window()
             interface.grille = gtk.Table(1,4)
@@ -94,6 +92,9 @@ class fonctionsInterface:
             interface.defilementPaquets = gtk.ScrolledWindow()
 
             interface.zoneInformations = gtk.Frame(fctLang.traduire("informations"))
+            interface.zoneBoutonInformation = gtk.Table(2,1)
+            interface.outilsPaquet = gtk.Toolbar()
+            interface.imageInstallerSupprimer = gtk.Button(label=fctLang.traduire("informations"), stock=gtk.STOCK_ADD)
             interface.listeInformations = gtk.TreeView()
             interface.colonneLabel = gtk.TreeViewColumn()
             interface.celluleLabel = gtk.CellRendererText()
@@ -184,7 +185,7 @@ class fonctionsInterface:
             interface.outils.set_style(gtk.TOOLBAR_ICONS)
 
             interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreInstallation, interface, 0)
-            interface.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("refresh_pkg"), None, fctEvent.lancerMiseajourBaseDonnees, interface, 2)
+            interface.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("upgrade"), None, fctEvent.lancerMiseajourBaseDonnees, interface, 2)
             interface.outils.insert_space(3)
             interface.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
             interface.texteRecherche.connect("activate", interface.effectuerRecherche, gtk.RESPONSE_OK)
@@ -193,7 +194,8 @@ class fonctionsInterface:
             interface.outils.insert_widget(interface.texteRecherche, fctLang.traduire("write_search"), None, 4)
             interface.outils.insert_stock(gtk.STOCK_FIND, fctLang.traduire("search"), None, interface.effectuerRecherche, None, 5)
             interface.outils.insert_space(6)
-            interface.outils.insert_stock(gtk.STOCK_QUIT, fctLang.traduire("quit"), None, fctEvent.detruire, None, 7)
+            interface.outils.insert_stock(gtk.STOCK_PREFERENCES, fctLang.traduire("preferences"), None, None, None, 7)
+            interface.outils.insert_stock(gtk.STOCK_QUIT, fctLang.traduire("quit"), None, fctEvent.detruire, None, 8)
 
 
             # ------------------------------------------------------------------
@@ -234,6 +236,9 @@ class fonctionsInterface:
             interface.zoneGroupes.add(interface.defilementGroupes)
             interface.zoneGroupes.set_border_width(4)
             interface.zoneGroupes.set_resize_mode(gtk.RESIZE_PARENT)
+
+            interface.groupes.attach(interface.zoneSelectionGroupe, 0, 1, 0, 1, yoptions=gtk.FILL)
+            interface.groupes.attach(interface.zoneGroupes, 0, 1, 1, 2)
 
 
             # ------------------------------------------------------------------
@@ -287,23 +292,34 @@ class fonctionsInterface:
             interface.zonePaquets.add(interface.defilementPaquets)
             interface.zonePaquets.set_border_width(4)
 
+            interface.zoneColonnePaquets.attach(interface.groupes, 0, 1, 0, 1, xoptions=gtk.FILL)
+            interface.zoneColonnePaquets.attach(interface.zonePaquetsInformations, 1, 2, 0, 1)
+
 
             # ------------------------------------------------------------------
             #       Informations sur le paquet
             # ------------------------------------------------------------------
 
+            interface.outilsPaquet.set_orientation(gtk.ORIENTATION_VERTICAL)
+            interface.outilsPaquet.set_style(gtk.TOOLBAR_ICONS)
+
+            interface.imageInstallerSupprimer.set_use_stock(False)
+            interface.outilsPaquet.insert_widget(interface.imageInstallerSupprimer, None, None, 0)
+            #~ interface.outilsPaquet.insert_stock(gtk.STOCK_REMOVE, fctLang.traduire("refresh_pkg"), None, None, None, 1)
+            interface.outilsPaquet.insert_stock(gtk.STOCK_INFO, fctLang.traduire("quit"), None, None, None, 2)
+            interface.outilsPaquet.insert_stock(gtk.STOCK_EDIT, fctLang.traduire("quit"), None, None, None, 2)
+
             interface.listeInformations.set_headers_visible(False)
-            interface.listeInformations.set_hover_selection(True)
+            interface.listeInformations.set_hover_selection(False)
 
             interface.celluleLabel.set_property('weight', pango.WEIGHT_BOLD)
 
             interface.colonneLabel.pack_start(interface.celluleLabel, True)
             interface.colonneLabel.add_attribute(interface.celluleLabel, "text", 0)
             interface.colonneValeur.pack_start(interface.celluleValeur, True)
-            interface.colonneValeur.add_attribute(interface.celluleValeur, "text", 1)
+            interface.colonneValeur.add_attribute(interface.celluleValeur, "markup", 1)
 
             interface.celluleValeur.set_property('wrap-mode', pango.WRAP_WORD)
-            interface.celluleValeur.set_property('markup', 1)
             interface.celluleValeur.set_property('editable', True)
 
             interface.listeInformations.append_column(interface.colonneLabel)
@@ -313,8 +329,11 @@ class fonctionsInterface:
             interface.defilementInformations.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementInformations.add(interface.listeInformations)
             interface.defilementInformations.set_border_width(4)
+            
+            #~ interface.zoneBoutonInformation.attach(interface.outilsPaquet, 0, 1, 0, 1, xoptions=gtk.FILL)
+            interface.zoneBoutonInformation.attach(interface.defilementInformations, 1, 2, 0, 1)
 
-            interface.zoneInformations.add(interface.defilementInformations)
+            interface.zoneInformations.add(interface.zoneBoutonInformation)
             interface.zoneInformations.set_border_width(4)
             interface.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
 
@@ -322,15 +341,9 @@ class fonctionsInterface:
             # ------------------------------------------------------------------
             #       Intégration des widgets
             # ------------------------------------------------------------------
-
+            
             interface.zonePaquetsInformations.add1(interface.zonePaquets)
             interface.zonePaquetsInformations.add2(interface.zoneInformations)
-
-            interface.groupes.attach(interface.zoneSelectionGroupe, 0, 1, 0, 1, yoptions=gtk.FILL)
-            interface.groupes.attach(interface.zoneGroupes, 0, 1, 1, 2)
-
-            interface.zoneColonnePaquets.attach(interface.groupes, 0, 1, 0, 1, xoptions=gtk.FILL)
-            interface.zoneColonnePaquets.attach(interface.zonePaquetsInformations, 1, 2, 0, 1)
 
             interface.grille.attach(interface.menu, 0, 1, 0, 1, yoptions=gtk.FILL)
             interface.grille.attach(interface.outils, 0, 1, 1, 2, yoptions=gtk.FILL)
@@ -389,7 +402,21 @@ class fonctionsInterface:
             return True
 
         return True
-
+    
+    
+    def ouvrirNavigateur (interface, cell_renderer, colonne, liste):
+        """
+        Ouvre le navigateur internet lorsque l'on clique sur le lien
+        """
+        
+        try:
+            modele = liste.get_model()
+            
+            if modele[colonne][0] == fctLang.traduire("url"):
+                print "test"
+        except:
+            pass
+        
 
     def cocherPaquet (interface, cell_renderer, colonne, liste):
         """
@@ -515,7 +542,7 @@ class fonctionsInterface:
         interface.celluleValeur.set_property("wrap-width", interface.fenetre.get_size()[0]/2)
         interface.colonnePaquetsNom.set_min_width(interface.fenetre.get_size()[0]/2)
         interface.colonnePaquets.set_size_request(0, interface.fenetre.get_size()[1]/2)
-
+    
 
 # ------------------------------------------------------------------------------------------------------------
 #
@@ -532,7 +559,7 @@ class fonctionsInterface:
         logo = gtk.gdk.pixbuf_new_from_file("./data/logo.png")
 
         about.set_program_name("pyFPM")
-        about.set_version("0001_r2")
+        about.set_version("0001_r3")
         about.set_comments(fctLang.traduire("about_desc"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer\net/ou le modifier conformément aux dispositions de la Licence Publique\nGénérale GNU, telle que publiée par la Free Software Foundation.")

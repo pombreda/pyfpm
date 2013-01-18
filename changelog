@@ -1,9 +1,16 @@
 
-    pyFPM 0001_r2 : -- janvier 2013
+    pyFPM 0001_r3 : 15 janvier 2013
+        - Reecriture de la fonction de remplissage des paquets
+        - Ajout d'une fonction pour choisir son depot
+
+
+    pyFPM 0001_r2 : 11 janvier 2013
         - Nouveau logo
         - Nettoyage des fonctions
         - Amélioration de l'affichage des paquets
-        - 
+        - Ajout d'icones dans la liste des paquets
+
 
     pyFPM 0001_r1 : 07 janvier 2013
-        - Première version
+        - Restructuration du code en fichiers multiples
+        - Ajout de libpacman.py pour sauvegarde

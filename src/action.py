@@ -182,7 +182,7 @@ class fonctionsEvenement:
         #~ interface.contenuInformations.append(None, [fctLang.traduire("groups"), str(pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_GROUPS)))])
 
         if paquetInstalle <> None:
-            interface.contenuInformations.append(None, [fctLang.traduire("url"), "<b>" + pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL)) + "<b>"])
+            interface.contenuInformations.append(None, [fctLang.traduire("url"), "<span foreground='blue'><u>" + pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL)) + "</u></span>"])
             interface.contenuInformations.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
 
         dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
