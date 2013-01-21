@@ -131,8 +131,6 @@ class fonctionsInterface:
             #       Menu
             # ------------------------------------------------------------------
 
-            fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
-
             interface.fenetre.connect("destroy", gtk.main_quit)
             interface.fenetre.connect("check-resize", interface.redimensionnement)
 
@@ -143,7 +141,7 @@ class fonctionsInterface:
             interface.menu_action_update.connect("activate", fctEvent.lancerMiseajourBaseDonnees, interface)
 
             interface.menu_action_check.set_image(gtk.image_new_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU))
-            #~ interface.menu_action_update.connect("activate", fctPaquets.verifierMiseajour)
+            interface.menu_action_check.connect("activate", interface.fenetreMiseAJour)
 
             interface.menu_action_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
             interface.menu_action_quit.connect("activate", fctEvent.detruire)
@@ -352,9 +350,8 @@ class fonctionsInterface:
             interface.fenetre.add(interface.grille)
 
             interface.fenetre.show_all()
-
-            if len(interface.listeMiseAJour) > 0:
-                interface.fenetreMiseAJour()
+            
+            interface.fenetreMiseAJour()
 
         else:
             try:
@@ -504,6 +501,7 @@ class fonctionsInterface:
 
         interface.listeColonneGroupes.clear()
         interface.listeColonnePaquets.clear()
+        interface.contenuInformations.clear()
         interface.barreStatus.push(0, "")
 
 
@@ -632,7 +630,7 @@ class fonctionsInterface:
                 listeTmp = []
 
         if len(listeAjoutDependances) > 0:
-            objet.fenetreInformation("Dependances supplémentaires", "Des paquets vont être ajoutés à la liste")
+            objet.fenetreInformation("Dependances supplémentaires", str(len(listeAjoutDependances)) + " paquets vont être ajoutés à la liste")
             
         for element in listeAjoutDependances:
             interface.listeInstallation.append(element)
@@ -653,7 +651,7 @@ class fonctionsInterface:
             except:
                 pass
                 
-            fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+            fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
             zoneInstallation = gtk.TreeView()
             listeInstallation = gtk.TreeStore(str)
             colonneInstallation = gtk.TreeViewColumn()
@@ -666,6 +664,7 @@ class fonctionsInterface:
 
             zoneInstallation.set_headers_visible(False)
             zoneInstallation.set_hover_selection(True)
+            zoneInstallation.expand_all()
 
             colonneInstallation.pack_start(celluleInstallation, True)
             colonneInstallation.add_attribute(celluleInstallation, "text", 0)
@@ -697,43 +696,58 @@ class fonctionsInterface:
             fenetre.vbox.pack_start(defilementInstallation)
 
             fenetre.show_all()
-            fenetre.run()
+            choix = fenetre.run()
 
-            fenetre.destroy()
+            if choix == gtk.RESPONSE_APPLY:
+                fctEvent.lancerInstallationPaquets(interface)
+                fenetre.destroy()
+            else:
+                fenetre.destroy()
         else:
             interface.fenetreInformation(fctLang.traduire("apply_pkg"), fctLang.traduire("no_change"))
 
 
-    def fenetreMiseAJour (interface):
+    def fenetreMiseAJour (interface, *args):
         """
         Prévient qu'il y a des mises à jour et propose de les installer
         """
 
-        miseajour = gtk.Dialog(fctLang.traduire("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_OK, gtk.RESPONSE_OK))
-        miseajour.set_has_separator(True)
-        miseajour.set_default_response(gtk.RESPONSE_OK)
+        interface.fenetre.set_sensitive(False)
+        
+        fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
 
-        texteInfo = gtk.Label(fctLang.traduire("update_available"))
+        if len(interface.listeMiseAJour) > 0:
+            texte = ""
+            for element in interface.listeMiseAJour:
+                if not element in interface.listeInstallation:
+                    texte += "- " + str(element) + "\n"
+                    
+            if texte != "":
+                miseajour = gtk.Dialog(fctLang.traduire("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_ADD, gtk.RESPONSE_ACCEPT, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                miseajour.set_has_separator(True)
+                miseajour.set_default_response(gtk.RESPONSE_OK)
 
-        texte = ""
-        for element in interface.listeMiseAJour:
-            texte += "- " + str(element) + "\n"
+                texteInfo = gtk.Label(fctLang.traduire("update_available"))
 
-        textePaquets = gtk.Label(texte)
+                textePaquets = gtk.Label(texte)
 
-        grille = gtk.Table(2,2)
-        grille.set_border_width(4)
+                grille = gtk.Table(2,2)
+                grille.set_border_width(4)
 
-        miseajour.vbox.pack_start(grille)
+                miseajour.vbox.pack_start(grille)
 
-        grille.attach(texteInfo, 0, 1, 0, 1)
-        grille.attach(textePaquets, 0, 1, 1, 2, yoptions=gtk.FILL)
+                grille.attach(texteInfo, 0, 1, 0, 1)
+                grille.attach(textePaquets, 0, 1, 1, 2, yoptions=gtk.FILL)
 
-        miseajour.show_all()
-        choix = miseajour.run()
+                miseajour.show_all()
+                choix = miseajour.run()
 
-        if choix == gtk.RESPONSE_OK:
-            miseajour.destroy()
-        else:
-            miseajour.destroy()
-
+                if choix == gtk.RESPONSE_ACCEPT:
+                    for element in interface.listeMiseAJour:
+                        if not element in interface.listeInstallation:
+                            interface.listeInstallation.append(str(element))
+                    miseajour.destroy()
+                else:
+                    miseajour.destroy()
+                
+        interface.fenetre.set_sensitive(True)

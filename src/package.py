@@ -187,41 +187,66 @@ class fonctionsPaquets:
             liste.append(pointer_to_string(element))
 
 
+    def fpm_trans_conv(*args):
+        print ("fpm_trans_conv")
+        i = 1
+        for arg in args:
+            if i == 1:
+                event = arg
+                print_debug("event : " + str(event))
+            elif i == 2:
+                pkg=arg
+            elif i == 5:
+                INTP = ctypes.POINTER(ctypes.c_int)
+                response = ctypes.cast(arg, INTP)
+            else:
+                print ("not yet implemented")
+
+            i += 1
+
+        if event == PM_TRANS_CONV_LOCAL_UPTODATE:
+            if print_console_ask(pointer_to_string(pacman_pkg_getinfo(pkg, PM_PKG_NAME)) + " local version is up to date. Upgrade anyway? [Y/n]" ) == 1:
+                response[0] = 1
+        if event == PM_TRANS_CONV_LOCAL_NEWER:
+            if print_console_ask(pointer_to_string(pacman_pkg_getinfo(pkg, PM_PKG_NAME)) + " local version is newer. Upgrade anyway? [Y/n]" ) == 1:
+                response[0] = 1
+        if event == PM_TRANS_CONV_CORRUPTED_PKG:
+            if print_console_ask("Archive is corrupted. Do you want to delete it?") == 1:
+                    response[0] = 1
+            
+            
+    def print_console_ask(question):
+        print_console(question)
+        response = raw_input()
+        if response == "y":
+            return 1
+        return -1
+         
+            
     def installerPaquets (objet, listePaquets):
         """
         Installer les paquets mis en paramêtre
         """
         
-        for element in db_list:
+        for element in repo_list:
             pacman_set_option(PM_OPT_DLFNM, element)
             
         pm_trans = PM_TRANS_TYPE_SYNC
         flags = PM_TRANS_FLAG_NOCONFLICTS
-        
-        if pacman_trans_init(pm_trans, flags, None, None, None) == -1 :
-            print (fctLang.traduire("init_install_failed"))
-            pacman_print_error()
-            return -1
+            
+        #~ try:
+        pacman_trans_init(pm_trans, flags, None, pacman_trans_cb_conv(objet.fpm_trans_conv), None)
 
         for paquet in listePaquets:
-            if pacman_trans_addtarget(paquet) == -1 :
-                print (fctLang.traduire("install_cant_add"))
-                pacman_print_error()
-                return -1
+            pacman_trans_addtarget(paquet)
 
         data = PM_LIST()
-        if pacman_trans_prepare(data) == -1:
-            print (fctLang.traduire("trans_prepare_failed"))
-            pacman_print_error()
-            return -1
-
-        if pacman_trans_commit(data) == -1:
-            print (fctLang.traduire("trans_commit_failed"))
-            pacman_print_error()
-            return -1
-            
+        pacman_trans_prepare(data)
+        pacman_trans_commit(data)
+                
         pacman_trans_release()
-        return 1
+        #~ except:
+            #~ print ("Erreurs lors de l'initialisation de l'installation")
 
 
 def main (*args):
@@ -231,11 +256,13 @@ def main (*args):
     """
     fctPaquets = fonctionsPaquets()
 
-    for arg in sys.argv:
-        if arg=="cleancache":
-            fctPaquets.nettoyerCache()
-        elif arg=="updatedb":
-            fctPaquets.miseajourBaseDonnees()
+    if sys.argv[0] == "cleancache":
+        fctPaquets.nettoyerCache()
+    elif sys.argv[0] == "updatedb":
+        fctPaquets.miseajourBaseDonnees()
+    elif sys.argv[0] == "install":
+        print sys.argv[1]
+        fctPaquets.installerPaquets(sys.argv[1])
 
 if __name__ == "__main__":
     sys.exit(main())

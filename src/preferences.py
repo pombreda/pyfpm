@@ -94,7 +94,6 @@ class fonctionsPreferences:
         listeLangues.sort()
         
         for element in listeLangues:
-            print fctLang.nomLangue(element)
             liste.append_text(fctLang.nomLangue(element))
 
         fctLang.recupererNomLangue()

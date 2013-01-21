@@ -206,6 +206,67 @@ class fonctionsEvenement:
         interface.contenuInformations.append(None, [fctLang.traduire("depends"), texte])
 
 
+    def lancerNettoyerCache (objet, image, interface):
+        """
+        Lancer la commande de nettoyage du cache
+        """
+
+        interface.fenetre.set_sensitive(False)
+        
+        if objet.verifierUtilisateur() == 0:
+            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
+        else:
+            fctPaquets.nettoyerCache()
+            
+        interface.fenetre.set_sensitive(True)
+
+        interface.effacerInterface()
+        objet.ajouterGroupes(interface)
+        interface.barreStatus.push(0, fctLang.traduire("clean_cache_done"))
+
+
+    def lancerMiseajourBaseDonnees (objet, image, interface):
+        """
+        Lancer la commande de mise à jour des dépôts de paquets
+        """
+        
+        interface.fenetre.set_sensitive(False)
+
+        if objet.verifierUtilisateur() == 0:
+            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
+        else:
+            fctPaquets.miseajourBaseDonnees()
+
+        interface.effacerInterface()
+        objet.ajouterGroupes(interface)
+        interface.barreStatus.push(0, fctLang.traduire("update_db_done"))
+
+        fctPaquets.initialiserGroupes(interface)
+        fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
+        
+        if len(interface.listeMiseAJour) > 0:
+            interface.fenetreMiseAJour()
+                
+        interface.fenetre.set_sensitive(True)
+        
+        
+    def lancerInstallationPaquets (objet, interface):
+        """
+        Lancer la commande d'installation de paquets
+        """
+        
+        if objet.verifierUtilisateur() == 0:
+            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py install " + str(interface.listeInstallation))
+        else:
+            fctPaquets.installerPaquets(interface.listeInstallation)
+            
+        interface.effacerInterface()
+        objet.ajouterGroupes(interface)
+        
+        fctPaquets.initialiserGroupes(interface)
+        fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
+
+
     def verifierDonnee (objet, liste, donnee):
         """
         Vérifie si nom est dans liste
@@ -230,36 +291,4 @@ class fonctionsEvenement:
             return 0
 
         return 1
-
-
-    def lancerNettoyerCache (objet, image, interface):
-        """
-        Lancer la commande de nettoyage du cache
-        """
-
-        if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
-        else:
-            os.system("python ./src/package.py cleancache")
-
-        interface.effacerInterface()
-        objet.ajouterGroupes(interface)
-        interface.barreStatus.push(0, fctLang.traduire("clean_cache_done"))
-
-
-    def lancerMiseajourBaseDonnees (objet, image, interface):
-        """
-        Lancer la commande de mise à jour des dépôts de paquets
-        """
-
-        if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
-        else:
-            os.system("python ./src/package.py updatedb")
-
-        interface.effacerInterface()
-        objet.ajouterGroupes(interface)
-        interface.barreStatus.push(0, fctLang.traduire("update_db_done"))
-
-        fctPaquets.initialiserGroupes(interface)
-        fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
+        
