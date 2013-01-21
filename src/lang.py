@@ -33,3 +33,26 @@ class fonctionsLang:
                 return traduction.get("traduction", mot)
             except:
                 return mot
+                
+    
+    def nomLangue (objet, fichier):
+        """
+        Récupère le nom de la langue
+        """
+        
+        if fichier != "":
+            try:
+                traduction = SafeConfigParser()
+                traduction.read("lang/" + fichier + ".ini")
+
+                return traduction.get("information", "lang")
+            except:
+                return fichier
+        
+    
+    def recupererNomLangue (objet):
+        """
+        Récupère la liste des fichier de language dans ./lang
+        """
+        
+        os.system("ls ./lang/*.ini | awk 'BEGIN{FS=\".\"}{print $1}'")

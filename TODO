@@ -3,6 +3,7 @@ Affichage (display.py)
     FIXME
         - Le redimensionnement des panneaux dans les limites extérieurs de la fenêtre affiche des erreurs
         - Remise à zéro de l'interface lors d'une mise à jour de la base de données [DONE]
+        - Les paquets provenant de dépôts externe ne sont pas considéré dans les mises à jour
 
     TODO
         - Afficher une fenêtre avec barre de progrès lors de la recherche des dépendances

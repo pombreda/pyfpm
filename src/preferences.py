@@ -7,7 +7,7 @@
 #
 # ----------------------------------------------------------------------
 
-import sys, pango
+import sys, pango, os
 
 try:
     import pygtk, gtk
@@ -24,6 +24,7 @@ fctEvent = fonctionsEvenement()
 
 """
     fonctionsPreferences
+        fenetrePreferences (interface, widget)
 """
 
 class fonctionsPreferences:
@@ -35,17 +36,17 @@ class fonctionsPreferences:
 
         general = gtk.Label(fctLang.traduire("preferences_main"))
         grilleGeneral = gtk.Table(1,1)
-        zoneLangue = gtk.Frame(fctLang.traduire("lang"))
+        zoneLangue = gtk.Frame(fctLang.traduire("language"))
         generalLangue = gtk.Table(2,1)
-        generalLangueLabel = gtk.Label(fctLang.traduire("lang"))
-        generalLangueChoix = gtk.ComboBox()
+        generalLangueLabel = gtk.Label(fctLang.traduire("language"))
+        generalLangueChoix = gtk.combo_box_new_text()
 
         commande = gtk.Label(fctLang.traduire("preferences_command"))
         grilleCommande = gtk.Table(1,1)
         zoneCommande = gtk.Frame(fctLang.traduire("preferences_command"))
         generalCommande = gtk.Table(2,1)
         generalCommandeLabel = gtk.Label(fctLang.traduire("choose_su"))
-        generalCommandeChoix = gtk.ComboBox()
+        generalCommandeChoix = gtk.combo_box_new_text()
 
         divers = gtk.Label(fctLang.traduire("preferences_misc"))
         zoneDivers = gtk.Table(1,1)
@@ -64,6 +65,8 @@ class fonctionsPreferences:
         zoneLangue.set_border_width(4)
         grilleGeneral.attach(zoneLangue, 0, 1, 0, 1)
         onglets.append_page(grilleGeneral, general)
+        
+        interface.remplirLangue(generalLangueChoix)
 
         generalCommande.attach(generalCommandeLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
         generalCommande.attach(generalCommandeChoix, 1, 2, 0, 1, yoptions=gtk.FILL)
@@ -82,8 +85,18 @@ class fonctionsPreferences:
         fenetre.destroy()
 
 
-    def remplirLangue (interface, widget):
+    def remplirLangue (interface, liste):
         """
         Récupère les fichiers de langues disponible et en récupère le nom
         """
 
+        listeLangues = ['fr', 'en']
+        listeLangues.sort()
+        
+        for element in listeLangues:
+            print fctLang.nomLangue(element)
+            liste.append_text(fctLang.nomLangue(element))
+
+        fctLang.recupererNomLangue()
+        liste.set_active(listeLangues.index(fctLang.traduire(fctConfig.lireConfig("pyfpm", "lang"))))
+        

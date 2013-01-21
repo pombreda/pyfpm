@@ -186,7 +186,7 @@ class fonctionsInterface:
             interface.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
             interface.outils.set_style(gtk.TOOLBAR_ICONS)
 
-            interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreInstallation, interface, 0)
+            interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreVerifierDependances, interface, 0)
             interface.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("upgrade"), None, fctEvent.lancerMiseajourBaseDonnees, interface, 2)
             interface.outils.insert_space(3)
             interface.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
@@ -502,6 +502,7 @@ class fonctionsInterface:
         Efface l'ensemble de l'interface
         """
 
+        interface.listeColonneGroupes.clear()
         interface.listeColonnePaquets.clear()
         interface.barreStatus.push(0, "")
 
@@ -544,6 +545,21 @@ class fonctionsInterface:
         interface.celluleValeur.set_property("wrap-width", interface.fenetre.get_size()[0]/2)
         interface.colonnePaquetsNom.set_min_width(interface.fenetre.get_size()[0]/2)
         interface.colonnePaquets.set_size_request(0, interface.fenetre.get_size()[1]/2)
+        
+        
+    def relancerInterface (interface, *args):
+        """
+        Permet de relancer l'interface pour appliquer certains changements
+        """
+        
+        print "Relancement de l'interface"
+        
+        interface.effacerInterface()
+        fctPaquets.terminerPacman()
+        gtk.main_quit()
+        fctPaquets.initialiserPacman()
+        interface.fenetrePrincipale()
+        gtk.main()
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -587,12 +603,56 @@ class fonctionsInterface:
         information.destroy()
 
 
-    def fenetreInstallation (objet, widget, interface, *event):
+    def fenetreVerifierDependances (objet, widget, interface, *event):
+        """
+        Affiche une fenêtre qui indique si des dépendances doivent être installé en complément
+        """
+        
+        listeAjoutDependances = []
+        listeDependances = []
+        listePaquets = []
+        listeTmp = []
+
+        for element in interface.listeInstallation:
+            listePaquets.append(element)
+
+        while (True):
+            for element in listePaquets:
+                listeDependances = fctPaquets.recupererDependances(str(element))
+                
+                for paquet in listeDependances:
+                    if not paquet in listeAjoutDependances and not paquet in interface.listeInstallation:
+                        listeAjoutDependances.append(str(paquet))
+                        listeTmp.append(str(paquet))
+            
+            if len(listeTmp) == 0:
+                break
+            else:
+                listePaquets = listeTmp
+                listeTmp = []
+
+        if len(listeAjoutDependances) > 0:
+            objet.fenetreInformation("Dependances supplémentaires", "Des paquets vont être ajoutés à la liste")
+            
+        for element in listeAjoutDependances:
+            interface.listeInstallation.append(element)
+            
+        interface.listeInstallation.sort()
+        objet.fenetreInstallation(interface)
+
+
+    def fenetreInstallation (objet, interface, *event):
         """
         Affiche les modifications à effectuer sur les paquets
         """
 
-        if len(interface.listeInstallation) != 0 or len(interface.listeSuppression) != 0 or len(interface.listeMiseAJour) != 0:
+        if len(interface.listeInstallation) != 0: # or len(interface.listeSuppression) != 0 or len(interface.listeMiseAJour) != 0:
+            try:
+                interface.selectionGroupe = interface.colonneGroupes.get_selection()
+                interface.selectionnerGroupe(interface.selectionGroupe, interface.listeColonneGroupes)
+            except:
+                pass
+                
             fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
             zoneInstallation = gtk.TreeView()
             listeInstallation = gtk.TreeStore(str)
@@ -622,17 +682,17 @@ class fonctionsInterface:
                 for element in interface.listeInstallation:
                     listeInstallation.append(titre, [element])
 
-            if len(interface.listeSuppression) != 0:
-                titre = listeInstallation.append(None, [fctLang.traduire("remove_pkg")])
+            #~ if len(interface.listeSuppression) != 0:
+                #~ titre = listeInstallation.append(None, [fctLang.traduire("remove_pkg")])
 
-                for element in interface.listeSuppression:
-                    listeInstallation.append(titre, [element])
+                #~ for element in interface.listeSuppression:
+                    #~ listeInstallation.append(titre, [element])
 
-            if len(interface.listeMiseAJour) != 0:
-                titre = listeInstallation.append(None, [fctLang.traduire("update_pkg")])
+            #~ if len(interface.listeMiseAJour) != 0:
+                #~ titre = listeInstallation.append(None, [fctLang.traduire("update_pkg")])
 
-                for element in interface.listeMiseAJour:
-                    listeInstallation.append(titre, [element])
+                #~ for element in interface.listeMiseAJour:
+                    #~ listeInstallation.append(titre, [element])
 
             fenetre.vbox.pack_start(defilementInstallation)
 
@@ -654,8 +714,6 @@ class fonctionsInterface:
         miseajour.set_default_response(gtk.RESPONSE_OK)
 
         texteInfo = gtk.Label(fctLang.traduire("update_available"))
-
-        #~ print (interface.listeMiseAJour)
 
         texte = ""
         for element in interface.listeMiseAJour:

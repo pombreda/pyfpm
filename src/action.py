@@ -243,6 +243,7 @@ class fonctionsEvenement:
             os.system("python ./src/package.py cleancache")
 
         interface.effacerInterface()
+        objet.ajouterGroupes(interface)
         interface.barreStatus.push(0, fctLang.traduire("clean_cache_done"))
 
 
@@ -257,6 +258,7 @@ class fonctionsEvenement:
             os.system("python ./src/package.py updatedb")
 
         interface.effacerInterface()
+        objet.ajouterGroupes(interface)
         interface.barreStatus.push(0, fctLang.traduire("update_db_done"))
 
         fctPaquets.initialiserGroupes(interface)

@@ -80,7 +80,6 @@ class fonctionsPaquets:
         Initialise la liste des groupes
         """
 
-        #~ print ("Initialisation des groupes")
         baseDonnees = db_list[interface.listeSelectionGroupe.get_active()]
         ensembleGroupes = []
 
@@ -104,7 +103,6 @@ class fonctionsPaquets:
         Initialise les paquets correspondant au groupe sélectionné
         """
 
-        #~ print ("Initialisation des paquets")
         ensemblePaquets = []
 
         pm_group = pacman_db_readgrp (db_list[interface.listeSelectionGroupe.get_active()], groupe)
@@ -138,24 +136,39 @@ class fonctionsPaquets:
         return objetTrouve
 
 
-    def recupererDependances (objet, paquet, listePaquets):
+    def recupererDependances (objet, nomPaquet):
         """
         Récupère les dépendances non installés d'un paquet
         """
 
         listeDependances = []
 
+        if "frugalware" in repo_list:
+            index = repo_list.index("frugalware")
+        elif "frugalware-current" in repo_list:
+            index = repo_list.index("frugalware-current")
+            
+        paquet = pacman_db_readpkg(db_list[index], nomPaquet)
         dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
 
-        for element in dependances:
+        while dependances != 0:
             nomDependance = pointer_to_string(pacman_list_getdata(dependances))
-            nomPaquet = pacman_pkg_get_info(nomDependance, PM_PKG_NAME)
-            versionPaquet = pacman_pkg_get_info(nomDependance, PM_PKG_VERSION)
 
-            if not pacman_package_intalled(nomPaquet, versionPaquet):
-                listeDependances.append(nomPaquet)
+            nomDependance = nomDependance.split('=')
+            nomDependance = nomDependance[0].split('<')
+            nomDependance = nomDependance[0].split('>')
+            nomDependance = nomDependance[0]
+            
+            information = pacman_db_readpkg(db_list[index], nomDependance)
+            nomPaquetDependance = pacman_pkg_get_info(information, PM_PKG_NAME)
+            versionPaquetDependance = pacman_pkg_get_info(information, PM_PKG_VERSION)
+            
+            if not pacman_package_intalled(nomPaquetDependance, versionPaquetDependance):
+                listeDependances.append(nomPaquetDependance)
 
-        print (listeDependances)
+            dependances = pacman_list_next(dependances)
+
+        return listeDependances
 
 
     def obtenirMiseAJour (objet, liste):
@@ -173,7 +186,42 @@ class fonctionsPaquets:
         for element in listePaquetsMiseAJour:
             liste.append(pointer_to_string(element))
 
-        #~ print (liste)
+
+    def installerPaquets (objet, listePaquets):
+        """
+        Installer les paquets mis en paramêtre
+        """
+        
+        for element in db_list:
+            pacman_set_option(PM_OPT_DLFNM, element)
+            
+        pm_trans = PM_TRANS_TYPE_SYNC
+        flags = PM_TRANS_FLAG_NOCONFLICTS
+        
+        if pacman_trans_init(pm_trans, flags, None, None, None) == -1 :
+            print (fctLang.traduire("init_install_failed"))
+            pacman_print_error()
+            return -1
+
+        for paquet in listePaquets:
+            if pacman_trans_addtarget(paquet) == -1 :
+                print (fctLang.traduire("install_cant_add"))
+                pacman_print_error()
+                return -1
+
+        data = PM_LIST()
+        if pacman_trans_prepare(data) == -1:
+            print (fctLang.traduire("trans_prepare_failed"))
+            pacman_print_error()
+            return -1
+
+        if pacman_trans_commit(data) == -1:
+            print (fctLang.traduire("trans_commit_failed"))
+            pacman_print_error()
+            return -1
+            
+        pacman_trans_release()
+        return 1
 
 
 def main (*args):
