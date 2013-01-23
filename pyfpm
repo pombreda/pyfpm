@@ -1,1 +1,3 @@
-python ./src/main.py
+PYFPM=`pwd`
+
+python $PYFPM/src/main.py

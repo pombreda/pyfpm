@@ -36,9 +36,16 @@ fctInterface = fonctionsInterface()
 
 def main():
 
-    fctPaquets.initialiserPacman()
-    fctInterface.fenetrePrincipale()
-    gtk.main()
+    if sys.argv[0] == "-h" or sys.argv[0] == "--help":
+        print ("Utilisation : pyfpm <option>\n\t-h\taffiche l'aide\n\t-v\taffiche la version de pyfpm")
+    elif sys.argv[0] == "-v" or sys.argv[0] == "--version":
+        print ("pyFPM v.0001")
+    else:
+        fctPaquets.initialiserPacman()
+        #~ fctPaquets.test_infoPaquets("frugalware")
+        fctInterface.fenetrePrincipale()
+        gtk.main()
+        fctPaquets.terminerPacman()
 
 if __name__ == "__main__":
     sys.exit(main())

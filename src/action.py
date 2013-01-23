@@ -39,7 +39,7 @@ class fonctionsEvenement:
         Détruit l'interface et termine pyFPM
         """
 
-        fctPaquets.terminerPacman()
+        #~ fctPaquets.terminerPacman()
         gtk.main_quit()
 
 
@@ -162,6 +162,7 @@ class fonctionsEvenement:
             - version
             - description
             - dépendances
+            - groupes
             Si installé :
             - site du projet
             - SHA1SUMS
@@ -172,22 +173,48 @@ class fonctionsEvenement:
 
         interface.contenuInformations.clear()
 
+        # Récupère les informations depuis local si le paquet est installé
         if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
             paquetInstalle = pacman_db_readpkg (db_list[0], nomPaquet)
 
         interface.contenuInformations.append(None, [fctLang.traduire("name"), nomPaquet])
         interface.contenuInformations.append(None, [fctLang.traduire("version"), versionPaquet])
 
-        interface.contenuInformations.append(None, [fctLang.traduire("description"), pacman_pkg_get_info(paquet, PM_PKG_DESC)])
-        #~ interface.contenuInformations.append(None, [fctLang.traduire("groups"), str(pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_GROUPS)))])
+        interface.contenuInformations.append(None, [fctLang.traduire("description"), str(pacman_pkg_get_info(paquet, PM_PKG_DESC))])
 
-        if paquetInstalle <> None:
+        # Liste des groupes
+        texte = ""
+        groupes = pacman_pkg_getinfo(paquet, PM_PKG_GROUPS)
+
+        while groupes != 0:
+            nomGroupe = pointer_to_string(pacman_list_getdata(groupes))
+
+            texte += nomGroupe
+
+            groupes = pacman_list_next(groupes)
+            if groupes != 0:
+                texte += ", "
+                
+        if texte != "":
+            interface.contenuInformations.append(None, [fctLang.traduire("groups"), texte])
+
+        # Affiche des informations supplémentaires si le paquet est installé
+        if paquetInstalle != None:
             interface.contenuInformations.append(None, [fctLang.traduire("url"), "<span foreground='blue'><u>" + pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL)) + "</u></span>"])
+            interface.contenuInformations.append(None, [fctLang.traduire("install_date"), pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE)])
+            
             if nomPaquet in interface.listeMiseAJour:
                 interface.contenuInformations.append(None, ["SHA1SUMS", fctLang.traduire("package_update_available")])
             else:
                 interface.contenuInformations.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
+                
+            interface.contenuInformations.append(None, [fctLang.traduire("size"), str(format(float(long(pacman_pkg_getinfo(paquetInstalle, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+        else:
+            interface.contenuInformations.append(None, [fctLang.traduire("compress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuInformations.append(None, [fctLang.traduire("uncompress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_USIZE))/1024)/1024, '.2f')) + " MB"])
 
+        # Liste des dépendances
+        texte = ""
         dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
 
         while dependances != 0:
@@ -203,8 +230,49 @@ class fonctionsEvenement:
             if dependances != 0:
                 texte += ", "
 
-        interface.contenuInformations.append(None, [fctLang.traduire("depends"), texte])
+        if texte != "":
+            interface.contenuInformations.append(None, [fctLang.traduire("depends"), texte])
+            
+        # Liste des fichiers inclus dans le paquet
+        texte = ""
+        texteBuffer = interface.listeFichiers.get_buffer()
+        
+        if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
+            fichiers = pacman_pkg_getinfo(paquetInstalle, PM_PKG_FILES)
+            while fichiers != 0:
+                texte += "  /" + pointer_to_string(pacman_list_getdata(fichiers)) + "\n"
+                fichiers = pacman_list_next(fichiers)
+        else:
+            texte = " " + fctLang.traduire("no_info")
+                
+        texteBuffer.set_text(texte)
 
+        # Liste des fichiers inclus dans le paquet
+        texte = ""
+        texteBuffer = interface.listeJournal.get_buffer()
+        
+        if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
+            journal = PM_ROOT + PM_DBPATH + "/" + repo_list[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
+            if os.path.exists(journal) == True:
+                file = codecs.open(journal, "r", "utf-8")
+                for element in file:
+                    if element != "":
+                        texte += " " + element
+                file.close()
+            else:
+                texte = " " + fctLang.traduire("no_file_found")
+        else:
+            texte = " " + fctLang.traduire("no_info")
+                
+        texteBuffer.set_text(texte)
+        
+        chemin = "/usr/share/icons/Frugalware/apps/16/" + nomPaquet + ".png"
+        if os.path.exists(chemin) == True:
+            image = gtk.gdk.pixbuf_new_from_file(chemin)
+        else:
+            image = None
+        interface.iconeInformations.set_from_pixbuf(image)
+        
 
     def lancerNettoyerCache (objet, image, interface):
         """
@@ -214,7 +282,7 @@ class fonctionsEvenement:
         interface.fenetre.set_sensitive(False)
         
         if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
+            os.system(fctConfig.lireConfig("admin", "command") + " python src/package.py cleancache")
         else:
             fctPaquets.nettoyerCache()
             
@@ -233,7 +301,8 @@ class fonctionsEvenement:
         interface.fenetre.set_sensitive(False)
 
         if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
+            #~ os.system("pwd")
+            os.system(fctConfig.lireConfig("admin", "command") + " python src/package.py updatedb")
         else:
             fctPaquets.miseajourBaseDonnees()
 
@@ -256,7 +325,7 @@ class fonctionsEvenement:
         """
         
         if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py install " + str(interface.listeInstallation))
+            os.system(fctConfig.lireConfig("admin", "command") + " python src/package.py install " + str(interface.listeInstallation))
         else:
             fctPaquets.installerPaquets(interface.listeInstallation)
             

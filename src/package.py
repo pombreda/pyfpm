@@ -7,7 +7,7 @@
 #
 # ----------------------------------------------------------------------
 
-import sys
+import sys, string
 
 import pacmang2.libpacman
 from pacmang2.libpacman import *
@@ -16,7 +16,7 @@ from lang import *
 
 fctLang = fonctionsLang()
 
-pacmang2.libpacman.printconsole=1
+pacmang2.libpacman.printconsole=0
 pacmang2.libpacman.debug=0
 
 """
@@ -37,11 +37,11 @@ class fonctionsPaquets:
         Initialise pacman-g2 pour permettre d'être utilisé
         """
 
-        print ("Initialisation de pacman")
+        print fctLang.traduire("init_pacman")
         pacman_init()
-        print ("Initialisation de la base de données")
+        print fctLang.traduire("init_db")
         pacman_init_database()
-        print ("Mise en place de la base de données")
+        print fctLang.traduire("register_db")
         pacman_register_all_database()
 
 
@@ -50,7 +50,7 @@ class fonctionsPaquets:
         Nettoye le cache de pacman-g2
         """
 
-        print ("Nettoyage du cache")
+        print fctLang.traduire("clean_cache")
         pacman_sync_cleancache()
 
 
@@ -59,7 +59,7 @@ class fonctionsPaquets:
         Met à jour les dépôts de paquets
         """
 
-        print ("Mise à jour des bases de paquets")
+        print fctLang.traduire("update_db")
         objet.terminerPacman()
         objet.initialiserPacman()
 
@@ -71,7 +71,7 @@ class fonctionsPaquets:
         Termine l'instance de pacman-g2
         """
 
-        print ("Fermeture de l'instance")
+        print fctLang.traduire("close_pacman")
         pacman_finally()
 
 
@@ -248,6 +248,37 @@ class fonctionsPaquets:
         #~ except:
             #~ print ("Erreurs lors de l'initialisation de l'installation")
 
+
+        def changerDateFr (onjet, date):
+            """
+            Adapte la date pour les pays francophone
+            """
+            
+            # FORMAT : Jour Mois N° HH:MM:SS Année -> Jour N° Mois Année HH:MM:SS
+            string.split(date, " ")
+            
+            nouvelleDate = date[0] + " " + date[2] + " " + date[1] + " " + date[4] + " " + date[3]
+            return nouvelleDate
+            
+
+    def test_infoPaquets (objet, nomPaquet):
+        information = pacman_db_readpkg(db_list[0], nomPaquet)
+        print "Nom : " +  pacman_pkg_get_info(information, PM_PKG_NAME)
+        print "Version : " +  pacman_pkg_get_info(information, PM_PKG_VERSION)
+        print "Description : " +  pacman_pkg_get_info(information, PM_PKG_DESC)
+        
+        texte = ""
+        index = pacman_pkg_getinfo(information, PM_PKG_GROUPS)
+        while index != 0:
+            texte += pointer_to_string(pacman_list_getdata(index))
+            index = pacman_list_next(index)
+        print "Groupes : " +  texte
+        
+        print "Url : " + pointer_to_string(pacman_pkg_getinfo(information, PM_PKG_URL))
+        
+        taille = format(float(long(pacman_pkg_getinfo(information, PM_PKG_SIZE))/1024)/1024, '.2f')
+        print "Test : " + str(taille) + " MB"
+        
 
 def main (*args):
     """

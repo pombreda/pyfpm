@@ -46,9 +46,21 @@ class fonctionsInterface:
             interface.listeMiseAJour = []
             interface.paquetSelectionne = ""
 
+            # ------------------------------------------------------------------
+            #       Fenetre
+            # ------------------------------------------------------------------
+
             interface.fenetre = gtk.Window()
             interface.grille = gtk.Table(1,4)
             interface.groupes = gtk.Table(1,2)
+            interface.zoneColonnePaquets = gtk.Table(2,1)
+            interface.zonePaquetsInformations = gtk.VPaned()
+
+            interface.barreStatus = gtk.Statusbar()
+
+            # ------------------------------------------------------------------
+            #       Menu
+            # ------------------------------------------------------------------
 
             interface.menu = gtk.MenuBar()
             interface.menu_action = gtk.MenuItem(label=fctLang.traduire("action"))
@@ -65,11 +77,23 @@ class fonctionsInterface:
             interface.menu_help_list = gtk.Menu()
             interface.menu_help_about = gtk.ImageMenuItem(fctLang.traduire("about"))
 
+            # ------------------------------------------------------------------
+            #       Barre d'outils
+            # ------------------------------------------------------------------
+
             interface.outils = gtk.Toolbar()
             interface.texteRecherche = gtk.Entry()
 
+            # ------------------------------------------------------------------
+            #       Liste des groupes
+            # ------------------------------------------------------------------
+
             interface.zoneSelectionGroupe = gtk.Frame(fctLang.traduire("select_group"))
             interface.listeSelectionGroupe = gtk.combo_box_new_text()
+
+            # ------------------------------------------------------------------
+            #       Colonnes des groupes
+            # ------------------------------------------------------------------
 
             interface.zoneGroupes = gtk.Frame(fctLang.traduire("list_groups"))
             interface.listeColonneGroupes = gtk.ListStore(str)
@@ -77,6 +101,10 @@ class fonctionsInterface:
             interface.colonneGroupesNom = gtk.TreeViewColumn(fctLang.traduire("groups"))
             interface.celluleGroupesNom = gtk.CellRendererText()
             interface.defilementGroupes = gtk.ScrolledWindow()
+
+            # ------------------------------------------------------------------
+            #       Colonnes des paquets
+            # ------------------------------------------------------------------
 
             interface.zonePaquets = gtk.Frame(fctLang.traduire("packages_list"))
             interface.listeColonnePaquets = gtk.ListStore(int, str, str, str, str)
@@ -93,10 +121,14 @@ class fonctionsInterface:
             interface.cellulePaquetsVersionDisponible = gtk.CellRendererText()
             interface.defilementPaquets = gtk.ScrolledWindow()
 
-            interface.zoneInformations = gtk.Frame(fctLang.traduire("informations"))
-            interface.zoneBoutonInformation = gtk.Table(2,1)
-            interface.outilsPaquet = gtk.Toolbar()
-            interface.imageInstallerSupprimer = gtk.Button(label=fctLang.traduire("informations"), stock=gtk.STOCK_ADD)
+            # ------------------------------------------------------------------
+            #       Informations sur le paquet
+            # ------------------------------------------------------------------
+            
+            interface.zoneInformations = gtk.Notebook()
+            interface.labelInformations = gtk.Label(fctLang.traduire("informations"))
+            interface.labelFichiers = gtk.Label(fctLang.traduire("files"))
+            interface.labelJournal = gtk.Label(fctLang.traduire("changelog"))
             interface.listeInformations = gtk.TreeView()
             interface.colonneLabel = gtk.TreeViewColumn()
             interface.celluleLabel = gtk.CellRendererText()
@@ -104,11 +136,13 @@ class fonctionsInterface:
             interface.celluleValeur = gtk.CellRendererText()
             interface.contenuInformations = gtk.TreeStore(str,str)
             interface.defilementInformations = gtk.ScrolledWindow()
+            interface.listeFichiers = gtk.TextView()
+            interface.defilementFichiers = gtk.ScrolledWindow()
+            interface.listeJournal = gtk.TextView()
+            interface.defilementJournal = gtk.ScrolledWindow()
+            interface.iconeLabel = gtk.Label("Test")
+            interface.iconeInformations = gtk.Image()
 
-            interface.barreStatus = gtk.Statusbar()
-
-            interface.zoneColonnePaquets = gtk.Table(2,1)
-            interface.zonePaquetsInformations = gtk.VPaned()
 
 
     def fenetrePrincipale (interface):
@@ -176,7 +210,6 @@ class fonctionsInterface:
 
             interface.menu_help.set_submenu(interface.menu_help_list)
 
-
             # ------------------------------------------------------------------
             #       Barre d'outils
             # ------------------------------------------------------------------
@@ -197,7 +230,6 @@ class fonctionsInterface:
             interface.outils.insert_stock(gtk.STOCK_PREFERENCES, fctLang.traduire("preferences"), None, fctPrefs.fenetrePreferences, None, 7)
             interface.outils.insert_stock(gtk.STOCK_QUIT, fctLang.traduire("quit"), None, fctEvent.detruire, None, 8)
 
-
             # ------------------------------------------------------------------
             #       Liste des groupes
             # ------------------------------------------------------------------
@@ -207,7 +239,6 @@ class fonctionsInterface:
             interface.listeSelectionGroupe.connect('changed', interface.changementDepot, interface)
 
             fctEvent.ajouterDepots(interface)
-
 
             # ------------------------------------------------------------------
             #       Colonnes des groupes
@@ -239,7 +270,6 @@ class fonctionsInterface:
 
             interface.groupes.attach(interface.zoneSelectionGroupe, 0, 1, 0, 1, yoptions=gtk.FILL)
             interface.groupes.attach(interface.zoneGroupes, 0, 1, 1, 2)
-
 
             # ------------------------------------------------------------------
             #       Colonnes des paquets
@@ -292,19 +322,9 @@ class fonctionsInterface:
             interface.zoneColonnePaquets.attach(interface.groupes, 0, 1, 0, 1, xoptions=gtk.FILL)
             interface.zoneColonnePaquets.attach(interface.zonePaquetsInformations, 1, 2, 0, 1)
 
-
             # ------------------------------------------------------------------
             #       Informations sur le paquet
             # ------------------------------------------------------------------
-
-            interface.outilsPaquet.set_orientation(gtk.ORIENTATION_VERTICAL)
-            interface.outilsPaquet.set_style(gtk.TOOLBAR_ICONS)
-
-            interface.imageInstallerSupprimer.set_use_stock(False)
-            interface.outilsPaquet.insert_widget(interface.imageInstallerSupprimer, None, None, 0)
-            #~ interface.outilsPaquet.insert_stock(gtk.STOCK_REMOVE, fctLang.traduire("refresh_pkg"), None, None, None, 1)
-            interface.outilsPaquet.insert_stock(gtk.STOCK_INFO, fctLang.traduire("quit"), None, None, None, 2)
-            interface.outilsPaquet.insert_stock(gtk.STOCK_EDIT, fctLang.traduire("quit"), None, None, None, 2)
 
             interface.listeInformations.set_headers_visible(False)
             interface.listeInformations.set_hover_selection(False)
@@ -326,14 +346,28 @@ class fonctionsInterface:
             interface.defilementInformations.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementInformations.add(interface.listeInformations)
             interface.defilementInformations.set_border_width(4)
+            
+            interface.listeFichiers.set_editable(False)
+            interface.listeFichiers.set_cursor_visible(False)
+            
+            interface.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+            interface.defilementFichiers.add(interface.listeFichiers)
+            interface.defilementFichiers.set_border_width(4)
+            
+            interface.listeJournal.set_editable(False)
+            interface.listeJournal.set_cursor_visible(False)
+            
+            interface.defilementJournal.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+            interface.defilementJournal.add(interface.listeJournal)
+            interface.defilementJournal.set_border_width(4)
 
-            #~ interface.zoneBoutonInformation.attach(interface.outilsPaquet, 0, 1, 0, 1, xoptions=gtk.FILL)
-            interface.zoneBoutonInformation.attach(interface.defilementInformations, 1, 2, 0, 1)
-
-            interface.zoneInformations.add(interface.zoneBoutonInformation)
+            interface.zoneInformations.set_tab_pos(gtk.POS_LEFT)
+            interface.zoneInformations.append_page(interface.defilementInformations, interface.labelInformations)
+            interface.zoneInformations.append_page(interface.defilementFichiers, interface.labelFichiers)
+            interface.zoneInformations.append_page(interface.defilementJournal, interface.labelJournal)
+            interface.zoneInformations.append_page(interface.iconeInformations, interface.iconeLabel)
             interface.zoneInformations.set_border_width(4)
             interface.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
-
 
             # ------------------------------------------------------------------
             #       Intégration des widgets

@@ -30,7 +30,11 @@ class fonctionsLang:
                 traduction = SafeConfigParser()
                 traduction.read("lang/" + langue + ".ini")
 
-                return traduction.get("traduction", mot)
+                motTrouve = traduction.get("traduction", mot)
+                if motTrouve != "":
+                    return motTrouve
+                else:
+                    return mot
             except:
                 return mot
                 

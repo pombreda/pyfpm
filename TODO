@@ -4,11 +4,13 @@ Affichage (display.py)
         - Le redimensionnement des panneaux dans les limites extérieurs de la fenêtre affiche des erreurs
         - Remise à zéro de l'interface lors d'une mise à jour de la base de données [DONE]
         - Les paquets provenant de dépôts externe ne sont pas considéré dans les mises à jour
+        - Les & dans les descriptions empèche celle-ci de s'afficher
 
     TODO
         - Afficher une fenêtre avec barre de progrès lors de la recherche des dépendances
         - Améliorer le nom des groupes affichés (merci Munto :p)
         - Faire une fenêtre de progression pour la mise à jour des bases de données
+        - Bouton sélectionner tout le groupe/recherche
 
 
 Evénements (action.py)

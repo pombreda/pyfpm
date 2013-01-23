@@ -35,13 +35,17 @@ class fonctionsPreferences:
         onglets = gtk.Notebook()
 
         general = gtk.Label(fctLang.traduire("preferences_main"))
-        grilleGeneral = gtk.Table(1,1)
-        zoneLangue = gtk.Frame(fctLang.traduire("language"))
+        grilleGeneral = gtk.Table(1,2)
+        zoneGeneralLangue = gtk.Frame(fctLang.traduire("preferences_main"))
         generalLangue = gtk.Table(2,1)
         generalLangueLabel = gtk.Label(fctLang.traduire("language"))
         generalLangueChoix = gtk.combo_box_new_text()
+        zoneGeneralDivers = gtk.Frame(fctLang.traduire("misc"))
+        grilleGeneralCocher = gtk.Table(1,2)
+        miseajourDemarrage = gtk.CheckButton(fctLang.traduire("start_update"))
+        sauvegardeFenetre = gtk.CheckButton(fctLang.traduire("save_window"))
 
-        commande = gtk.Label(fctLang.traduire("preferences_command"))
+        commande = gtk.Label(fctLang.traduire("pacman"))
         grilleCommande = gtk.Table(1,1)
         zoneCommande = gtk.Frame(fctLang.traduire("preferences_command"))
         generalCommande = gtk.Table(2,1)
@@ -61,9 +65,14 @@ class fonctionsPreferences:
 
         generalLangue.attach(generalLangueLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
         generalLangue.attach(generalLangueChoix, 1, 2, 0, 1, yoptions=gtk.FILL)
-        zoneLangue.add(generalLangue)
-        zoneLangue.set_border_width(4)
-        grilleGeneral.attach(zoneLangue, 0, 1, 0, 1)
+        zoneGeneralLangue.add(generalLangue)
+        zoneGeneralLangue.set_border_width(4)
+        grilleGeneralCocher.attach(miseajourDemarrage, 0, 1, 0, 1)
+        grilleGeneralCocher.attach(sauvegardeFenetre, 0, 1, 1, 2)
+        zoneGeneralDivers.add(grilleGeneralCocher)
+        zoneGeneralDivers.set_border_width(4)
+        grilleGeneral.attach(zoneGeneralLangue, 0, 1, 0, 1)
+        grilleGeneral.attach(zoneGeneralDivers, 0, 1, 1, 2, yoptions=gtk.FILL)
         onglets.append_page(grilleGeneral, general)
         
         interface.remplirLangue(generalLangueChoix)
@@ -74,6 +83,8 @@ class fonctionsPreferences:
         zoneCommande.set_border_width(4)
         grilleCommande.attach(zoneCommande, 0, 1, 0, 1)
         onglets.append_page(grilleCommande, commande)
+
+        interface.remplirOutils(generalCommandeChoix)
 
         onglets.append_page(zoneDivers, divers)
 
@@ -96,6 +107,23 @@ class fonctionsPreferences:
         for element in listeLangues:
             liste.append_text(fctLang.nomLangue(element))
 
-        fctLang.recupererNomLangue()
         liste.set_active(listeLangues.index(fctLang.traduire(fctConfig.lireConfig("pyfpm", "lang"))))
+        
+        
+    def remplirOutils (interface, liste):
+        """
+        Récupère les outils de connexion en mode administrateur
+        """
+        
+        # Applications les plus connus
+        listeOutils = ['gksu', 'kdsu']
+        if not fctConfig.lireConfig("admin", "command") in listeOutils:
+            listeOutils.append(fctConfig.lireConfig("admin", "command"))
+        listeOutils.sort()
+
+        for element in listeOutils:
+            if os.path.exists("/usr/bin/" + element):
+                liste.append_text(element)
+                
+        liste.set_active(listeOutils.index(fctConfig.lireConfig("admin", "command")))
         
