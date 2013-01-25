@@ -7,7 +7,12 @@
 #
 # ----------------------------------------------------------------------
 
-import sys, string
+import sys, string, time
+
+try:
+    import pygtk, gtk
+except ImportError:
+    sys.exit("pyGTK introuvable")
 
 import pacmang2.libpacman
 from pacmang2.libpacman import *
@@ -16,20 +21,88 @@ from lang import *
 
 fctLang = fonctionsLang()
 
-pacmang2.libpacman.printconsole=0
+pacmang2.libpacman.printconsole=1
 pacmang2.libpacman.debug=0
 
-"""
-    fonctionsPaquets
-        initialiserGroupes (objet)
-        initialiserPacman (objet)
-        initialiserPaquets (objet, groupe)
-        miseajourBaseDonnees (objet)
-        nettoyerCache (objet)
-        terminerPacman (objet)
-        verifierElements (objet, tableau, listeElements)
-        verifierInstallationPaquet (objet, interface, nom, version)
-"""
+modePacman = ""
+
+class fonctionsInstallation:
+    def __init__ (interface):
+        
+        interface.fenetre = gtk.Window()
+        interface.grille = gtk.Table(1,4)
+        
+        interface.barreProgres = gtk.ProgressBar()        
+        
+    def fenetrePacmang2 (interface):
+       
+        interface.fenetre.set_title(fctLang.traduire("pacman_title") + " " + modePacman)
+        interface.fenetre.set_size_request(360, 80)
+        interface.fenetre.set_resizable(False)
+        interface.fenetre.set_position(gtk.WIN_POS_CENTER)
+        
+        interface.fenetre.connect("destroy", gtk.main_quit)
+        
+        interface.grille.attach(interface.barreProgres, 0, 1, 0, 1, xoptions=gtk.EXPAND, yoptions=gtk.EXPAND)
+
+        interface.fenetre.add(interface.grille)
+
+        interface.fenetre.show_all()
+        interface.lancerCommande()
+    
+    
+    def lancerCommande (interface):
+        """
+        Permet de lancer la commande adéquate
+        """
+        
+        fctPaquets = fonctionsPaquets()
+        
+        if modePacman == "cleancache":
+            fctPaquets.nettoyerCache()
+        elif modePacman == "updatedb":
+            fctPaquets.miseajourBaseDonnees()
+            
+    
+    def changerLabel (interface, texte):
+        """
+        Changer le contenu du label
+        """
+        
+        interface.barreProgres.set_text(texte)
+        interface.rafraichirFenetre()
+
+    
+    def changerBarreProgres (interface, valeur):
+        """
+        Mettre à jour la barre de progres
+        """
+        
+        interface.barreProgres.set_fraction(valeur)
+        interface.rafraichirFenetre()
+        
+        
+    def fermerFenetre (interface):
+        """
+        Ferme la fenêtre
+        """
+        
+        gtk.main_quit()
+
+
+    def rafraichirFenetre (interface):
+        """
+        Rafraichit l'interface quand des changements ont lieux
+        """
+        
+        try :
+            while gtk.events_pending():
+                gtk.main_iteration_do(False)
+                
+            time.sleep(0.1)
+        except:
+            pass
+
 
 class fonctionsPaquets:
     def initialiserPacman (objet):
@@ -62,9 +135,8 @@ class fonctionsPaquets:
         print fctLang.traduire("update_db")
         objet.terminerPacman()
         objet.initialiserPacman()
-
         pacman_update_db()
-
+        
 
     def terminerPacman (objet):
         """
@@ -72,6 +144,7 @@ class fonctionsPaquets:
         """
 
         print fctLang.traduire("close_pacman")
+        pacman_trans_release()
         pacman_finally()
 
 
@@ -183,8 +256,9 @@ class fonctionsPaquets:
 
         listePaquetsMiseAJour = pacman_check_update()
 
-        for element in listePaquetsMiseAJour:
-            liste.append(pointer_to_string(element))
+        if listePaquetsMiseAJour > 0:
+            for element in listePaquetsMiseAJour:
+                liste.append(pointer_to_string(element))
 
 
     def fpm_trans_conv(*args):
@@ -249,35 +323,16 @@ class fonctionsPaquets:
             #~ print ("Erreurs lors de l'initialisation de l'installation")
 
 
-        def changerDateFr (onjet, date):
-            """
-            Adapte la date pour les pays francophone
-            """
-            
-            # FORMAT : Jour Mois N° HH:MM:SS Année -> Jour N° Mois Année HH:MM:SS
-            string.split(date, " ")
-            
-            nouvelleDate = date[0] + " " + date[2] + " " + date[1] + " " + date[4] + " " + date[3]
-            return nouvelleDate
-            
-
-    def test_infoPaquets (objet, nomPaquet):
-        information = pacman_db_readpkg(db_list[0], nomPaquet)
-        print "Nom : " +  pacman_pkg_get_info(information, PM_PKG_NAME)
-        print "Version : " +  pacman_pkg_get_info(information, PM_PKG_VERSION)
-        print "Description : " +  pacman_pkg_get_info(information, PM_PKG_DESC)
+    def changerDateFr (objet, date):
+        """
+        Adapte la date pour les pays francophone
+        """
         
-        texte = ""
-        index = pacman_pkg_getinfo(information, PM_PKG_GROUPS)
-        while index != 0:
-            texte += pointer_to_string(pacman_list_getdata(index))
-            index = pacman_list_next(index)
-        print "Groupes : " +  texte
+        # FORMAT : Jour Mois N° HH:MM:SS Année -> Jour N° Mois Année HH:MM:SS
+        date = string.split(date, " ")
         
-        print "Url : " + pointer_to_string(pacman_pkg_getinfo(information, PM_PKG_URL))
-        
-        taille = format(float(long(pacman_pkg_getinfo(information, PM_PKG_SIZE))/1024)/1024, '.2f')
-        print "Test : " + str(taille) + " MB"
+        nouvelleDate = date[0] + " " + date[2] + " " + date[1] + " " + date[4] + " " + date[3]
+        return nouvelleDate
         
 
 def main (*args):
@@ -285,15 +340,20 @@ def main (*args):
     Partie nécessaire pour l'execution de certaines commandes avec les
     droits super-utilisateur
     """
+    
     fctPaquets = fonctionsPaquets()
+    #~ fctInstall = fonctionsInstallation()
+    
+    global modePacman
+    for argument in sys.argv:
+        if argument == "cleancache":
+            modePacman = "cleancache"
+            fctPaquets.nettoyerCache()
+        elif argument == "updatedb":
+            modePacman = "updatedb"
+            fctPaquets.miseajourBaseDonnees()
 
-    if sys.argv[0] == "cleancache":
-        fctPaquets.nettoyerCache()
-    elif sys.argv[0] == "updatedb":
-        fctPaquets.miseajourBaseDonnees()
-    elif sys.argv[0] == "install":
-        print sys.argv[1]
-        fctPaquets.installerPaquets(sys.argv[1])
+    #~ fctInstall.lancerCommande()
 
 if __name__ == "__main__":
     sys.exit(main())

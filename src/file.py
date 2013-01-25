@@ -10,12 +10,6 @@
 import os, sys, codecs
 
 
-# ----------------------------------------------------------------------
-# fonctionsFichier
-#       fichier (objet, chemin)
-#       utf8 (objet, fichier)
-# ----------------------------------------------------------------------
-
 class fonctionsFichier:
     """
     Vérifie l'existance d'un fichier

@@ -19,19 +19,9 @@ from package import *
 from lang import *
 
 fctPaquets = fonctionsPaquets()
+fctInstall = fonctionsInstallation()
 fctLang = fonctionsLang()
 
-
-"""
-    fonctionsEvenement
-        ajouterGroupes (objet, liste)
-        remplirPaquets (objet, interface, paquets)
-        verifierDonnee (objet, liste, nom)
-        detruire (objet, fenetre)
-        lancerMiseajourBaseDonnees (objet, interface)
-        lancerNettoyerCache (objet, interface)
-        obtenirGroupe (objet, interface, groupe)
-"""
 
 class fonctionsEvenement:
     def detruire (objet, fenetre):
@@ -39,7 +29,6 @@ class fonctionsEvenement:
         Détruit l'interface et termine pyFPM
         """
 
-        #~ fctPaquets.terminerPacman()
         gtk.main_quit()
 
 
@@ -71,11 +60,17 @@ class fonctionsEvenement:
         Ajouter les groupes dans l'interface
         """
 
+        listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
+
         interface.listeColonnePaquets.clear()
         ensembleGroupes = fctPaquets.initialiserGroupes(interface)
 
         for nom in ensembleGroupes:
-            interface.listeColonneGroupes.append([nom])
+            if fctConfig.lireConfig("pyfpm", "useprohibategroups") == "false":
+                if not nom in listeGroupesProhibes:
+                    interface.listeColonneGroupes.append([nom])
+            else:
+                interface.listeColonneGroupes.append([nom])
 
 
     def obtenirGroupe (objet, interface, groupe):
@@ -126,6 +121,7 @@ class fonctionsEvenement:
 
             interface.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
 
+        fctInstall.rafraichirFenetre()
         interface.barreStatus.push(0, str(len(interface.listeColonnePaquets)) + " " + fctLang.traduire("read_packages_done"))
 
 
@@ -172,6 +168,7 @@ class fonctionsEvenement:
         paquetInstalle = None
 
         interface.contenuInformations.clear()
+        interface.contenuPaquet.clear()
 
         # Récupère les informations depuis local si le paquet est installé
         if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
@@ -200,38 +197,104 @@ class fonctionsEvenement:
 
         # Affiche des informations supplémentaires si le paquet est installé
         if paquetInstalle != None:
-            interface.contenuInformations.append(None, [fctLang.traduire("url"), "<span foreground='blue'><u>" + pointer_to_string(pacman_pkg_get_info(paquetInstalle, PM_PKG_URL)) + "</u></span>"])
-            interface.contenuInformations.append(None, [fctLang.traduire("install_date"), pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE)])
+            interface.contenuInformations.append(None, [fctLang.traduire("url"), "<span foreground='blue'><u>" + pacman_pkg_get_info(paquetInstalle, PM_PKG_URL) + "</u></span>"])
             
             if nomPaquet in interface.listeMiseAJour:
-                interface.contenuInformations.append(None, ["SHA1SUMS", fctLang.traduire("package_update_available")])
+                interface.contenuPaquet.append(None, ["SHA1SUMS", fctLang.traduire("package_update_available")])
             else:
-                interface.contenuInformations.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
+                interface.contenuPaquet.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
                 
-            interface.contenuInformations.append(None, [fctLang.traduire("size"), str(format(float(long(pacman_pkg_getinfo(paquetInstalle, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuPaquet.append(None, [fctLang.traduire("install_date"), fctPaquets.changerDateFr(pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE))])
+            interface.contenuPaquet.append(None, [fctLang.traduire("size"), str(format(float(long(pacman_pkg_getinfo(paquetInstalle, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuPaquet.append(None, [fctLang.traduire("packager"), pacman_pkg_get_info(paquetInstalle, PM_PKG_PACKAGER)])
         else:
-            interface.contenuInformations.append(None, [fctLang.traduire("compress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
-            interface.contenuInformations.append(None, [fctLang.traduire("uncompress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_USIZE))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuPaquet.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
+            interface.contenuPaquet.append(None, [fctLang.traduire("compress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuPaquet.append(None, [fctLang.traduire("uncompress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_USIZE))/1024)/1024, '.2f')) + " MB"])
 
         # Liste des dépendances
         texte = ""
-        dependances = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
+        paquets = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
 
-        while dependances != 0:
-            nomDependance = pointer_to_string(pacman_list_getdata(dependances))
+        while paquets != 0:
+            element = pointer_to_string(pacman_list_getdata(paquets))
 
-            nomDependance = nomDependance.split('=')
-            nomDependance = nomDependance[0].split('<')
-            nomDependance = nomDependance[0].split('>')
+            element = element.split('=')
+            element = element[0].split('<')
+            element = element[0].split('>')
 
-            texte += nomDependance[0]
+            texte += element[0]
 
-            dependances = pacman_list_next(dependances)
-            if dependances != 0:
+            paquets = pacman_list_next(paquets)
+            if paquets != 0:
                 texte += ", "
 
         if texte != "":
             interface.contenuInformations.append(None, [fctLang.traduire("depends"), texte])
+
+        # Liste des paquets ajoutés
+        texte = ""
+        paquets = pacman_pkg_getinfo(paquet, PM_PKG_PROVIDES)
+
+        while paquets != 0:
+            element = pointer_to_string(pacman_list_getdata(paquets))
+
+            texte += element
+
+            paquets = pacman_list_next(paquets)
+            if paquets != 0:
+                texte += ", "
+
+        if texte != "":
+            interface.contenuPaquet.append(None, [fctLang.traduire("provides"), texte])
+
+        # Liste des paquets remplacés
+        texte = ""
+        paquets = pacman_pkg_getinfo(paquet, PM_PKG_REPLACES)
+
+        while paquets != 0:
+            element = pointer_to_string(pacman_list_getdata(paquets))
+
+            texte += element
+
+            paquets = pacman_list_next(paquets)
+            if paquets != 0:
+                texte += ", "
+
+        if texte != "":
+            interface.contenuPaquet.append(None, [fctLang.traduire("replaces"), texte])
+
+        # Liste des dépendances inverses
+        texte = ""
+        paquets = pacman_pkg_getinfo(paquet, PM_PKG_REQUIREDBY)
+
+        while paquets != 0:
+            element = pointer_to_string(pacman_list_getdata(paquets))
+
+            texte += element
+
+            paquets = pacman_list_next(paquets)
+            if paquets != 0:
+                texte += ", "
+
+        if texte != "":
+            interface.contenuInformations.append(None, [fctLang.traduire("required_by"), texte])
+
+        # Liste des paquets en conflit
+        texte = ""
+        paquets = pacman_pkg_getinfo(paquet, PM_PKG_CONFLICTS)
+
+        while paquets != 0:
+            element = pointer_to_string(pacman_list_getdata(paquets))
+
+            texte += element
+
+            paquets = pacman_list_next(paquets)
+            if paquets != 0:
+                texte += ", "
+
+        if texte != "":
+            interface.contenuPaquet.append(None, [fctLang.traduire("conflits"), texte])
             
         # Liste des fichiers inclus dans le paquet
         texte = ""
@@ -280,18 +343,20 @@ class fonctionsEvenement:
         """
 
         interface.fenetre.set_sensitive(False)
+        interface.barreStatus.push(0, fctLang.traduire("clean_cache"))
+        fctInstall.rafraichirFenetre()
         
         if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python src/package.py cleancache")
+            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
         else:
             fctPaquets.nettoyerCache()
-            
-        interface.fenetre.set_sensitive(True)
 
         interface.effacerInterface()
         objet.ajouterGroupes(interface)
         interface.barreStatus.push(0, fctLang.traduire("clean_cache_done"))
 
+        interface.fenetre.set_sensitive(True)
+    
 
     def lancerMiseajourBaseDonnees (objet, image, interface):
         """
@@ -299,12 +364,13 @@ class fonctionsEvenement:
         """
         
         interface.fenetre.set_sensitive(False)
+        interface.barreStatus.push(0, fctLang.traduire("update_db"))
+        fctInstall.rafraichirFenetre()
 
         if objet.verifierUtilisateur() == 0:
-            #~ os.system("pwd")
-            os.system(fctConfig.lireConfig("admin", "command") + " python src/package.py updatedb")
+            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
         else:
-            fctPaquets.miseajourBaseDonnees()
+            os.system("python ./src/package.py updatedb")
 
         interface.effacerInterface()
         objet.ajouterGroupes(interface)
@@ -325,15 +391,15 @@ class fonctionsEvenement:
         """
         
         if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python src/package.py install " + str(interface.listeInstallation))
+            interface.fenetreInformation("Attention","Seul l'administrateur peut exécuter cette commande")
         else:
             fctPaquets.installerPaquets(interface.listeInstallation)
             
-        interface.effacerInterface()
-        objet.ajouterGroupes(interface)
-        
-        fctPaquets.initialiserGroupes(interface)
-        fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
+            interface.effacerInterface()
+            objet.ajouterGroupes(interface)
+            
+            fctPaquets.initialiserGroupes(interface)
+            fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
 
 
     def verifierDonnee (objet, liste, donnee):

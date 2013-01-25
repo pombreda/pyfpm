@@ -7,15 +7,12 @@
 #
 # ----------------------------------------------------------------------
 
+import string
+
 from config import *
 
 fctConfig = fonctionsConfiguration()
 
-
-"""
-    fonctionsLang
-        traduire (objet, mot)
-"""
 
 class fonctionsLang:
     def traduire (objet, mot):
@@ -54,9 +51,29 @@ class fonctionsLang:
                 return fichier
         
     
-    def recupererNomLangue (objet):
+    def recupererTraduction (objet):
         """
         Récupère la liste des fichier de language dans ./lang
         """
         
-        os.system("ls ./lang/*.ini | awk 'BEGIN{FS=\".\"}{print $1}'")
+        liste = os.listdir('./lang')
+        liste2 = []
+        
+        for element in liste:
+            nom = string.split(element, ".ini")
+            liste2.append(nom[0])
+        
+        return liste2
+
+
+    def fichierLangue (objet, nom):
+        
+        liste = objet.recupererTraduction()
+        
+        index = ""
+        for element in liste:
+            if objet.nomLangue(element) == nom:
+                index = element
+                
+        return index
+                

@@ -1,3 +1,9 @@
-PYFPM=`pwd`
+#!/bin/sh
 
-python $PYFPM/src/main.py
+ARGS=""
+
+if [ ! -z $1 ] ; then
+    ARGS=$1
+fi
+
+python -B ./src/main.py $ARGS

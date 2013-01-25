@@ -24,18 +24,6 @@ fctLang = fonctionsLang()
 fctEvent = fonctionsEvenement()
 fctPrefs = fonctionsPreferences()
 
-"""
-    fonctionsInterface
-        cocherPaquet (interface, cell_renderer, colonne, liste)
-        effacerRecherche (interface, *args)
-        effectuerRecherche (interface, *args)
-        fenetreAPropos (objet, widget, *event)
-        fenetreInformation (objet, titre, texte)
-        fenetreInstallation (objet, widget, interface, *event)
-        fenetrePrincipale (objet)
-        selectionnerGroupe (interface, selection, modele)
-        selectionnerPaquet (interface, selection, modele)
-"""
 
 class fonctionsInterface:
     def __init__(interface):
@@ -65,6 +53,7 @@ class fonctionsInterface:
             interface.menu = gtk.MenuBar()
             interface.menu_action = gtk.MenuItem(label=fctLang.traduire("action"))
             interface.menu_action_list = gtk.Menu()
+            interface.menu_action_install = gtk.ImageMenuItem(fctLang.traduire("apply_pkg"))
             interface.menu_action_clean = gtk.ImageMenuItem(fctLang.traduire("clean_cache"))
             interface.menu_action_update = gtk.ImageMenuItem(fctLang.traduire("update_database"))
             interface.menu_action_check = gtk.ImageMenuItem(fctLang.traduire("check_update"))
@@ -127,22 +116,27 @@ class fonctionsInterface:
             
             interface.zoneInformations = gtk.Notebook()
             interface.labelInformations = gtk.Label(fctLang.traduire("informations"))
+            interface.labelPaquet = gtk.Label(fctLang.traduire("package"))
             interface.labelFichiers = gtk.Label(fctLang.traduire("files"))
             interface.labelJournal = gtk.Label(fctLang.traduire("changelog"))
             interface.listeInformations = gtk.TreeView()
-            interface.colonneLabel = gtk.TreeViewColumn()
-            interface.celluleLabel = gtk.CellRendererText()
-            interface.colonneValeur = gtk.TreeViewColumn()
-            interface.celluleValeur = gtk.CellRendererText()
+            interface.colonneLabelInformations = gtk.TreeViewColumn()
+            interface.celluleLabelInformations = gtk.CellRendererText()
+            interface.colonneValeurInformations = gtk.TreeViewColumn()
+            interface.celluleValeurInformations = gtk.CellRendererText()
             interface.contenuInformations = gtk.TreeStore(str,str)
             interface.defilementInformations = gtk.ScrolledWindow()
+            interface.listePaquet = gtk.TreeView()
+            interface.colonneLabelPaquet = gtk.TreeViewColumn()
+            interface.celluleLabelPaquet = gtk.CellRendererText()
+            interface.colonneValeurPaquet = gtk.TreeViewColumn()
+            interface.celluleValeurPaquet = gtk.CellRendererText()
+            interface.contenuPaquet = gtk.TreeStore(str,str)
+            interface.defilementPaquet = gtk.ScrolledWindow()
             interface.listeFichiers = gtk.TextView()
             interface.defilementFichiers = gtk.ScrolledWindow()
             interface.listeJournal = gtk.TextView()
             interface.defilementJournal = gtk.ScrolledWindow()
-            interface.iconeLabel = gtk.Label("Test")
-            interface.iconeInformations = gtk.Image()
-
 
 
     def fenetrePrincipale (interface):
@@ -168,6 +162,9 @@ class fonctionsInterface:
             interface.fenetre.connect("destroy", gtk.main_quit)
             interface.fenetre.connect("check-resize", interface.redimensionnement)
 
+            interface.menu_action_install.set_image(gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU))
+            interface.menu_action_install.connect("activate", interface.fenetreVerifierDependances, interface)
+
             interface.menu_action_clean.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
             interface.menu_action_clean.connect("activate", fctEvent.lancerNettoyerCache, interface)
 
@@ -182,11 +179,15 @@ class fonctionsInterface:
 
             interface.menu.add(interface.menu_action)
 
+            interface.menu_action_list.add(interface.menu_action_install)
             interface.menu_action_list.add(interface.menu_action_clean)
             interface.menu_action_list.add(interface.menu_action_update)
             interface.menu_action_list.add(interface.menu_action_check)
             interface.menu_action_list.add(interface.menu_action_quit)
-
+            
+            if fctEvent.verifierUtilisateur() == 0:
+                interface.menu_action_install.set_sensitive(False)
+                
             interface.menu_action.set_submenu(interface.menu_action_list)
 
             interface.menu_edit_clear_changes.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
@@ -217,17 +218,19 @@ class fonctionsInterface:
             interface.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
             interface.outils.set_style(gtk.TOOLBAR_ICONS)
 
+            #~ if fctEvent.verifierUtilisateur() != 0:
+                #~ interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreVerifierDependances, interface, 0)
             interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreVerifierDependances, interface, 0)
-            interface.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("upgrade"), None, fctEvent.lancerMiseajourBaseDonnees, interface, 2)
+            interface.outils.insert_stock(gtk.STOCK_FIND, fctLang.traduire("check_update"), None, interface.fenetreMiseAJour, None, 2)
             interface.outils.insert_space(3)
             interface.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
             interface.texteRecherche.connect("activate", interface.effectuerRecherche, gtk.RESPONSE_OK)
             interface.texteRecherche.connect("icon-press", interface.effacerRecherche)
             interface.texteRecherche.grab_focus()
             interface.outils.insert_widget(interface.texteRecherche, fctLang.traduire("write_search"), None, 4)
-            interface.outils.insert_stock(gtk.STOCK_FIND, fctLang.traduire("search"), None, interface.effectuerRecherche, None, 5)
+            interface.outils.insert_stock(gtk.STOCK_FIND_AND_REPLACE, fctLang.traduire("search"), None, interface.effectuerRecherche, None, 5)
             interface.outils.insert_space(6)
-            interface.outils.insert_stock(gtk.STOCK_PREFERENCES, fctLang.traduire("preferences"), None, fctPrefs.fenetrePreferences, None, 7)
+            interface.outils.insert_stock(gtk.STOCK_PREFERENCES, fctLang.traduire("preferences"), None, fctPrefs.fenetrePreferences, interface, 7)
             interface.outils.insert_stock(gtk.STOCK_QUIT, fctLang.traduire("quit"), None, fctEvent.detruire, None, 8)
 
             # ------------------------------------------------------------------
@@ -329,23 +332,44 @@ class fonctionsInterface:
             interface.listeInformations.set_headers_visible(False)
             interface.listeInformations.set_hover_selection(False)
 
-            interface.celluleLabel.set_property('weight', pango.WEIGHT_BOLD)
+            interface.celluleLabelInformations.set_property('weight', pango.WEIGHT_BOLD)
 
-            interface.colonneLabel.pack_start(interface.celluleLabel, True)
-            interface.colonneLabel.add_attribute(interface.celluleLabel, "text", 0)
-            interface.colonneValeur.pack_start(interface.celluleValeur, True)
-            interface.colonneValeur.add_attribute(interface.celluleValeur, "markup", 1)
+            interface.colonneLabelInformations.pack_start(interface.celluleLabelInformations, True)
+            interface.colonneLabelInformations.add_attribute(interface.celluleLabelInformations, "text", 0)
+            interface.colonneValeurInformations.pack_start(interface.celluleValeurInformations, True)
+            interface.colonneValeurInformations.add_attribute(interface.celluleValeurInformations, "markup", 1)
 
-            interface.celluleValeur.set_property('wrap-mode', pango.WRAP_WORD)
-            interface.celluleValeur.set_property('editable', True)
+            interface.celluleValeurInformations.set_property('wrap-mode', pango.WRAP_WORD)
+            interface.celluleValeurInformations.set_property('editable', True)
 
-            interface.listeInformations.append_column(interface.colonneLabel)
-            interface.listeInformations.append_column(interface.colonneValeur)
+            interface.listeInformations.append_column(interface.colonneLabelInformations)
+            interface.listeInformations.append_column(interface.colonneValeurInformations)
             interface.listeInformations.set_model(interface.contenuInformations)
 
             interface.defilementInformations.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementInformations.add(interface.listeInformations)
             interface.defilementInformations.set_border_width(4)
+            
+            interface.listePaquet.set_headers_visible(False)
+            interface.listePaquet.set_hover_selection(False)
+
+            interface.celluleLabelPaquet.set_property('weight', pango.WEIGHT_BOLD)
+
+            interface.colonneLabelPaquet.pack_start(interface.celluleLabelPaquet, True)
+            interface.colonneLabelPaquet.add_attribute(interface.celluleLabelPaquet, "text", 0)
+            interface.colonneValeurPaquet.pack_start(interface.celluleValeurPaquet, True)
+            interface.colonneValeurPaquet.add_attribute(interface.celluleValeurPaquet, "markup", 1)
+
+            interface.celluleValeurPaquet.set_property('wrap-mode', pango.WRAP_WORD)
+            interface.celluleValeurPaquet.set_property('editable', True)
+
+            interface.listePaquet.append_column(interface.colonneLabelPaquet)
+            interface.listePaquet.append_column(interface.colonneValeurPaquet)
+            interface.listePaquet.set_model(interface.contenuPaquet)
+
+            interface.defilementPaquet.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+            interface.defilementPaquet.add(interface.listePaquet)
+            interface.defilementPaquet.set_border_width(4)
             
             interface.listeFichiers.set_editable(False)
             interface.listeFichiers.set_cursor_visible(False)
@@ -363,9 +387,9 @@ class fonctionsInterface:
 
             interface.zoneInformations.set_tab_pos(gtk.POS_LEFT)
             interface.zoneInformations.append_page(interface.defilementInformations, interface.labelInformations)
+            interface.zoneInformations.append_page(interface.defilementPaquet, interface.labelPaquet)
             interface.zoneInformations.append_page(interface.defilementFichiers, interface.labelFichiers)
             interface.zoneInformations.append_page(interface.defilementJournal, interface.labelJournal)
-            interface.zoneInformations.append_page(interface.iconeInformations, interface.iconeLabel)
             interface.zoneInformations.set_border_width(4)
             interface.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
 
@@ -385,7 +409,8 @@ class fonctionsInterface:
 
             interface.fenetre.show_all()
             
-            interface.fenetreMiseAJour()
+            if fctConfig.lireConfig("pyfpm", "startupdate") == "true":
+                interface.fenetreMiseAJour()
 
         else:
             try:
@@ -536,6 +561,7 @@ class fonctionsInterface:
         interface.listeColonneGroupes.clear()
         interface.listeColonnePaquets.clear()
         interface.contenuInformations.clear()
+        interface.contenuPaquet.clear()
         interface.barreStatus.push(0, "")
 
 
@@ -572,9 +598,8 @@ class fonctionsInterface:
         s'adapte à la fenêtre
         """
 
-        #~ valeur = 450
-
-        interface.celluleValeur.set_property("wrap-width", interface.fenetre.get_size()[0]/2)
+        interface.celluleValeurInformations.set_property("wrap-width", interface.fenetre.get_size()[0]/2)
+        interface.celluleValeurPaquet.set_property("wrap-width", interface.fenetre.get_size()[0]/2)
         interface.colonnePaquetsNom.set_min_width(interface.fenetre.get_size()[0]/2)
         interface.colonnePaquets.set_size_request(0, interface.fenetre.get_size()[1]/2)
         
@@ -686,9 +711,11 @@ class fonctionsInterface:
                 pass
                 
             fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
-            zoneInstallation = gtk.TreeView()
+            
+            zoneInstallation = gtk.Frame(fctLang.traduire("install_pkg"))
             listeInstallation = gtk.TreeStore(str)
-            colonneInstallation = gtk.TreeViewColumn()
+            colonnesInstallation = gtk.TreeView()
+            colonneInstallationNom = gtk.TreeViewColumn()
             celluleInstallation = gtk.CellRendererText()
             defilementInstallation = gtk.ScrolledWindow()
 
@@ -696,38 +723,36 @@ class fonctionsInterface:
             fenetre.set_default_response(gtk.RESPONSE_OK)
             fenetre.set_size_request(280,300)
 
-            zoneInstallation.set_headers_visible(False)
-            zoneInstallation.set_hover_selection(True)
-            zoneInstallation.expand_all()
+            colonnesInstallation.set_headers_visible(False)
+            colonnesInstallation.set_hover_selection(True)
+            colonnesInstallation.expand_all()
 
-            colonneInstallation.pack_start(celluleInstallation, True)
-            colonneInstallation.add_attribute(celluleInstallation, "text", 0)
+            colonneInstallationNom.pack_start(celluleInstallation, True)
+            colonneInstallationNom.add_attribute(celluleInstallation, "text", 0)
 
-            zoneInstallation.append_column(colonneInstallation)
-            zoneInstallation.set_model(listeInstallation)
+            colonnesInstallation.append_column(colonneInstallationNom)
+            colonnesInstallation.set_model(listeInstallation)
 
             defilementInstallation.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            defilementInstallation.add(zoneInstallation)
+            defilementInstallation.add(colonnesInstallation)
+            defilementInstallation.set_border_width(4)
+            
+            zoneInstallation.add(defilementInstallation)
+            zoneInstallation.set_border_width(4)
 
             if len(interface.listeInstallation) != 0:
-                titre = listeInstallation.append(None, [fctLang.traduire("install_pkg")])
-
                 for element in interface.listeInstallation:
-                    listeInstallation.append(titre, [element])
+                    listeInstallation.append(None, [element])
 
             #~ if len(interface.listeSuppression) != 0:
-                #~ titre = listeInstallation.append(None, [fctLang.traduire("remove_pkg")])
-
                 #~ for element in interface.listeSuppression:
-                    #~ listeInstallation.append(titre, [element])
+                    #~ listeInstallation.append(None, [element])
 
             #~ if len(interface.listeMiseAJour) != 0:
-                #~ titre = listeInstallation.append(None, [fctLang.traduire("update_pkg")])
-
                 #~ for element in interface.listeMiseAJour:
-                    #~ listeInstallation.append(titre, [element])
+                    #~ listeInstallation.append(None, [element])
 
-            fenetre.vbox.pack_start(defilementInstallation)
+            fenetre.vbox.pack_start(zoneInstallation)
 
             fenetre.show_all()
             choix = fenetre.run()

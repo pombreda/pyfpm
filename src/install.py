@@ -14,34 +14,34 @@ try:
 except ImportError:
     sys.exit("pyGTK introuvable")
 
-from config import *
 from lang import *
-from action import *
 
-fctConfig = fonctionsConfiguration()
 fctLang = fonctionsLang()
-fctEvent = fonctionsEvenement()
 
-"""
-    fonctionsPreferences
-        fenetrePreferences (interface, widget)
-"""
 
 class fonctionsInstallation:
-    def fenetreInstallation (interface):
-
-        fenetre = gtk.Dialog(fctLang.traduire("pacman_title"), None, gtk.DIALOG_MODAL, (gtk.STOCK_OK, gtk.RESPONSE_OK))
+    def __init__ (interface):
+        
+        interface.fenetre = gtk.Dialog(fctLang.traduire("pacman_title"), None, gtk.DIALOG_MODAL, (gtk.STOCK_OK, gtk.RESPONSE_OK))
         
         interface.barreProgres = gtk.ProgressBar()
         
-        fenetre.vbox.pack_start(interface.barreProgres)
+        
+    def fenetreInstallation (interface):
 
-        fenetre.show_all()
-        fenetre.run()
+        interface.fenetre.vbox.pack_start(interface.barreProgres)
+
+        interface.fenetre.show_all()
         
-        fenetre.destroy()
+    
+    def fermerFenetre (interface):
+        """
+        Permet de fermer la fenetre d'installation
+        """
         
-        
+        interface.fenetre.destroy()
+    
+    
     def changerLabel (interface, texte):
         """
         Changer le contenu du label
