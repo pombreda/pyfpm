@@ -34,8 +34,9 @@ class fonctionsPreferences:
         grilleGeneral = gtk.Table(1,2)
         zoneGeneralLangue = gtk.Frame(fctLang.traduire("preferences_main"))
         generalLangue = gtk.Table(2,1)
-        generalLangueLabel = gtk.Label(fctLang.traduire("language"))
+        generalLangueLabel = gtk.Label(fctLang.traduire("language") + "*")
         generalLangueChoix = gtk.combo_box_new_text()
+        generalLangueAsterix = gtk.Label("*" + fctLang.traduire("need_reboot"))
         zoneGeneralDivers = gtk.Frame(fctLang.traduire("misc"))
         grilleGeneralCocher = gtk.Table(1,2)
         objet.miseajourDemarrage = gtk.CheckButton(fctLang.traduire("start_update"))
@@ -59,9 +60,12 @@ class fonctionsPreferences:
         #~ fenetre.set_size_request(400, 400)
 
         onglets.set_tab_pos(gtk.POS_LEFT)
+        
+        generalLangueAsterix.set_alignment(0,0.5)
 
         generalLangue.attach(generalLangueLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
         generalLangue.attach(generalLangueChoix, 1, 2, 0, 1, yoptions=gtk.FILL)
+        generalLangue.attach(generalLangueAsterix, 0, 2, 1, 2)
         generalLangue.set_border_width(4)
         zoneGeneralLangue.add(generalLangue)
         zoneGeneralLangue.set_border_width(4)
@@ -108,7 +112,7 @@ class fonctionsPreferences:
                 interface.effacerInterface()
                 fctEvent.ajouterGroupes(interface)
                 
-            fctInstall.rafraichirFenetre()
+            interface.rafraichirFenetre()
 
         fenetre.destroy()
 

@@ -19,7 +19,6 @@ from package import *
 from lang import *
 
 fctPaquets = fonctionsPaquets()
-fctInstall = fonctionsInstallation()
 fctLang = fonctionsLang()
 
 
@@ -114,14 +113,15 @@ class fonctionsEvenement:
 
             if nomPaquet in interface.listeInstallation:
                 objetTrouve = 1
-                image = gtk.STOCK_YES
+                if not nomPaquet in interface.listeMiseAJour:
+                    image = gtk.STOCK_ADD
             elif nomPaquet in interface.listeSuppression:
                 objetTrouve = 0
-                image = gtk.STOCK_NO
+                image = gtk.STOCK_REMOVE
 
             interface.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
 
-        fctInstall.rafraichirFenetre()
+        interface.rafraichirFenetre()
         interface.barreStatus.push(0, str(len(interface.listeColonnePaquets)) + " " + fctLang.traduire("read_packages_done"))
 
 
@@ -204,7 +204,7 @@ class fonctionsEvenement:
             else:
                 interface.contenuPaquet.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
                 
-            interface.contenuPaquet.append(None, [fctLang.traduire("install_date"), fctPaquets.changerDateFr(pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE))])
+            interface.contenuPaquet.append(None, [fctLang.traduire("install_date"), fctPaquets.changerDate(pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE))])
             interface.contenuPaquet.append(None, [fctLang.traduire("size"), str(format(float(long(pacman_pkg_getinfo(paquetInstalle, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
             interface.contenuPaquet.append(None, [fctLang.traduire("packager"), pacman_pkg_get_info(paquetInstalle, PM_PKG_PACKAGER)])
         else:
@@ -344,7 +344,7 @@ class fonctionsEvenement:
 
         interface.fenetre.set_sensitive(False)
         interface.barreStatus.push(0, fctLang.traduire("clean_cache"))
-        fctInstall.rafraichirFenetre()
+        interface.rafraichirFenetre()
         
         if objet.verifierUtilisateur() == 0:
             os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
@@ -365,7 +365,7 @@ class fonctionsEvenement:
         
         interface.fenetre.set_sensitive(False)
         interface.barreStatus.push(0, fctLang.traduire("update_db"))
-        fctInstall.rafraichirFenetre()
+        interface.rafraichirFenetre()
 
         if objet.verifierUtilisateur() == 0:
             os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
@@ -392,6 +392,7 @@ class fonctionsEvenement:
         
         if objet.verifierUtilisateur() == 0:
             interface.fenetreInformation("Attention","Seul l'administrateur peut exécuter cette commande")
+            #~ os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py install")
         else:
             fctPaquets.installerPaquets(interface.listeInstallation)
             

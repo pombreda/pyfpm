@@ -11,6 +11,7 @@ Affichage (display.py)
         - Améliorer le nom des groupes affichés (merci Munto :p)
         - Faire une fenêtre de progression pour la mise à jour des bases de données [CANCELED]
         - Bouton sélectionner tout le groupe/recherche
+        - Faire en sorte de rafraichir la fenêtre en mode recherche
 
 
 Evénements (action.py)
@@ -31,3 +32,6 @@ Paquet (package.py)
 
     FIXME
         - La base de données ne peut pas être mise à jour depuis root sans core dumped [DONE]
+        
+    TODO
+        - Améliorer la fonction d'affichage de la date en format JJ/MM/AAAA

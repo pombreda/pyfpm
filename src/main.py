@@ -19,11 +19,9 @@ import os, sys
 
 from package import *
 from display import *
-from config import *
 
 fctPaquets = fonctionsPaquets()
 fctInterface = fonctionsInterface()
-fctConfig = fonctionsConfiguration()
 
 # ----------------------------------------------------------------------
 #   Main
