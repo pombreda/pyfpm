@@ -19,20 +19,23 @@ from lang import *
 from action import *
 from preferences import *
 
-fctConfig = fonctionsConfiguration()
-fctLang = fonctionsLang()
 fctEvent = fonctionsEvenement()
 fctPrefs = fonctionsPreferences()
+fctConfig = fonctionsConfiguration()
+fctLang = fonctionsLang()
 
 
 class fonctionsInterface:
     def __init__(interface):
 
-            interface.listePaquetsInstalles = []
-            interface.listeInstallation = []
-            interface.listeSuppression = []
-            interface.listeMiseAJour = []
             interface.paquetSelectionne = ""
+
+            interface.listeInstallationPacman = []
+            interface.listeSuppressionPacman = []
+            interface.listeMiseAJourPacman = []
+
+            interface.recherche_mode = False
+            interface.recherche_nom = ""
 
             # ------------------------------------------------------------------
             #       Fenetre
@@ -113,7 +116,7 @@ class fonctionsInterface:
             # ------------------------------------------------------------------
             #       Informations sur le paquet
             # ------------------------------------------------------------------
-            
+
             interface.zoneInformations = gtk.Notebook()
             interface.labelInformations = gtk.Label(fctLang.traduire("informations"))
             interface.labelPaquet = gtk.Label(fctLang.traduire("package"))
@@ -184,17 +187,14 @@ class fonctionsInterface:
             interface.menu_action_list.add(interface.menu_action_update)
             interface.menu_action_list.add(interface.menu_action_check)
             interface.menu_action_list.add(interface.menu_action_quit)
-            
-            #~ if fctEvent.verifierUtilisateur() == 0:
-                #~ interface.menu_action_install.set_sensitive(False)
-                
+
             interface.menu_action.set_submenu(interface.menu_action_list)
 
             interface.menu_edit_clear_changes.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
             interface.menu_edit_clear_changes.connect("activate", interface.effacerListesPaquets)
 
             interface.menu_edit_preference.set_image(gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU))
-            interface.menu_edit_preference.connect("activate", fctPrefs.fenetrePreferences)
+            interface.menu_edit_preference.connect("activate", fctPrefs.fenetrePreferences, interface)
 
             interface.menu.add(interface.menu_edit)
 
@@ -218,8 +218,6 @@ class fonctionsInterface:
             interface.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
             interface.outils.set_style(gtk.TOOLBAR_ICONS)
 
-            #~ if fctEvent.verifierUtilisateur() != 0:
-                #~ interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreVerifierDependances, interface, 0)
             interface.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, interface.fenetreInstallation, interface, 0)
             interface.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("update_database"), None, fctEvent.lancerMiseajourBaseDonnees, interface, 2)
             interface.outils.insert_space(3)
@@ -349,7 +347,7 @@ class fonctionsInterface:
             interface.defilementInformations.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementInformations.add(interface.listeInformations)
             interface.defilementInformations.set_border_width(4)
-            
+
             interface.listePaquet.set_headers_visible(False)
             interface.listePaquet.set_hover_selection(False)
 
@@ -370,17 +368,17 @@ class fonctionsInterface:
             interface.defilementPaquet.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementPaquet.add(interface.listePaquet)
             interface.defilementPaquet.set_border_width(4)
-            
+
             interface.listeFichiers.set_editable(False)
             interface.listeFichiers.set_cursor_visible(False)
-            
+
             interface.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementFichiers.add(interface.listeFichiers)
             interface.defilementFichiers.set_border_width(4)
-            
+
             interface.listeJournal.set_editable(False)
             interface.listeJournal.set_cursor_visible(False)
-            
+
             interface.defilementJournal.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             interface.defilementJournal.add(interface.listeJournal)
             interface.defilementJournal.set_border_width(4)
@@ -408,11 +406,11 @@ class fonctionsInterface:
             interface.fenetre.add(interface.grille)
 
             interface.fenetre.show_all()
-            
+
             if fctConfig.lireConfig("pyfpm", "startupdate") == "true":
                 interface.fenetreMiseAJour()
             else:
-                fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
+                fctPaquets.obtenirMiseAJour(interface.listeMiseAJourPacman)
 
         else:
             try:
@@ -436,6 +434,9 @@ class fonctionsInterface:
             modele = interface.colonneGroupes.get_model()
 
             selectionGroupe = modele.get_value(treeiter, 0)
+
+            interface.recherche_mode = False
+            interface.recherche_nom = ""
 
             fctEvent.obtenirGroupe(interface, selectionGroupe)
         except:
@@ -487,8 +488,8 @@ class fonctionsInterface:
         modele = liste.get_model()
         modele[colonne][0] = not modele[colonne][0]
 
-        elementAjouter = fctEvent.verifierDonnee(interface.listeInstallation, modele[colonne][2])
-        elementEnlever = fctEvent.verifierDonnee(interface.listeSuppression, modele[colonne][2])
+        elementAjouter = fctEvent.verifierDonnee(interface.listeInstallationPacman, modele[colonne][2])
+        elementEnlever = fctEvent.verifierDonnee(interface.listeSuppressionPacman, modele[colonne][2])
 
         if modele[colonne][0] == 0:
             # Le paquet en question à été décoché
@@ -496,12 +497,12 @@ class fonctionsInterface:
                 # Le paquet en question est installé
                 if elementEnlever == 0:
                     # Le paquet est mis dans la liste des paquets à supprimer
-                    interface.listeSuppression.append(modele[colonne][2])
+                    interface.listeSuppressionPacman.append(modele[colonne][2])
                     modele[colonne][1] = gtk.STOCK_REMOVE
             else:
                 if elementAjouter != 0:
                     # Le paquet est enlevé de la liste des paquets à installer
-                    interface.listeInstallation.remove(elementAjouter)
+                    interface.listeInstallationPacman.remove(elementAjouter)
                     modele[colonne][1] = " "
 
         else:
@@ -510,15 +511,15 @@ class fonctionsInterface:
                 # Le paquet en question est installé
                 if elementEnlever != 0:
                     # Le paquet est enlevé de la liste des paquets à supprimer
-                    interface.listeSuppression.remove(elementEnlever)
-                    if modele[colonne][2] in interface.listeMiseAJour:
+                    interface.listeSuppressionPacman.remove(elementEnlever)
+                    if modele[colonne][2] in interface.listeMiseAJourPacman:
                         modele[colonne][1] = gtk.STOCK_REFRESH
                     else:
                         modele[colonne][1] = " "
             else:
                 if elementAjouter == 0:
                     # Le paquet est mis dans la liste des paquets à installer
-                    interface.listeInstallation.append(modele[colonne][2])
+                    interface.listeInstallationPacman.append(modele[colonne][2])
                     modele[colonne][1] = gtk.STOCK_ADD
 
 
@@ -530,17 +531,21 @@ class fonctionsInterface:
         if interface.texteRecherche.get_text != '':
             interface.listeColonnePaquets.clear()
             objetRechercher = interface.texteRecherche.get_text()
-            
+
             paquets = fctPaquets.chercherPaquet(db_list[interface.listeSelectionGroupe.get_active()], objetRechercher)
 
-            print (str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
-            interface.barreStatus.push(0, (str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher))
+            if not interface.recherche_mode:
+                print (str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
+                interface.changerTexteBarreStatus(str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
+
+            interface.recherche_mode = True
+            interface.recherche_nom = objetRechercher
 
             if len(paquets) > 0:
                 pacman_trans_release()
                 fctEvent.remplirPaquets(interface, paquets)
 
-            interface.effacerRecherche()
+            #~ interface.effacerRecherche()
 
 
     def effacerRecherche (interface, *args):
@@ -556,11 +561,17 @@ class fonctionsInterface:
         Efface l'ensemble de l'interface
         """
 
+        modele = interface.listeSelectionGroupe.get_model()
+        modele.clear()
+        interface.listeSelectionGroupe.set_model(modele)
+
         interface.listeColonneGroupes.clear()
         interface.listeColonnePaquets.clear()
+
         interface.contenuInformations.clear()
         interface.contenuPaquet.clear()
-        interface.barreStatus.push(0, "")
+
+        interface.changerTexteBarreStatus("")
 
 
     def effacerListesPaquets (interface, *args):
@@ -568,8 +579,8 @@ class fonctionsInterface:
         Remet à zéro la liste des paquets à installer et désinstaller
         """
 
-        interface.listeInstallation = []
-        interface.listeSuppression  = []
+        interface.listeInstallationPacman = []
+        interface.listeSuppressionPacman  = []
 
         try:
             interface.selectionGroupe = interface.colonneGroupes.get_selection()
@@ -577,7 +588,7 @@ class fonctionsInterface:
         except:
             pass
 
-        interface.barreStatus.push(0, fctLang.traduire("clear_changes_done"))
+        interface.changerTexteBarreStatus(fctLang.traduire("clear_changes_done"))
 
 
     def changementDepot (interface, *args):
@@ -588,8 +599,8 @@ class fonctionsInterface:
         interface.listeColonnePaquets.clear()
         interface.listeColonneGroupes.clear()
         fctEvent.ajouterGroupes(interface)
-        
-        interface.barreStatus.push(0, fctLang.traduire("change_repo") + " " + interface.listeSelectionGroupe.get_active_text())
+
+        interface.changerTexteBarreStatus(fctLang.traduire("change_repo") + " " + str(interface.listeSelectionGroupe.get_active_text()))
 
 
     def redimensionnement (interface, *args):
@@ -602,20 +613,27 @@ class fonctionsInterface:
         interface.celluleValeurPaquet.set_property("wrap-width", interface.fenetre.get_size()[0]/2)
         interface.colonnePaquetsNom.set_min_width(interface.fenetre.get_size()[0]/2)
         interface.colonnePaquets.set_size_request(0, interface.fenetre.get_size()[1]/2)
-        
-        
+
+
     def rafraichirFenetre (interface):
         """
         Rafraichit l'interface quand des changements ont lieux
         """
-        
+
         try :
             while gtk.events_pending():
                 gtk.main_iteration_do(False)
-                
-            time.sleep(0.1)
+
         except:
             pass
+
+
+    def changerTexteBarreStatus (interface, texte):
+        """
+        Changer le texte inscrit dans la barre inférieur
+        """
+
+        interface.barreStatus.push(0, str(texte))
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -636,6 +654,7 @@ class fonctionsInterface:
         about.set_version("0001")
         about.set_comments(fctLang.traduire("about_desc"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
+        about.set_authors(["Gaetan Gourdin (bouleetbil) - Module python pour pacman-g2", "Aurélien Lubert (PacMiam) - Interface"])
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer\net/ou le modifier conformément aux dispositions de la Licence Publique\nGénérale GNU, telle que publiée par la Free Software Foundation.")
         about.set_logo(logo)
 
@@ -663,27 +682,29 @@ class fonctionsInterface:
         """
         Affiche les modifications à effectuer sur les paquets
         """
-        
-        interface.listeInstallation, interface.listeSuppression = fctPaquets.preparerPacman(interface.listeInstallation, interface.listeSuppression)
 
-        if len(interface.listeInstallation) != 0 or len(interface.listeSuppression):
-            interface.listeInstallation.sort()
-            interface.listeSuppression.sort()
-            try:
-                interface.selectionGroupe = interface.colonneGroupes.get_selection()
-                interface.selectionnerGroupe(interface.selectionGroupe, interface.listeColonneGroupes)
-            except:
-                pass
-                
+        #~ interface.listeInstallationPacman, interface.listeSuppressionPacman = fctPaquets.preparerPacman(interface, interface.listeInstallationPacman, interface.listeSuppressionPacman)
+
+        if interface.recherche_mode == False:
+            interface.selectionGroupe = interface.colonneGroupes.get_selection()
+            interface.selectionnerGroupe(interface.selectionGroupe, interface.listeColonneGroupes)
+        else:
+            interface.texteRecherche.set_text(interface.recherche_nom)
+            interface.effectuerRecherche()
+
+        if len(interface.listeInstallationPacman) != 0 or len(interface.listeSuppressionPacman):
+            interface.listeInstallationPacman.sort()
+            interface.listeSuppressionPacman.sort()
+
             fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
-            
+
             zoneInstallation = gtk.Frame(fctLang.traduire("install_pkg"))
             listeInstallation = gtk.TreeStore(str)
             colonnesInstallation = gtk.TreeView()
             colonneInstallationNom = gtk.TreeViewColumn()
             celluleInstallation = gtk.CellRendererText()
             defilementInstallation = gtk.ScrolledWindow()
-            
+
             zoneSuppression = gtk.Frame(fctLang.traduire("remove_pkg"))
             listeSuppression = gtk.TreeStore(str)
             colonnesSuppression = gtk.TreeView()
@@ -691,7 +712,7 @@ class fonctionsInterface:
             celluleSuppression = gtk.CellRendererText()
             defilementSuppression = gtk.ScrolledWindow()
 
-            fenetre.set_has_separator(True)
+            #~ fenetre.set_has_separator(True)
             fenetre.set_default_response(gtk.RESPONSE_OK)
             fenetre.set_size_request(400, 400)
 
@@ -708,7 +729,7 @@ class fonctionsInterface:
             defilementInstallation.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             defilementInstallation.add(colonnesInstallation)
             defilementInstallation.set_border_width(4)
-            
+
             zoneInstallation.add(defilementInstallation)
             zoneInstallation.set_border_width(4)
 
@@ -725,17 +746,17 @@ class fonctionsInterface:
             defilementSuppression.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             defilementSuppression.add(colonnesSuppression)
             defilementSuppression.set_border_width(4)
-            
+
             zoneSuppression.add(defilementSuppression)
             zoneSuppression.set_border_width(4)
 
-            if len(interface.listeInstallation) != 0:
-                for element in interface.listeInstallation:
+            if len(interface.listeInstallationPacman) != 0:
+                for element in interface.listeInstallationPacman:
                     listeInstallation.append(None, [element])
                 fenetre.vbox.pack_start(zoneInstallation)
 
-            if len(interface.listeSuppression) != 0:
-                for element in interface.listeSuppression:
+            if len(interface.listeSuppressionPacman) != 0:
+                for element in interface.listeSuppressionPacman:
                     listeSuppression.append(None, [element])
                 fenetre.vbox.pack_start(zoneSuppression)
 
@@ -743,13 +764,13 @@ class fonctionsInterface:
             choix = fenetre.run()
 
             if choix == gtk.RESPONSE_APPLY:
-                fctEvent.lancerInstallationPaquets(interface)
                 fenetre.destroy()
+                fctEvent.lancerInstallationPaquets(interface)
             else:
                 fenetre.destroy()
         else:
             interface.fenetreInformation(fctLang.traduire("apply_pkg"), fctLang.traduire("no_change"))
-        
+
 
     def fenetreMiseAJour (interface, *args):
         """
@@ -757,19 +778,17 @@ class fonctionsInterface:
         """
 
         interface.fenetre.set_sensitive(False)
-        
-        fctPaquets.obtenirMiseAJour(interface.listeMiseAJour)
+
+        fctPaquets.obtenirMiseAJour(interface.listeMiseAJourPacman)
         listeTmp = []
 
-        if len(interface.listeMiseAJour) > 0:
-            for element in interface.listeMiseAJour:
-                if not element in interface.listeInstallation:
+        if len(interface.listeMiseAJourPacman) > 0:
+            for element in interface.listeMiseAJourPacman:
+                if not element in interface.listeInstallationPacman:
                     listeTmp.append(element)
-                    
+
             if len(listeTmp) > 0:
                 miseajour = gtk.Dialog(fctLang.traduire("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_ADD, gtk.RESPONSE_ACCEPT, gtk.STOCK_OK, gtk.RESPONSE_OK))
-                miseajour.set_has_separator(True)
-                miseajour.set_default_response(gtk.RESPONSE_OK)
 
                 texteInfo = gtk.Label(fctLang.traduire("update_available"))
                 listeInfo = gtk.TreeStore(str)
@@ -779,7 +798,7 @@ class fonctionsInterface:
                 defilementInfo = gtk.ScrolledWindow()
                 grille = gtk.Table(2,2)
 
-                miseajour.set_has_separator(True)
+                #~ miseajour.set_has_separator(True)
                 miseajour.set_default_response(gtk.RESPONSE_ACCEPT)
                 miseajour.set_size_request(400, 400)
 
@@ -792,7 +811,7 @@ class fonctionsInterface:
 
                 colonnesInfo.append_column(colonneInfoNom)
                 colonnesInfo.set_model(listeInfo)
-                
+
                 grille.set_border_width(4)
 
                 defilementInfo.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -803,7 +822,7 @@ class fonctionsInterface:
 
                 grille.attach(texteInfo, 0, 1, 0, 1, yoptions=gtk.FILL)
                 grille.attach(defilementInfo, 0, 1, 1, 2)
-        
+
                 for element in listeTmp:
                     listeInfo.append(None, [element])
 
@@ -811,11 +830,67 @@ class fonctionsInterface:
                 choix = miseajour.run()
 
                 if choix == gtk.RESPONSE_ACCEPT:
-                    for element in interface.listeMiseAJour:
-                        if not element in interface.listeInstallation:
-                            interface.listeInstallation.append(str(element))
+                    for element in interface.listeMiseAJourPacman:
+                        if not element in interface.listeInstallationPacman:
+                            interface.listeInstallationPacman.append(str(element))
                     miseajour.destroy()
                 else:
                     miseajour.destroy()
-                
+            else:
+                interface.barreStatus.push(0, fctLang.traduire("no_update_available"))
+
         interface.fenetre.set_sensitive(True)
+
+
+    def fenetreConfirmation (interface, nomPaquet, listePaquet):
+        """
+        Fenêtre de confirmation pour la fonction fctPaquets.lancerPacman
+        """
+
+        fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+
+        texteConfirmation = gtk.Label(fctLang.traduire(nomPaquet))
+        listeConfirmation = gtk.TreeStore(str)
+        colonnesConfirmation = gtk.TreeView()
+        colonneConfirmationNom = gtk.TreeViewColumn()
+        celluleConfirmation = gtk.CellRendererText()
+        defilementConfirmation = gtk.ScrolledWindow()
+        grille = gtk.Table(2,2)
+
+        #~ confirmation.set_has_separator(True)
+        confirmation.set_default_response(gtk.RESPONSE_ACCEPT)
+        confirmation.set_size_request(400, 400)
+
+        colonnesConfirmation.set_headers_visible(False)
+        colonnesConfirmation.set_hover_selection(True)
+        colonnesConfirmation.expand_all()
+
+        colonneConfirmationNom.pack_start(celluleConfirmation, True)
+        colonneConfirmationNom.add_attribute(celluleConfirmation, "text", 0)
+
+        colonnesConfirmation.append_column(colonneConfirmationNom)
+        colonnesConfirmation.set_model(listeConfirmation)
+
+        grille.set_border_width(4)
+
+        defilementConfirmation.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        defilementConfirmation.add(colonnesConfirmation)
+        defilementConfirmation.set_border_width(4)
+
+        confirmation.vbox.pack_start(grille)
+
+        grille.attach(texteConfirmation, 0, 1, 0, 1, yoptions=gtk.FILL)
+        grille.attach(defilementConfirmation, 0, 1, 1, 2)
+
+        for element in listePaquet:
+            listeConfirmation.append(None, [element])
+
+        confirmation.show_all()
+        choix = confirmation.run()
+
+        if choix == gtk.RESPONSE_ACCEPT:
+            confirmation.destroy()
+            return 1
+        else:
+            confirmation.destroy()
+            return 0

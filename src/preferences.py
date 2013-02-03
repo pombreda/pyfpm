@@ -57,10 +57,9 @@ class fonctionsPreferences:
         fenetre.set_default_response(gtk.RESPONSE_OK)
         fenetre.set_resizable(True)
         fenetre.set_position(gtk.WIN_POS_CENTER)
-        #~ fenetre.set_size_request(400, 400)
 
         onglets.set_tab_pos(gtk.POS_LEFT)
-        
+
         generalLangueAsterix.set_alignment(0,0.5)
 
         generalLangue.attach(generalLangueLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
@@ -78,7 +77,7 @@ class fonctionsPreferences:
         grilleGeneral.attach(zoneGeneralLangue, 0, 1, 0, 1)
         grilleGeneral.attach(zoneGeneralDivers, 0, 1, 1, 2, yoptions=gtk.FILL)
         onglets.append_page(grilleGeneral, general)
-        
+
         objet.remplirLangue(generalLangueChoix)
         objet.remplirCases()
 
@@ -91,27 +90,27 @@ class fonctionsPreferences:
         onglets.append_page(grilleCommande, commande)
 
         objet.remplirOutils(generalCommandeChoix)
-        
+
         #~ onglets.append_page(zoneDivers, divers)
 
         fenetre.vbox.pack_start(onglets)
 
         fenetre.show_all()
         reponse = fenetre.run()
-        
+
         if reponse == gtk.RESPONSE_APPLY:
             dico = {"lang" : fctLang.fichierLangue(generalLangueChoix.get_active_text()), "offline" : fctConfig.booleenMinuscule(objet.horsLigne.get_active()), "startupdate" : fctConfig.booleenMinuscule(objet.miseajourDemarrage.get_active()), "useprohibategroups" : fctConfig.booleenMinuscule(objet.afficherGroupes.get_active()), "width" : "1024", "height" : "600", "command" : generalCommandeChoix.get_active_text()}
-            
+
             modificationInterface = False
             if fctConfig.lireConfig("pyfpm", "useprohibategroups") != fctConfig.booleenMinuscule(objet.afficherGroupes.get_active()):
                 modificationInterface = True
-            
+
             fctConfig.ecrireConfig(dico)
-            
+
             if modificationInterface:
                 interface.effacerInterface()
                 fctEvent.ajouterGroupes(interface)
-                
+
             interface.rafraichirFenetre()
 
         fenetre.destroy()
@@ -124,21 +123,21 @@ class fonctionsPreferences:
 
         listeLangues = fctLang.recupererTraduction()
         listeLangues.sort()
-        
+
         for element in listeLangues:
                 liste.append_text(fctLang.nomLangue(element))
 
         liste.set_active(listeLangues.index(fctLang.traduire(fctConfig.lireConfig("pyfpm", "lang"))))
-        
-        
+
+
     def remplirOutils (objet, liste):
         """
         Récupère les outils de connexion en mode administrateur
         """
-        
+
         # Applications les plus connus
         listeOutils = ['gksu', 'kdsu']
-        
+
         if not fctConfig.lireConfig("admin", "command") in listeOutils:
             listeOutils.append(fctConfig.lireConfig("admin", "command"))
         listeOutils.sort()
@@ -146,15 +145,15 @@ class fonctionsPreferences:
         for element in listeOutils:
             if os.path.exists("/usr/bin/" + element):
                 liste.append_text(element)
-                
+
         liste.set_active(listeOutils.index(fctConfig.lireConfig("admin", "command")))
-        
-    
+
+
     def remplirCases (objet):
         """
         Met les cases à cocher aux bonnes valeurs
         """
-    
+
         objet.miseajourDemarrage.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "startupdate")))
         objet.afficherGroupes.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "useprohibategroups")))
         objet.horsLigne.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "offline")))

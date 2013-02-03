@@ -17,11 +17,11 @@
 
 import os, sys
 
-from package import *
 from display import *
+from package import *
 
-fctPaquets = fonctionsPaquets()
 fctInterface = fonctionsInterface()
+fctPaquets = fonctionsPaquets()
 
 # ----------------------------------------------------------------------
 #   Main
@@ -41,12 +41,15 @@ def main():
         elif sys.argv[1] == "-v" or sys.argv[1] == "--version":
             print ("pyFPM v.0001")
     else:
+        fctPaquets.demarrerPacman()
         fctPaquets.initialiserPacman()
-        
+
         fctLang.recupererTraduction()
         fctInterface.fenetrePrincipale()
         gtk.main()
+
         fctPaquets.terminerPacman()
+
 
 if __name__ == "__main__":
     sys.exit(main())
