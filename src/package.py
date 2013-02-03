@@ -21,7 +21,6 @@ from pypacman import *
 fctLang = fonctionsLang()
 
 modeDebug = 1
-printconsole = 0
 
 
 class fonctionsPaquets:
@@ -39,11 +38,11 @@ class fonctionsPaquets:
         Initialise pacman-g2 pour permettre d'être utilisé
         """
 
-        print fctLang.traduire("init_pacman")
+        objet.printDebug("DEBUG", fctLang.traduire("init_pacman"))
         pacman_init()
-        print fctLang.traduire("init_db")
+        objet.printDebug("DEBUG", fctLang.traduire("init_db"))
         pacman_init_database()
-        print fctLang.traduire("register_db")
+        objet.printDebug("DEBUG", fctLang.traduire("register_db"))
         pacman_register_all_database()
 
 
@@ -52,7 +51,7 @@ class fonctionsPaquets:
         Termine l'instance de pacman-g2
         """
 
-        print fctLang.traduire("close_pacman")
+        objet.printDebug("DEBUG", fctLang.traduire("close_pacman"))
         pacman_finally()
 
 
@@ -62,7 +61,7 @@ class fonctionsPaquets:
         Nettoye le cache de pacman-g2
         """
 
-        print fctLang.traduire("clean_cache")
+        objet.printDebug("DEBUG", fctLang.traduire("clean_cache"))
         pacman_sync_cleancache()
 
 
@@ -71,7 +70,7 @@ class fonctionsPaquets:
         Met à jour les dépôts de paquets
         """
 
-        print fctLang.traduire("update_db")
+        objet.printDebug("DEBUG", fctLang.traduire("update_db"))
         objet.terminerPacman()
         objet.initialiserPacman()
         pacman_update_db()
@@ -145,9 +144,11 @@ class fonctionsPaquets:
             listeInstallation = []
 
         if len(listeSuppression) > 0:
+            objet.printDebug("DEBUG", "Suppression de paquets")
             objet.suppressionPaquet(listeSuppression)
 
         if len(listeInstallation) > 0:
+            objet.printDebug("DEBUG", "Installation de paquets")
             objet.installationPaquet(listeInstallation)
 
 
@@ -167,14 +168,16 @@ class fonctionsPaquets:
             if pacman_trans_init(PM_TRANS_TYPE_REMOVE, pm_trans_flag, pacman_trans_cb_event(fpm_progress_event), pacman_trans_cb_conv(fpm_trans_conv), pacman_trans_cb_progress(fpm_progress_install)) == -1:
                 objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
+            objet.printDebug("DEBUG", "Initialisation de la transaction")
 
             if pacman_trans_addtarget(element) == -1:
                 objet.printDebug ("ERROR", "Impossible de désinstaller " + element)
                 objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
+            objet.printDebug("DEBUG", element + " ajouté")
 
             data = PM_LIST()
-            objet.printDebug ("DEBUG", "Préparation de la transaction")
+            objet.printDebug ("DEBUG", "Données récupérées")
 
             if pacman_trans_prepare(data) == -1:
                 if pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_UNSATISFIED_DEPS):
@@ -200,11 +203,12 @@ class fonctionsPaquets:
                 else:
                     objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                     return -1
-            else:
-                print 'test'
+            objet.printDebug ("DEBUG", "Transaction préparée avec succès")
+             
             if pacman_trans_commit(data) == -1:
                 objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
+            objet.printDebug ("DEBUG", "Envoie effectué")
 
             pacman_trans_release()
 
@@ -406,7 +410,7 @@ class fonctionsPaquets:
         Récupère les paquets dont une mise à jour est disponible
         """
 
-        print (fctLang.traduire("add_update_list"))
+        objet.printDebug("DEBUG", fctLang.traduire("add_update_list"))
 
         if len(liste) > 0:
             liste = []

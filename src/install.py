@@ -48,6 +48,7 @@ class fonctionsInstallation:
         """
         
         interface.barreProgres.set_text(texte)
+        interface.rafraichirFenetre()
 
     
     def changerBarreProgres (interface, valeur):
@@ -56,3 +57,17 @@ class fonctionsInstallation:
         """
         
         interface.barreProgres.set_fraction(valeur)
+        interface.rafraichirFenetre()
+
+
+    def rafraichirFenetre (interface):
+        """
+        Rafraichit l'interface quand des changements ont lieux
+        """
+
+        try :
+            while gtk.events_pending():
+                gtk.main_iteration_do(False)
+
+        except:
+            pass

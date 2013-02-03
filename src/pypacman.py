@@ -18,7 +18,7 @@
 import pacmang2.libpacman
 from pacmang2.libpacman import *
 
-pacmang2.libpacman.printconsole=1
+pacmang2.libpacman.printconsole=0
 
 def pacman_remove_pkg(packagename,removedep=0):
   #TODO : can remove group pacman_db_readgrp  pacman_grp_getinfo

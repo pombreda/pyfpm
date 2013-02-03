@@ -14,11 +14,13 @@ try:
 except ImportError:
     sys.exit("pyGTK introuvable")
 
-from config import *
-from lang import *
+from package import *
 from action import *
 from preferences import *
+from config import *
+from lang import *
 
+fctPaquets = fonctionsPaquets()
 fctEvent = fonctionsEvenement()
 fctPrefs = fonctionsPreferences()
 fctConfig = fonctionsConfiguration()
@@ -535,7 +537,7 @@ class fonctionsInterface:
             paquets = fctPaquets.chercherPaquet(db_list[interface.listeSelectionGroupe.get_active()], objetRechercher)
 
             if not interface.recherche_mode:
-                print (str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
+                fctPaquets.printDebug("DEBUG", str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
                 interface.changerTexteBarreStatus(str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
 
             interface.recherche_mode = True
