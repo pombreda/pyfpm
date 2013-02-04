@@ -534,20 +534,21 @@ class fonctionsInterface:
             interface.listeColonnePaquets.clear()
             objetRechercher = interface.texteRecherche.get_text()
 
-            paquets = fctPaquets.chercherPaquet(db_list[interface.listeSelectionGroupe.get_active()], objetRechercher)
+            #~ paquets = fctPaquets.chercherPaquet(db_list[interface.listeSelectionGroupe.get_active()], objetRechercher)
+            paquets = fctPaquets.chercherPaquet(objetRechercher)
 
-            if not interface.recherche_mode:
-                fctPaquets.printDebug("DEBUG", str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
-                interface.changerTexteBarreStatus(str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
+            #~ if not interface.recherche_mode:
+            fctPaquets.printDebug("DEBUG", str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
+            interface.changerTexteBarreStatus(str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
 
             interface.recherche_mode = True
             interface.recherche_nom = objetRechercher
 
             if len(paquets) > 0:
                 pacman_trans_release()
-                fctEvent.remplirPaquets(interface, paquets)
+                fctEvent.remplirPaquets(interface, paquets, recherche = True)
 
-            #~ interface.effacerRecherche()
+            interface.effacerRecherche()
 
 
     def effacerRecherche (interface, *args):
@@ -685,7 +686,6 @@ class fonctionsInterface:
         Affiche les modifications à effectuer sur les paquets
         """
 
-        index = 0
         if "frugalware" in repo_list:
             index = repo_list.index("frugalware")
         elif "frugalware-current" in repo_list:

@@ -52,8 +52,8 @@ class fonctionsConfiguration:
             configuration.set("pyfpm", "startupdate", dico.get("startupdate", "true"))
             configuration.set("pyfpm", "useprohibategroups", dico.get("useprohibategroups", "false"))
             
-            configuration.set("screen", "width", "1024")
-            configuration.set("screen", "height", "600")
+            configuration.set("screen", "width", objet.lireConfig("screen", "width"))
+            configuration.set("screen", "height", objet.lireConfig("screen", "height"))
             
             configuration.set("admin", "command", dico.get("command", "gksu"))
             

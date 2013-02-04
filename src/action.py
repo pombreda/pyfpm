@@ -81,7 +81,7 @@ class fonctionsEvenement:
         objet.remplirPaquets(interface, paquets)
 
 
-    def remplirPaquets (objet, interface, paquets):
+    def remplirPaquets (objet, interface, paquets, recherche = False):
         """
         Ajoute les paquets dans l'interface
         """
@@ -90,8 +90,12 @@ class fonctionsEvenement:
         interface.listeColonnePaquets.clear()
 
         for element in paquets:
-            nomPaquet = pacman_pkg_get_info(element, PM_PKG_NAME)
-            versionPaquet = pacman_pkg_get_info(element, PM_PKG_VERSION)
+            if not recherche:
+                nomPaquet = pacman_pkg_get_info(element, PM_PKG_NAME)
+                versionPaquet = pacman_pkg_get_info(element, PM_PKG_VERSION)
+            elif recherche:
+                nomPaquet = pacman_pkg_get_info(element[1], PM_PKG_NAME)
+                versionPaquet = pacman_pkg_get_info(element[1], PM_PKG_VERSION)
 
             if pacman_package_intalled(nomPaquet, versionPaquet):
                 # Le paquet est installé
@@ -121,7 +125,10 @@ class fonctionsEvenement:
             elif nomPaquet in interface.listeSuppressionPacman:
                 objetTrouve = 0
                 image = gtk.STOCK_REMOVE
-
+            
+            if recherche:
+                nomPaquet = "[" + element[0] + "] " + nomPaquet
+            
             interface.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
 
         interface.rafraichirFenetre()
@@ -135,7 +142,10 @@ class fonctionsEvenement:
 
         interface.changerTexteBarreStatus(fctLang.traduire("read_pkg") + " " + nomPaquet)
         objetTrouve = 0
-
+        
+        if nomPaquet.find("]") != -1:
+            nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
+        
         try:
             listePaquets = pacman_search_pkg(nomPaquet)
             interface.paquetSelectionne = nomPaquet
@@ -180,7 +190,7 @@ class fonctionsEvenement:
         interface.contenuInformations.append(None, [fctLang.traduire("name"), nomPaquet])
         interface.contenuInformations.append(None, [fctLang.traduire("version"), versionPaquet])
 
-        interface.contenuInformations.append(None, [fctLang.traduire("description"), str(pacman_pkg_get_info(paquet, PM_PKG_DESC))])
+        interface.contenuInformations.append(None, [fctLang.traduire("description"), pacman_pkg_get_info(paquet, PM_PKG_DESC).replace("&","&amp;")])
 
         # Liste des groupes
         texte = ""

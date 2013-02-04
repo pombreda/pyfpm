@@ -423,25 +423,28 @@ class fonctionsPaquets:
                 liste.append(pointer_to_string(element))
 
 
-    def chercherPaquet (objet, depot, nomPaquet):
+    #~ def chercherPaquet (objet, depot, nomPaquet):
+    def chercherPaquet (objet, nomPaquet):
         """
         Chercher les paquets correspondant à la recherche dans le dépôt sélectionné
         """
 
         listePaquetsTrouves = []
 
-        pacman_set_option(PM_OPT_NEEDLES, nomPaquet)
-        listePaquets = pacman_db_search(depot)
+        for element in repo_list:
+            if repo_list.index(element) > 0:
+                pacman_set_option(PM_OPT_NEEDLES, nomPaquet)
+                listePaquets = pacman_db_search(db_list[repo_list.index(element)])
 
-        if listePaquets != None:
-            i = pacman_list_first(listePaquets)
+                if listePaquets != None:
+                    i = pacman_list_first(listePaquets)
 
-            while i != 0:
-                paquet = pacman_db_readpkg(depot, pacman_list_getdata(i))
+                    while i != 0:
+                        paquet = pacman_db_readpkg(db_list[repo_list.index(element)], pacman_list_getdata(i))
 
-                listePaquetsTrouves.append(paquet)
+                        listePaquetsTrouves.append([element, paquet])
 
-                i = pacman_list_next(i)
+                        i = pacman_list_next(i)
 
         return listePaquetsTrouves
 
