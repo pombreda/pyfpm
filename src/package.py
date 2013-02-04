@@ -130,9 +130,6 @@ class fonctionsPaquets:
         Deuxième étape : Installation des paquets sélectionnés
         """
 
-        objet.terminerPacman()
-        objet.initialiserPacman()
-
         if listeSuppressionPacman != "None":
             listeSuppression = listeSuppressionPacman.split(",")
         else:
@@ -144,10 +141,14 @@ class fonctionsPaquets:
             listeInstallation = []
 
         if len(listeSuppression) > 0:
+            objet.terminerPacman()
+            objet.initialiserPacman()
             objet.printDebug("DEBUG", "Suppression de paquets")
             objet.suppressionPaquet(listeSuppression)
 
         if len(listeInstallation) > 0:
+            objet.terminerPacman()
+            objet.initialiserPacman()
             objet.printDebug("DEBUG", "Installation de paquets")
             objet.installationPaquet(listeInstallation)
 
@@ -177,7 +178,7 @@ class fonctionsPaquets:
             objet.printDebug("DEBUG", element + " ajouté")
 
             data = PM_LIST()
-            objet.printDebug ("DEBUG", "Données récupérées")
+            objet.printDebug ("DEBUG", "Vérification des dépendances inverses")
 
             if pacman_trans_prepare(data) == -1:
                 if pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_UNSATISFIED_DEPS):
@@ -208,7 +209,7 @@ class fonctionsPaquets:
             if pacman_trans_commit(data) == -1:
                 objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
-            objet.printDebug ("DEBUG", "Envoie effectué")
+            objet.printDebug ("DEBUG", "Suppression de " + element)
 
             pacman_trans_release()
 
@@ -234,19 +235,19 @@ class fonctionsPaquets:
                 objet.printDebug ("DEBUG", element + " ajouté")
 
         data = PM_LIST()
-        objet.printDebug ("DEBUG", "Données récupérées")
+        objet.printDebug ("DEBUG", "Récupération des dépendances")
 
         if pacman_trans_prepare(data) == -1:
             objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_prepare : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
             return -1
         else:
-            objet.printDebug ("DEBUG", "Transaction préparée avec succès")
+            objet.printDebug ("DEBUG", "Téléchargement des paquets")
 
         if pacman_trans_commit(data) == -1:
             objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_commit : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
             return -1
         else:
-            objet.printDebug ("DEBUG", "Envoie effectué")
+            objet.printDebug ("DEBUG", "Installation des paquets")
 
         pacman_trans_release()
         return 1

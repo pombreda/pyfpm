@@ -685,7 +685,11 @@ class fonctionsInterface:
         Affiche les modifications à effectuer sur les paquets
         """
 
-        #~ interface.listeInstallationPacman, interface.listeSuppressionPacman = fctPaquets.preparerPacman(interface, interface.listeInstallationPacman, interface.listeSuppressionPacman)
+        index = 0
+        if "frugalware" in repo_list:
+            index = repo_list.index("frugalware")
+        elif "frugalware-current" in repo_list:
+            index = repo_list.index("frugalware-current")
 
         if interface.recherche_mode == False:
             interface.selectionGroupe = interface.colonneGroupes.get_selection()
@@ -699,75 +703,121 @@ class fonctionsInterface:
             interface.listeSuppressionPacman.sort()
 
             fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
+            texteFenetre = gtk.Label(fctLang.traduire("change_todo"))
 
+            grilleInstallation = gtk.Table(1,3)
             zoneInstallation = gtk.Frame(fctLang.traduire("install_pkg"))
-            listeInstallation = gtk.TreeStore(str)
+            listeInstallation = gtk.TreeStore(str, str)
             colonnesInstallation = gtk.TreeView()
             colonneInstallationNom = gtk.TreeViewColumn()
-            celluleInstallation = gtk.CellRendererText()
+            colonneInstallationTaille = gtk.TreeViewColumn()
+            celluleInstallationNom = gtk.CellRendererText()
+            celluleInstallationTaille = gtk.CellRendererText()
             defilementInstallation = gtk.ScrolledWindow()
+            tailleInstallation = gtk.Label("")
+            verifierDependancesInstallation = gtk.CheckButton(fctLang.traduire("skip_check_deps"))
+            seulementTelecharger = gtk.CheckButton(fctLang.traduire("download_only"))
 
+            grilleSuppression = gtk.Table(1,3)
             zoneSuppression = gtk.Frame(fctLang.traduire("remove_pkg"))
-            listeSuppression = gtk.TreeStore(str)
+            listeSuppression = gtk.TreeStore(str, str)
             colonnesSuppression = gtk.TreeView()
             colonneSuppressionNom = gtk.TreeViewColumn()
-            celluleSuppression = gtk.CellRendererText()
+            celluleSuppressionNom = gtk.CellRendererText()
+            colonneSuppressionTaille = gtk.TreeViewColumn()
+            celluleSuppressionTaille = gtk.CellRendererText()
             defilementSuppression = gtk.ScrolledWindow()
+            tailleSuppression = gtk.Label("")
+            verifierDependancesSuppression = gtk.CheckButton(fctLang.traduire("skip_check_deps"))
 
-            #~ fenetre.set_has_separator(True)
             fenetre.set_default_response(gtk.RESPONSE_OK)
             fenetre.set_size_request(400, 400)
+            
+            texteFenetre.set_alignment(-1, 0.5)
 
             colonnesInstallation.set_headers_visible(False)
             colonnesInstallation.set_hover_selection(True)
             colonnesInstallation.expand_all()
 
-            colonneInstallationNom.pack_start(celluleInstallation, True)
-            colonneInstallationNom.add_attribute(celluleInstallation, "text", 0)
+            colonneInstallationNom.pack_start(celluleInstallationNom, True)
+            colonneInstallationNom.add_attribute(celluleInstallationNom, "text", 0)
+            
+            colonneInstallationTaille.pack_start(celluleInstallationTaille, True)
+            colonneInstallationTaille.add_attribute(celluleInstallationTaille, "text", 1)
 
             colonnesInstallation.append_column(colonneInstallationNom)
+            colonnesInstallation.append_column(colonneInstallationTaille)
             colonnesInstallation.set_model(listeInstallation)
 
             defilementInstallation.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             defilementInstallation.add(colonnesInstallation)
             defilementInstallation.set_border_width(4)
+            
+            grilleInstallation.attach(defilementInstallation, 0, 1, 0, 1)
+            grilleInstallation.attach(tailleInstallation, 0, 1, 1, 2, yoptions=gtk.FILL, xoptions=gtk.FILL)
+            grilleInstallation.attach(verifierDependancesInstallation, 0, 1, 2, 3, yoptions=gtk.FILL)
+            grilleInstallation.attach(seulementTelecharger, 0, 1, 3, 4, yoptions=gtk.FILL)
+            grilleInstallation.set_border_width(4)
 
-            zoneInstallation.add(defilementInstallation)
+            zoneInstallation.add(grilleInstallation)
             zoneInstallation.set_border_width(4)
 
             colonnesSuppression.set_headers_visible(False)
             colonnesSuppression.set_hover_selection(True)
             colonnesSuppression.expand_all()
 
-            colonneSuppressionNom.pack_start(celluleSuppression, True)
-            colonneSuppressionNom.add_attribute(celluleSuppression, "text", 0)
+            colonneSuppressionNom.pack_start(celluleSuppressionNom, True)
+            colonneSuppressionNom.add_attribute(celluleSuppressionNom, "text", 0)
+
+            colonneSuppressionTaille.pack_start(celluleSuppressionTaille, True)
+            colonneSuppressionTaille.add_attribute(celluleSuppressionTaille, "text", 1)
 
             colonnesSuppression.append_column(colonneSuppressionNom)
+            colonnesSuppression.append_column(colonneSuppressionTaille)
             colonnesSuppression.set_model(listeSuppression)
 
             defilementSuppression.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             defilementSuppression.add(colonnesSuppression)
             defilementSuppression.set_border_width(4)
+            
+            grilleSuppression.attach(defilementSuppression, 0, 1, 0, 1)
+            grilleSuppression.attach(tailleSuppression, 0, 1, 1, 2, yoptions=gtk.FILL, xoptions=gtk.FILL)
+            grilleSuppression.attach(verifierDependancesSuppression, 0, 1, 2, 3, yoptions=gtk.FILL)
+            grilleSuppression.set_border_width(4)
 
-            zoneSuppression.add(defilementSuppression)
+            zoneSuppression.add(grilleSuppression)
             zoneSuppression.set_border_width(4)
 
+            fenetre.vbox.pack_start(texteFenetre, expand=False)
             if len(interface.listeInstallationPacman) != 0:
+                valeurInstallation = 0
                 for element in interface.listeInstallationPacman:
-                    listeInstallation.append(None, [element])
+                    paquet = pacman_db_readpkg(db_list[index], element)
+                    listeInstallation.append(None, [element, str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+                    
+                    valeurInstallation += float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024
+                    
+                tailleInstallation.set_text(fctLang.traduire("total_size") + " : " + str(format(valeurInstallation, '.2f')) + " MB")
                 fenetre.vbox.pack_start(zoneInstallation)
 
             if len(interface.listeSuppressionPacman) != 0:
+                valeurSuppression = 0
                 for element in interface.listeSuppressionPacman:
-                    listeSuppression.append(None, [element])
+                    paquet = pacman_db_readpkg(db_list[index], element)
+                    listeSuppression.append(None, [element, str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+                    
+                    valeurSuppression += float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024
+                    
+                tailleSuppression.set_text(fctLang.traduire("total_size") + " : " + str(format(valeurSuppression, '.2f')) + " MB")
                 fenetre.vbox.pack_start(zoneSuppression)
-
+ 
             fenetre.show_all()
             choix = fenetre.run()
 
             if choix == gtk.RESPONSE_APPLY:
                 fenetre.destroy()
                 fctEvent.lancerInstallationPaquets(interface)
+                interface.effacerListesPaquets()
             else:
                 fenetre.destroy()
         else:

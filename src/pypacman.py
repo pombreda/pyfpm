@@ -15,10 +15,9 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-import pacmang2.libpacman
-from pacmang2.libpacman import *
+from libpacman import *
 
-pacmang2.libpacman.printconsole=0
+printconsole=0
 
 def pacman_remove_pkg(packagename,removedep=0):
   #TODO : can remove group pacman_db_readgrp  pacman_grp_getinfo
@@ -253,7 +252,7 @@ def print_console_ask(question):
 #start main program
 for arg in sys.argv:
     if arg=="--debug":
-      pacmang2.libpacman.debug=1
+      debug=1
       print_console("enable debug mode")
       break
 
