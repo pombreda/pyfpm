@@ -489,17 +489,22 @@ class fonctionsInterface:
 
         modele = liste.get_model()
         modele[colonne][0] = not modele[colonne][0]
+        
+        nomPaquet = modele[colonne][2]
+        
+        if nomPaquet.find("]") != -1:
+            nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
 
-        elementAjouter = fctEvent.verifierDonnee(interface.listeInstallationPacman, modele[colonne][2])
-        elementEnlever = fctEvent.verifierDonnee(interface.listeSuppressionPacman, modele[colonne][2])
+        elementAjouter = fctEvent.verifierDonnee(interface.listeInstallationPacman, nomPaquet)
+        elementEnlever = fctEvent.verifierDonnee(interface.listeSuppressionPacman, nomPaquet)
 
         if modele[colonne][0] == 0:
             # Le paquet en question à été décoché
-            if pacman_package_intalled(modele[colonne][2], modele[colonne][3]) == 1:
+            if pacman_package_intalled(nomPaquet, modele[colonne][3]) == 1:
                 # Le paquet en question est installé
                 if elementEnlever == 0:
                     # Le paquet est mis dans la liste des paquets à supprimer
-                    interface.listeSuppressionPacman.append(modele[colonne][2])
+                    interface.listeSuppressionPacman.append(nomPaquet)
                     modele[colonne][1] = gtk.STOCK_REMOVE
             else:
                 if elementAjouter != 0:
@@ -509,7 +514,7 @@ class fonctionsInterface:
 
         else:
             # Le paquet en question à été coché
-            if pacman_package_intalled(modele[colonne][2], modele[colonne][3]) == 1:
+            if pacman_package_intalled(nomPaquet, modele[colonne][3]) == 1:
                 # Le paquet en question est installé
                 if elementEnlever != 0:
                     # Le paquet est enlevé de la liste des paquets à supprimer
@@ -521,7 +526,7 @@ class fonctionsInterface:
             else:
                 if elementAjouter == 0:
                     # Le paquet est mis dans la liste des paquets à installer
-                    interface.listeInstallationPacman.append(modele[colonne][2])
+                    interface.listeInstallationPacman.append(nomPaquet)
                     modele[colonne][1] = gtk.STOCK_ADD
 
 
@@ -792,6 +797,8 @@ class fonctionsInterface:
             if len(interface.listeInstallationPacman) != 0:
                 valeurInstallation = 0
                 for element in interface.listeInstallationPacman:
+                    if element.find("]") != -1:
+                        element = element[element.find("]") + 1:].strip()
                     paquet = pacman_db_readpkg(db_list[index], element)
                     listeInstallation.append(None, [element, str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
                     
@@ -803,6 +810,8 @@ class fonctionsInterface:
             if len(interface.listeSuppressionPacman) != 0:
                 valeurSuppression = 0
                 for element in interface.listeSuppressionPacman:
+                    if element.find("]") != -1:
+                        element = element[element.find("]") + 1:].strip()
                     paquet = pacman_db_readpkg(db_list[index], element)
                     listeSuppression.append(None, [element, str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
                     

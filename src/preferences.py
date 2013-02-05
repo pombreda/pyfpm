@@ -136,7 +136,7 @@ class fonctionsPreferences:
         """
 
         # Applications les plus connus
-        listeOutils = ['gksu', 'kdsu']
+        listeOutils = ['gksu', 'kdesudo']
 
         if not fctConfig.lireConfig("admin", "command") in listeOutils:
             listeOutils.append(fctConfig.lireConfig("admin", "command"))

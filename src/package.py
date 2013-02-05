@@ -493,6 +493,21 @@ class fonctionsPaquets:
             print ("[" + typeErreur + "] " + erreur)
 
 
+    def fenetreInformation (objet, titre, texte):
+        """
+        Affiche une fenêtre d'information
+        """
+
+        information = gtk.MessageDialog(None, gtk.DIALOG_ERROR, gtk.MESSAGE_INFO, gtk.BUTTONS_OK, texte)
+
+        information.set_title(titre)
+        information.set_default_response(gtk.RESPONSE_OK)
+
+        information.run()
+
+        information.destroy()
+
+
 def main (*args):
     """
     Partie nécessaire pour l'execution de certaines commandes avec les
