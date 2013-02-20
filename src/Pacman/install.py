@@ -14,9 +14,9 @@ try:
 except ImportError:
     sys.exit("pyGTK introuvable")
 
-from lang import *
-
-fctLang = fonctionsLang()
+#~ from lang import *
+#~ 
+#~ fctLang = fonctionsLang()
 
 
 class fonctionsInstallation:

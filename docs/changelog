@@ -1,0 +1,48 @@
+    
+    pyFPM 0001_pre1 : 3 fevrier 2013
+        - L'installation et la suppression de paquet est possible
+        - Nettoyage de code
+        - Affichage des informations pour la suppression et installation
+        - Correction de la libpacman dans pypacman.py
+        - Les depots sont affiches lors d'une recherche
+        - Les paquets selectionnes par recherche peuvent etre installer
+        - kdsu -> kdesudo
+    
+    
+    pyFPM 0001_r6 : 25 janvier 2013
+        - L'utilisateur peut modifier le fichier de configuration depuis pyfpm
+        - Restructuration de fonctions
+        - Implementation de l'algo permettant d'installer/supprimer des paquets
+        - Nettoyage de code
+    
+    
+    pyFPM 0001_r5 : 21 janvier 2013
+        - Fenetre des preferences ajoutee
+        - Gestion des dependances non installees a installer
+        - Installation de paquets possible
+        - Plus d'informations affichees pour un paquet
+        - Quelques corrections de fonctions
+    
+    
+    pyFPM 0001_r4 : 18 janvier 2013
+        - La mise a jour des depots est maintenant possible
+        - Correction de la fonction de recuperation des mises a jour
+
+
+    pyFPM 0001_r3 : 15 janvier 2013
+        - Reecriture de la fonction de remplissage des paquets
+        - Ajout d'une fonction pour choisir son depot
+        - Revision du fichier de langue francaise
+        - Mise en place de la structure de mise a jour du systeme
+
+
+    pyFPM 0001_r2 : 11 janvier 2013
+        - Nouveau logo
+        - Nettoyage des fonctions
+        - Amélioration de l'affichage des paquets
+        - Ajout d'icones dans la liste des paquets
+
+
+    pyFPM 0001_r1 : 07 janvier 2013
+        - Restructuration du code en fichiers multiples
+        - Ajout de libpacman.py pour sauvegarde

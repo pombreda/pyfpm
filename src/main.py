@@ -17,11 +17,18 @@
 
 import os, sys
 
-from display import *
-from package import *
+try:
+    import pygtk, gtk
+except ImportError:
+    sys.exit(fctLang.traduire("pygtk_not_found"))
 
-fctInterface = fonctionsInterface()
-fctPaquets = fonctionsPaquets()
+
+from Display import display
+fctInterface = display.fonctionsInterface()
+
+from Pacman import package
+fctPaquets = package.fonctionsPaquets()
+
 
 # ----------------------------------------------------------------------
 #   Main
@@ -44,7 +51,6 @@ def main():
         fctPaquets.demarrerPacman()
         fctPaquets.initialiserPacman()
 
-        fctLang.recupererTraduction()
         fctInterface.fenetrePrincipale()
         gtk.main()
 

@@ -14,17 +14,14 @@ try:
 except ImportError:
     sys.exit("pyGTK introuvable")
 
-from config import *
-from lang import *
-from action import *
 
-fctConfig = fonctionsConfiguration()
-fctLang = fonctionsLang()
-fctEvent = fonctionsEvenement()
+from Misc import config, lang, files
+fctLang = lang.fonctionsLang()
+fctConfig = config.fonctionsConfiguration()
 
 
-class fonctionsPreferences:
-    def fenetrePreferences (objet, widget, interface):
+class fonctionsPreferences (object):
+    def fenetrePreferences (self, widget, interface):
 
         fenetre = gtk.Dialog(fctLang.traduire("preferences_title"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
 
@@ -39,9 +36,9 @@ class fonctionsPreferences:
         generalLangueAsterix = gtk.Label("*" + fctLang.traduire("need_reboot"))
         zoneGeneralDivers = gtk.Frame(fctLang.traduire("misc"))
         grilleGeneralCocher = gtk.Table(1,2)
-        objet.miseajourDemarrage = gtk.CheckButton(fctLang.traduire("start_update"))
-        objet.afficherGroupes = gtk.CheckButton(fctLang.traduire("use_prohibate_groups"))
-        objet.horsLigne = gtk.CheckButton(fctLang.traduire("offline"))
+        self.miseajourDemarrage = gtk.CheckButton(fctLang.traduire("start_update"))
+        self.afficherGroupes = gtk.CheckButton(fctLang.traduire("use_prohibate_groups"))
+        self.modeDeveloppement = gtk.CheckButton(fctLang.traduire("development_mode"))
 
         commande = gtk.Label(fctLang.traduire("pacman"))
         grilleCommande = gtk.Table(1,1)
@@ -68,9 +65,9 @@ class fonctionsPreferences:
         generalLangue.set_border_width(4)
         zoneGeneralLangue.add(generalLangue)
         zoneGeneralLangue.set_border_width(4)
-        grilleGeneralCocher.attach(objet.miseajourDemarrage, 0, 1, 0, 1)
-        grilleGeneralCocher.attach(objet.afficherGroupes, 0, 1, 1, 2)
-        grilleGeneralCocher.attach(objet.horsLigne, 0, 1,2, 3)
+        grilleGeneralCocher.attach(self.miseajourDemarrage, 0, 1, 0, 1)
+        grilleGeneralCocher.attach(self.afficherGroupes, 0, 1, 1, 2)
+        grilleGeneralCocher.attach(self.modeDeveloppement, 0, 1,2, 3)
         grilleGeneralCocher.set_border_width(4)
         zoneGeneralDivers.add(grilleGeneralCocher)
         zoneGeneralDivers.set_border_width(4)
@@ -78,8 +75,8 @@ class fonctionsPreferences:
         grilleGeneral.attach(zoneGeneralDivers, 0, 1, 1, 2, yoptions=gtk.FILL)
         onglets.append_page(grilleGeneral, general)
 
-        objet.remplirLangue(generalLangueChoix)
-        objet.remplirCases()
+        self.remplirLangue(generalLangueChoix)
+        self.remplirCases()
 
         generalCommande.attach(generalCommandeLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
         generalCommande.attach(generalCommandeChoix, 1, 2, 0, 1, yoptions=gtk.FILL)
@@ -89,7 +86,7 @@ class fonctionsPreferences:
         grilleCommande.attach(zoneCommande, 0, 1, 0, 1)
         onglets.append_page(grilleCommande, commande)
 
-        objet.remplirOutils(generalCommandeChoix)
+        self.remplirOutils(generalCommandeChoix)
 
         #~ onglets.append_page(zoneDivers, divers)
 
@@ -99,10 +96,10 @@ class fonctionsPreferences:
         reponse = fenetre.run()
 
         if reponse == gtk.RESPONSE_APPLY:
-            dico = {"lang" : fctLang.fichierLangue(generalLangueChoix.get_active_text()), "offline" : fctConfig.booleenMinuscule(objet.horsLigne.get_active()), "startupdate" : fctConfig.booleenMinuscule(objet.miseajourDemarrage.get_active()), "useprohibategroups" : fctConfig.booleenMinuscule(objet.afficherGroupes.get_active()), "width" : "1024", "height" : "600", "command" : generalCommandeChoix.get_active_text()}
+            dico = {"lang" : fctLang.fichierLangue(generalLangueChoix.get_active_text()), "developmentmode" : fctConfig.booleenMinuscule(self.modeDeveloppement.get_active()), "startupdate" : fctConfig.booleenMinuscule(self.miseajourDemarrage.get_active()), "useprohibategroups" : fctConfig.booleenMinuscule(self.afficherGroupes.get_active()), "width" : "1024", "height" : "600", "command" : generalCommandeChoix.get_active_text()}
 
             modificationInterface = False
-            if fctConfig.lireConfig("pyfpm", "useprohibategroups") != fctConfig.booleenMinuscule(objet.afficherGroupes.get_active()):
+            if fctConfig.lireConfig("pyfpm", "useprohibategroups") != fctConfig.booleenMinuscule(self.afficherGroupes.get_active()):
                 modificationInterface = True
 
             fctConfig.ecrireConfig(dico)
@@ -116,7 +113,7 @@ class fonctionsPreferences:
         fenetre.destroy()
 
 
-    def remplirLangue (objet, liste):
+    def remplirLangue (self, liste):
         """
         Récupère les fichiers de langues disponible et en récupère le nom
         """
@@ -130,13 +127,13 @@ class fonctionsPreferences:
         liste.set_active(listeLangues.index(fctLang.traduire(fctConfig.lireConfig("pyfpm", "lang"))))
 
 
-    def remplirOutils (objet, liste):
+    def remplirOutils (self, liste):
         """
         Récupère les outils de connexion en mode administrateur
         """
 
         # Applications les plus connus
-        listeOutils = ['gksu', 'kdesudo']
+        listeOutils = ['ktsuss', 'gksu', 'gksudo', 'gnomesu', 'kdesu', 'kdesudo', 'xdg-su']
 
         if not fctConfig.lireConfig("admin", "command") in listeOutils:
             listeOutils.append(fctConfig.lireConfig("admin", "command"))
@@ -145,15 +142,17 @@ class fonctionsPreferences:
         for element in listeOutils:
             if os.path.exists("/usr/bin/" + element):
                 liste.append_text(element)
+            elif os.path.exists(element):
+                liste.append_text(element)
 
         liste.set_active(listeOutils.index(fctConfig.lireConfig("admin", "command")))
 
 
-    def remplirCases (objet):
+    def remplirCases (self):
         """
         Met les cases à cocher aux bonnes valeurs
         """
 
-        objet.miseajourDemarrage.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "startupdate")))
-        objet.afficherGroupes.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "useprohibategroups")))
-        objet.horsLigne.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "offline")))
+        self.miseajourDemarrage.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "startupdate")))
+        self.afficherGroupes.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "useprohibategroups")))
+        self.modeDeveloppement.set_active(fctConfig.booleenVersEntier(fctConfig.lireConfig("pyfpm", "developmentmode")))

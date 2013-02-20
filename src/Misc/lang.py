@@ -7,15 +7,15 @@
 #
 # ----------------------------------------------------------------------
 
-import string
+import os, sys, string
+from ConfigParser import SafeConfigParser
 
-from config import *
+from . import config, files
+fctConfig = config.fonctionsConfiguration()
 
-fctConfig = fonctionsConfiguration()
 
-
-class fonctionsLang:
-    def traduire (objet, mot):
+class fonctionsLang (object):
+    def traduire (self, mot):
         """
         Récupère la traduction du mot dans le fichier de langue
         correspondant
@@ -34,13 +34,13 @@ class fonctionsLang:
                     return mot
             except:
                 return mot
-                
-    
-    def nomLangue (objet, fichier):
+
+
+    def nomLangue (self, fichier):
         """
         Récupère le nom de la langue
         """
-        
+
         if fichier != "":
             try:
                 traduction = SafeConfigParser()
@@ -49,31 +49,31 @@ class fonctionsLang:
                 return traduction.get("information", "lang")
             except:
                 return fichier
-        
-    
-    def recupererTraduction (objet):
+
+
+    def recupererTraduction (self):
         """
         Récupère la liste des fichier de language dans ./lang
         """
-        
+
         liste = os.listdir('./lang')
         liste2 = []
-        
+
         for element in liste:
             nom = string.split(element, ".ini")
             liste2.append(nom[0])
-        
+
         return liste2
 
 
-    def fichierLangue (objet, nom):
-        
-        liste = objet.recupererTraduction()
-        
+    def fichierLangue (self, nom):
+
+        liste = self.recupererTraduction()
+
         index = ""
         for element in liste:
-            if objet.nomLangue(element) == nom:
+            if self.nomLangue(element) == nom:
                 index = element
-                
+
         return index
-                
+

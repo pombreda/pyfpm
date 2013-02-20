@@ -36,3 +36,4 @@ Paquet (package.py)
     TODO
         - Améliorer la fonction d'affichage de la date en format JJ/MM/AAAA
         - Gérer la version des paquets dans l'algo de vérification des dépendances [CANCELED]
+        - Afficher les actions de pacman-g2 sur la fenêtre

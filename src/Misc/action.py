@@ -7,23 +7,26 @@
 #
 # ----------------------------------------------------------------------
 
-import os
+import os, urllib
 
 try:
     import pygtk, gtk
 except ImportError:
     sys.exit("pyGTK introuvable")
 
-from display import *
-from package import *
-from lang import *
 
-fctPaquets = fonctionsPaquets()
-fctLang = fonctionsLang()
+from Pacman.libpacman import *
+from Pacman import package
+fctPaquets = package.fonctionsPaquets()
+
+from . import files, lang, config
+fctLang = lang.fonctionsLang()
+fctFile = files.fonctionsFichier()
+fctConfig = config.fonctionsConfiguration()
 
 
-class fonctionsEvenement:
-    def detruire (objet, fenetre):
+class fonctionsEvenement (object):
+    def detruire (self, fenetre):
         """
         Détruit l'interface et termine pyFPM
         """
@@ -31,7 +34,7 @@ class fonctionsEvenement:
         gtk.main_quit()
 
 
-    def ajouterDepots (objet, interface):
+    def ajouterDepots (self, interface):
         """
         Récupère les dépots disponible sur le système
         """
@@ -54,7 +57,7 @@ class fonctionsEvenement:
         interface.listeSelectionGroupe.set_active(index)
 
 
-    def ajouterGroupes (objet, interface):
+    def ajouterGroupes (self, interface):
         """
         Ajouter les groupes dans l'interface
         """
@@ -72,16 +75,16 @@ class fonctionsEvenement:
                 interface.listeColonneGroupes.append([nom])
 
 
-    def obtenirGroupe (objet, interface, groupe):
+    def obtenirGroupe (self, interface, groupe):
         """
         Obtenir les paquets correspondant au groupe sélectionné
         """
 
         paquets = fctPaquets.initialiserPaquets(interface, groupe)
-        objet.remplirPaquets(interface, paquets)
+        self.remplirPaquets(interface, paquets)
 
 
-    def remplirPaquets (objet, interface, paquets, recherche = False):
+    def remplirPaquets (self, interface, paquets, recherche = False):
         """
         Ajoute les paquets dans l'interface
         """
@@ -125,27 +128,27 @@ class fonctionsEvenement:
             elif nomPaquet in interface.listeSuppressionPacman:
                 objetTrouve = 0
                 image = gtk.STOCK_REMOVE
-            
-            if recherche:
+
+            if recherche and len(repo_list) > 2:
                 nomPaquet = "[" + element[0] + "] " + nomPaquet
-            
+
             interface.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
 
         interface.rafraichirFenetre()
         interface.changerTexteBarreStatus(str(len(interface.listeColonnePaquets)) + " " + fctLang.traduire("read_packages_done"))
 
 
-    def obtenirPaquet (objet, interface, nomPaquet, versionPaquet):
+    def obtenirPaquet (self, interface, nomPaquet, versionPaquet):
         """
         FIXME : Fusioner avec obtenirDetailsPaquet
         """
 
         interface.changerTexteBarreStatus(fctLang.traduire("read_pkg") + " " + nomPaquet)
         objetTrouve = 0
-        
+
         if nomPaquet.find("]") != -1:
             nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
-        
+
         try:
             listePaquets = pacman_search_pkg(nomPaquet)
             interface.paquetSelectionne = nomPaquet
@@ -153,7 +156,7 @@ class fonctionsEvenement:
             for paquet in listePaquets:
                 if pacman_pkg_get_info(paquet, PM_PKG_NAME) == nomPaquet and pacman_pkg_get_info(paquet, PM_PKG_VERSION) == versionPaquet:
                     objetTrouve = 1
-                    objet.obtenirDetailsPaquet(interface, nomPaquet, versionPaquet, paquet)
+                    self.obtenirDetailsPaquet(interface, nomPaquet, versionPaquet, paquet)
                     break
 
         except:
@@ -161,10 +164,10 @@ class fonctionsEvenement:
 
         if objetTrouve == 0:
             paquet = pacman_db_readpkg(db_list[0], nomPaquet)
-            objet.obtenirDetailsPaquet(interface, nomPaquet, versionPaquet, paquet)
+            self.obtenirDetailsPaquet(interface, nomPaquet, versionPaquet, paquet)
 
 
-    def obtenirDetailsPaquet (objet, interface, nomPaquet, versionPaquet, paquet):
+    def obtenirDetailsPaquet (self, interface, nomPaquet, versionPaquet, paquet):
         """
         Récupérer les informations correspondant au paquet délectionné :
             - nom
@@ -320,34 +323,100 @@ class fonctionsEvenement:
 
         texteBuffer.set_text(texte)
 
-        # Liste des fichiers inclus dans le paquet
+        # Changelog du paquet
         texte = ""
         texteBuffer = interface.listeJournal.get_buffer()
 
         if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
-            journal = PM_ROOT + PM_DBPATH + "/" + repo_list[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
-            if os.path.exists(journal) == True:
-                file = codecs.open(journal, "r", "utf-8")
-                for element in file:
-                    if element != "":
-                        texte += " " + element
-                file.close()
-            else:
-                texte = " " + fctLang.traduire("no_file_found")
+            try:
+                journal = PM_ROOT + PM_DBPATH + "/" + repo_list[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
+                if os.path.exists(journal) == True:
+                    file = codecs.open(journal, "r", "iso-8859-15")
+                    for element in file:
+                        if element != "":
+                            texte += " " + element
+                    file.close()
+                else:
+                    texte = " " + fctLang.traduire("no_file_found")
+            except:
+                texte = " " + fctLang.traduire("error")
         else:
             texte = " " + fctLang.traduire("no_info")
 
         texteBuffer.set_text(texte)
 
-        chemin = "/usr/share/icons/Frugalware/apps/16/" + nomPaquet + ".png"
-        if os.path.exists(chemin) == True:
-            image = gtk.gdk.pixbuf_new_from_file(chemin)
-        else:
-            image = None
-        interface.iconeInformations.set_from_pixbuf(image)
+        if fctConfig.lireConfig("pyfpm", "developmentmode") == "true":
+            # Liste des fichiers inclus dans le paquet
+            texte = ""
+            texteBuffer = interface.listeFrugalbuild.get_buffer()
+
+            try:
+                if self.recupererFrugalBuild(paquet):
+                    if os.path.exists("./tmp.frugalbuild") == True:
+                        file = codecs.open("./tmp.frugalbuild", "r", "utf-8")
+                        for element in file:
+                            if element != "":
+                                texte += " " + element
+                        file.close()
+            except:
+                texte = " " + fctLang.traduire("no_file_found")
+
+            texteBuffer.set_text(texte)
 
 
-    def lancerNettoyerCache (objet, image, interface):
+    def recupererFrugalBuild (self, paquet):
+        """
+        Récupère le FrugalBuild via le git de Frugalware
+        """
+
+        if "frugalware" in repo_list:
+            index = "frugalware"
+        elif "frugalware-current" in repo_list:
+            index = "frugalware-current"
+
+        listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
+        listeGroupes = []
+
+        # Liste des groupes
+        texte = ""
+
+        nomPaquet = pacman_pkg_get_info(paquet, PM_PKG_NAME)
+        groupes = pacman_pkg_getinfo(paquet, PM_PKG_GROUPS)
+
+        while groupes != 0:
+            nomGroupe = pointer_to_string(pacman_list_getdata(groupes))
+
+            listeGroupes.append(nomGroupe)
+
+            groupes = pacman_list_next(groupes)
+
+        for element in listeGroupes:
+            if not element in listeGroupesProhibes:
+                nomGroupe = element
+                break
+
+        url = "http://www7.frugalware.org/pub/frugalware/" + index + "/source/" + nomGroupe + "/" + nomPaquet + "/FrugalBuild"
+
+        try:
+            if fctFile.verifierErreurUrl(url) == 1:
+                fichierFB = urllib.urlopen(url)
+                fichierLocal = open("./tmp.frugalbuild", 'w')
+                fichierLocal.write(fichierFB.read())
+                fichierFB.close()
+                fichierLocal.close()
+                fctPaquets.printDebug("DEBUG", fctLang.traduire("download_complete") + " " + url)
+                resultat = True
+            else:
+                fctPaquets.printDebug("ERROR", fctLang.traduire("download_failed_404") + " " + url)
+        except:
+            fctPaquets.printDebug("ERROR", fctLang.traduire("download_failed") + " " + url)
+            resultat = False
+            pass
+
+        return resultat
+
+
+    def lancerNettoyerCache (self, image, interface):
         """
         Lancer la commande de nettoyage du cache
         """
@@ -356,20 +425,21 @@ class fonctionsEvenement:
         interface.changerTexteBarreStatus(fctLang.traduire("clean_cache"))
         interface.rafraichirFenetre()
 
-        if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py cleancache")
+        if self.verifierUtilisateur() == 0:
+            print
+            os.system(fctConfig.lireConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/restriction.py cleancache")
         else:
-            fctPaquets.nettoyerCache()
+            os.system("python -B " + os.path.realpath('.') + "/src/restriction.py cleancache")
 
         interface.effacerInterface()
-        objet.ajouterDepots(interface)
-        objet.ajouterGroupes(interface)
+        self.ajouterDepots(interface)
+        self.ajouterGroupes(interface)
         interface.changerTexteBarreStatus(fctLang.traduire("clean_cache_done"))
 
         interface.fenetre.set_sensitive(True)
 
 
-    def lancerMiseajourBaseDonnees (objet, image, interface):
+    def lancerMiseajourBaseDonnees (self, image, interface):
         """
         Lancer la commande de mise à jour des dépôts de paquets
         """
@@ -378,14 +448,14 @@ class fonctionsEvenement:
         interface.changerTexteBarreStatus(fctLang.traduire("update_db"))
         interface.rafraichirFenetre()
 
-        if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py updatedb")
+        if self.verifierUtilisateur() == 0:
+            os.system(fctConfig.lireConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/restriction.py updatedb")
         else:
-            os.system("python ./src/package.py updatedb")
+            os.system("python -B " + os.path.realpath('.') + "/src/restriction.py updatedb")
 
         interface.effacerInterface()
-        objet.ajouterDepots(interface)
-        objet.ajouterGroupes(interface)
+        self.ajouterDepots(interface)
+        self.ajouterGroupes(interface)
         interface.changerTexteBarreStatus(fctLang.traduire("update_db_done"))
 
         fctPaquets.initialiserGroupes(interface)
@@ -397,7 +467,7 @@ class fonctionsEvenement:
         interface.fenetre.set_sensitive(True)
 
 
-    def lancerInstallationPaquets (objet, interface):
+    def lancerInstallationPaquets (self, interface):
         """
         Lancer la commande d'installation de paquets
         """
@@ -424,14 +494,15 @@ class fonctionsEvenement:
         else:
             argumentSuppression = None
 
-        if objet.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python ./src/package.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
+
+        if self.verifierUtilisateur() == 0:
+            os.system(fctConfig.lireConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/Pacman/package.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
         else:
-            os.system("python ./src/package.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
+            os.system("python -B " + os.path.realpath('.') + "/src/Pacman/package.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
 
         interface.effacerInterface()
-        objet.ajouterDepots(interface)
-        objet.ajouterGroupes(interface)
+        self.ajouterDepots(interface)
+        self.ajouterGroupes(interface)
 
         fctPaquets.initialiserGroupes(interface)
         fctPaquets.obtenirMiseAJour(interface.listeMiseAJourPacman)
@@ -442,7 +513,7 @@ class fonctionsEvenement:
         interface.fenetre.set_sensitive(True)
 
 
-    def verifierDonnee (objet, liste, donnee):
+    def verifierDonnee (self, liste, donnee):
         """
         Vérifie si nom est dans liste
         """
@@ -457,7 +528,7 @@ class fonctionsEvenement:
         return objetTrouve
 
 
-    def verifierUtilisateur (objet):
+    def verifierUtilisateur (self):
         """
         Verifie quel utilisateur est en train d'utiliser pyFPM
         """

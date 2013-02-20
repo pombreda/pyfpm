@@ -7,76 +7,71 @@
 #
 # ----------------------------------------------------------------------
 
-import sys, string, time
+import os, sys, string, time
 
 try:
     import pygtk, gtk
 except ImportError:
-    sys.exit("pyGTK introuvable")
+    sys.exit("pygtk_not_found")
 
 from libpacman import *
-from lang import *
-from pypacman import *
 
-fctLang = fonctionsLang()
-
-modeDebug = 1
+modeDebug = True
 
 
-class fonctionsPaquets:
-    def demarrerPacman (objet):
+class fonctionsPaquets (object):
+    def demarrerPacman (self):
         """
         Vérifie qu'une instance de pacman-g2 n'est pas en cours
         """
 
         if os.path.exists(PM_LOCK):
-            sys.exit(fctLang.traduire("pacman_already_run"))
+            sys.exit("pacman_already_run")
 
 
-    def initialiserPacman (objet):
+    def initialiserPacman (self):
         """
         Initialise pacman-g2 pour permettre d'être utilisé
         """
 
-        objet.printDebug("DEBUG", fctLang.traduire("init_pacman"))
+        self.printDebug("DEBUG", "init_pacman")
         pacman_init()
-        objet.printDebug("DEBUG", fctLang.traduire("init_db"))
+        self.printDebug("DEBUG", "init_db")
         pacman_init_database()
-        objet.printDebug("DEBUG", fctLang.traduire("register_db"))
+        self.printDebug("DEBUG", "register_db")
         pacman_register_all_database()
 
 
-    def terminerPacman (objet):
+    def terminerPacman (self):
         """
         Termine l'instance de pacman-g2
         """
 
-        objet.printDebug("DEBUG", fctLang.traduire("close_pacman"))
+        self.printDebug("DEBUG", "close_pacman")
         pacman_finally()
 
 
-
-    def nettoyerCache (objet):
+    def nettoyerCache (self):
         """
         Nettoye le cache de pacman-g2
         """
 
-        objet.printDebug("DEBUG", fctLang.traduire("clean_cache"))
+        self.printDebug("DEBUG", "clean_cache")
         pacman_sync_cleancache()
 
 
-    def miseajourBaseDonnees (objet):
+    def miseajourBaseDonnees (self):
         """
         Met à jour les dépôts de paquets
         """
 
-        objet.printDebug("DEBUG", fctLang.traduire("update_db"))
-        objet.terminerPacman()
-        objet.initialiserPacman()
+        self.printDebug("DEBUG", "update_db")
+        self.terminerPacman()
+        self.initialiserPacman()
         pacman_update_db()
 
 
-    def initialiserGroupes (objet, interface):
+    def initialiserGroupes (self, interface):
         """
         Initialise la liste des groupes
         """
@@ -99,7 +94,7 @@ class fonctionsPaquets:
         return ensembleGroupes
 
 
-    def initialiserPaquets (objet, interface, groupe):
+    def initialiserPaquets (self, interface, groupe):
         """
         Initialise les paquets correspondant au groupe sélectionné
         """
@@ -122,7 +117,7 @@ class fonctionsPaquets:
         return ensemblePaquets
 
 
-    def lancerPacman (objet, listeInstallationPacman, listeSuppressionPacman):
+    def lancerPacman (self, listeInstallationPacman, listeSuppressionPacman):
         """
         Installation et désinstallation de paquet
 
@@ -140,45 +135,46 @@ class fonctionsPaquets:
         else:
             listeInstallation = []
 
+
         if len(listeSuppression) > 0:
-            objet.terminerPacman()
-            objet.initialiserPacman()
-            objet.printDebug("DEBUG", "Suppression de paquets")
-            objet.suppressionPaquet(listeSuppression)
+            self.terminerPacman()
+            self.initialiserPacman()
+            self.printDebug("DEBUG", "Suppression de paquets")
+            self.suppressionPaquet(listeSuppression)
 
         if len(listeInstallation) > 0:
-            objet.terminerPacman()
-            objet.initialiserPacman()
-            objet.printDebug("DEBUG", "Installation de paquets")
-            objet.installationPaquet(listeInstallation)
+            self.terminerPacman()
+            self.initialiserPacman()
+            self.printDebug("DEBUG", "Installation de paquets")
+            self.installationPaquet(listeInstallation)
 
 
-    def suppressionPaquet (objet, listePaquets, enleverDependances = 0):
+    def suppressionPaquet (self, listePaquets, enleverDependances = 0):
         for element in listePaquets:
-            if not element in objet.recupererPaquetsInstalles(element):
+            if not element in self.recupererPaquetsInstalles(element):
                 # Dans le cas où le paquet ne serait pas installé
-                objet.printDebug ("ERROR", "Paquet non installé")
+                self.printDebug ("ERROR", "Paquet non installé")
                 return -1
 
             pm_trans_flag = PM_TRANS_FLAG_NOCONFLICTS
 
             if enleverDependances == 1:
-                objet.printDebug ("DEBUG", "Suppression des paquets en cascade")
+                self.printDebug ("DEBUG", "Suppression des paquets en cascade")
                 pm_trans_flag = PM_TRANS_FLAG_CASCADE
 
             if pacman_trans_init(PM_TRANS_TYPE_REMOVE, pm_trans_flag, pacman_trans_cb_event(fpm_progress_event), pacman_trans_cb_conv(fpm_trans_conv), pacman_trans_cb_progress(fpm_progress_install)) == -1:
-                objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+                self.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
-            objet.printDebug("DEBUG", "Initialisation de la transaction")
+            self.printDebug("DEBUG", "Initialisation de la transaction")
 
             if pacman_trans_addtarget(element) == -1:
-                objet.printDebug ("ERROR", "Impossible de désinstaller " + element)
-                objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+                self.printDebug ("ERROR", "Impossible de désinstaller " + element)
+                self.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
-            objet.printDebug("DEBUG", element + " ajouté")
+            self.printDebug("DEBUG", element + " ajouté")
 
             data = PM_LIST()
-            objet.printDebug ("DEBUG", "Vérification des dépendances inverses")
+            self.printDebug ("DEBUG", "Vérification des dépendances inverses")
 
             if pacman_trans_prepare(data) == -1:
                 if pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_UNSATISFIED_DEPS):
@@ -190,11 +186,12 @@ class fonctionsPaquets:
                         liste.append(nom)
                         index = pacman_list_next(index)
 
-                    objet.printDebug ("DEBUG", element + " est requis par : " + str(liste))
+                    self.printDebug ("DEBUG", element + " est requis par : " + str(liste))
 
-                    #~ reponse = interface.fenetreConfirmation(nomPaquet, liste)
-                    #~ if reponse == 0:
-                        #~ return -1
+                    reponse = self.fenetreQuestion("DEBUG", element + " est requis par : " + str(liste) + "\nSouhaitez-vous continuer ?")
+                    if reponse == False:
+                        pacman_trans_release()
+                        return -1
 
                     pacman_trans_release()
 
@@ -202,52 +199,53 @@ class fonctionsPaquets:
 
                     return pacman_remove_pkg(element, 1)
                 else:
-                    objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+                    self.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                     return -1
-            objet.printDebug ("DEBUG", "Transaction préparée avec succès")
-             
+            self.printDebug ("DEBUG", "Transaction préparée avec succès")
+
             if pacman_trans_commit(data) == -1:
-                objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+                self.printDebug ("ERROR " + str(pacman.pacman_geterror()), pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
-            objet.printDebug ("DEBUG", "Suppression de " + element)
+            self.printDebug ("DEBUG", "Suppression de " + element)
 
             pacman_trans_release()
 
 
-    def installationPaquet (objet, listePaquets):
+    def installationPaquet (self, listePaquets):
         for element in repo_list:
                 pacman_set_option(PM_OPT_DLFNM, element)
 
         pm_trans = PM_TRANS_TYPE_SYNC
+
         flags = PM_TRANS_FLAG_NOCONFLICTS
 
         if pacman_trans_init(pm_trans, flags, pacman_trans_cb_event(fpm_progress_event), pacman_trans_cb_conv(fpm_trans_conv), pacman_trans_cb_progress(fpm_progress_install)) == -1:
-            objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_init : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+            self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_init : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
             return -1
         else:
-            objet.printDebug ("DEBUG", "Initialisation complète")
+            self.printDebug ("DEBUG", "Initialisation complète")
 
         for element in listePaquets:
             if pacman_trans_addtarget(element) == -1:
-                objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_addtarget : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+                self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_addtarget : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
             else:
-                objet.printDebug ("DEBUG", element + " ajouté")
+                self.printDebug ("DEBUG", element + " ajouté")
 
         data = PM_LIST()
-        objet.printDebug ("DEBUG", "Récupération des dépendances")
+        self.printDebug ("DEBUG", "Récupération des dépendances")
 
         if pacman_trans_prepare(data) == -1:
-            objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_prepare : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+            self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_prepare : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
             return -1
         else:
-            objet.printDebug ("DEBUG", "Téléchargement des paquets")
+            self.printDebug ("DEBUG", "Téléchargement des paquets")
 
         if pacman_trans_commit(data) == -1:
-            objet.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_commit : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+            self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_commit : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
             return -1
         else:
-            objet.printDebug ("DEBUG", "Installation des paquets")
+            self.printDebug ("DEBUG", "Installation des paquets")
 
         pacman_trans_release()
         return 1
@@ -290,7 +288,7 @@ class fonctionsPaquets:
         printDebug ("DEBUG", "Evenement")
 
 
-    def recupererPaquetsInstalles (objet, nomPaquet):
+    def recupererPaquetsInstalles (self, nomPaquet):
         """
         Recupère la liste des paquets installés
         """
@@ -312,7 +310,7 @@ class fonctionsPaquets:
         return liste
 
 
-    def separerVersionNom (objet, paquet):
+    def separerVersionNom (self, paquet):
         """
         Permet de récupérer la version et le nom du paquet quand la chaîne est du format "kernel>=3.7"
         """
@@ -343,7 +341,7 @@ class fonctionsPaquets:
         return liste2
 
 
-    def verifierConflits (objet, nomPaquet):
+    def verifierConflits (self, nomPaquet):
         """
         Vérifie si le paquet entre en conflit avec d'autres
         """
@@ -366,52 +364,12 @@ class fonctionsPaquets:
         return listePaquets
 
 
-    def verifierVersion (objet, paquet):
-        """
-        Permet de vérifier si il y a besoin de mettre à jour ou pas suivant la version
-        -1 : Le paquet ne peut être modifié
-        0 : Le paquet est installé et correspond
-        1 : Le paquet peut être mis à jour
-        """
-
-        if "frugalware" in repo_list:
-            index = repo_list.index("frugalware")
-        elif "frugalware-current" in repo_list:
-            index = repo_list.index("frugalware-current")
-
-        if len(paquet) > 1:
-            nom = paquet[0]
-            version = paquet[1]
-            symbole = paquet[2]
-
-            informationDepot = pacman_db_readpkg(db_list[index], nom)
-            versionPaquetDepot = pacman_pkg_get_info(informationDepot, PM_PKG_VERSION)
-
-            informationLocal = pacman_db_readpkg(db_list[0], nom)
-            versionPaquetLocal = pacman_pkg_get_info(informationLocal, PM_PKG_VERSION)
-
-            if symbole == "=":
-                if versionPaquetLocal == version:
-                    return 0
-                elif versionPaquetDepot >= version:
-                    return 1
-                else:
-                    return -1
-            elif symbole in [">=", "=>", ">"]:
-                if versionPaquetDepot >= version:
-                    return 1
-            elif symbole in ["<=", "=<", "<"]:
-                return -1
-        else:
-            return 0
-
-
-    def obtenirMiseAJour (objet, liste):
+    def obtenirMiseAJour (self, liste):
         """
         Récupère les paquets dont une mise à jour est disponible
         """
 
-        objet.printDebug("DEBUG", fctLang.traduire("add_update_list"))
+        self.printDebug("DEBUG", "add_update_list")
 
         if len(liste) > 0:
             liste = []
@@ -423,8 +381,8 @@ class fonctionsPaquets:
                 liste.append(pointer_to_string(element))
 
 
-    #~ def chercherPaquet (objet, depot, nomPaquet):
-    def chercherPaquet (objet, nomPaquet):
+    #~ def chercherPaquet (self, depot, nomPaquet):
+    def chercherPaquet (self, nomPaquet):
         """
         Chercher les paquets correspondant à la recherche dans le dépôt sélectionné
         """
@@ -449,7 +407,7 @@ class fonctionsPaquets:
         return listePaquetsTrouves
 
 
-    def changerDate (objet, date):
+    def changerDate (self, date):
         """
         Adapte la date pour les pays francophone
         """
@@ -484,45 +442,34 @@ class fonctionsPaquets:
         return -1
 
 
-    def printDebug (objet, typeErreur, erreur):
+    def printDebug (self, typeErreur, erreur):
         """
         Affiche une sortie terminal
         """
 
-        if modeDebug == 1:
+        if modeDebug:
             print ("[" + typeErreur + "] " + erreur)
 
 
-    def fenetreInformation (objet, titre, texte):
+    def fenetreQuestion (self, titre, texte):
         """
         Affiche une fenêtre d'information
         """
 
-        information = gtk.MessageDialog(None, gtk.DIALOG_ERROR, gtk.MESSAGE_INFO, gtk.BUTTONS_OK, texte)
+        fenetre = gtk.Dialog(titre, None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+        texteConfirmation = gtk.Label(texte)
 
-        information.set_title(titre)
-        information.set_default_response(gtk.RESPONSE_OK)
+        fenetre.set_default_response(gtk.RESPONSE_OK)
 
-        information.run()
+        fenetre.vbox.pack_start(texteConfirmation)
 
-        information.destroy()
+        fenetre.show_all()
+        choix = fenetre.run()
+        reponse = False
+        if choix == gtk.RESPONSE_OK:
+            reponse = True
 
+        fenetre.destroy()
 
-def main (*args):
-    """
-    Partie nécessaire pour l'execution de certaines commandes avec les
-    droits super-utilisateur
-    """
+        return reponse
 
-    fctPaquets = fonctionsPaquets()
-
-    for argument in sys.argv:
-        if argument == "cleancache":
-            fctPaquets.nettoyerCache()
-        elif argument == "updatedb":
-            fctPaquets.miseajourBaseDonnees()
-        elif argument == "install":
-            fctPaquets.lancerPacman(sys.argv[sys.argv.index(argument) + 1], sys.argv[sys.argv.index(argument) + 2])
-
-if __name__ == "__main__":
-    sys.exit(main())

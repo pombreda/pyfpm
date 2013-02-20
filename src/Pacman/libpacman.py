@@ -21,19 +21,22 @@
 #TODO : Add this options : pacman_set_option (PM_OPT_DLCB, (long)progress_update);
 
 import os, tempfile, shutil, sys
-from ctypes import *
-from _ctypes import PyObj_FromPtr
 import ctypes
 import dircache
 
+from ctypes import *
+from _ctypes import PyObj_FromPtr
+
 #GLOBAL
 pacman=cdll.LoadLibrary("libpacman.so")
-CFG_FILE    = "/etc/pacman-g2.conf"
-PM_ROOT     = "/"
-PM_DBPATH   = "var/lib/pacman-g2"
+
+CFG_FILE = "/etc/pacman-g2.conf"
+PM_ROOT = "/"
+PM_DBPATH = "var/lib/pacman-g2"
 PM_CACHEDIR = "var/cache/pacman-g2/pkg"
-PM_LOCK     = "/tmp/pacman-g2.lck"
+PM_LOCK = "/tmp/pacman-g2.lck"
 PM_HOOKSDIR = "etc/pacman-g2/hooks"
+
 '''
 offset=0
 rate=0
@@ -48,6 +51,7 @@ eta_m=0
 eta_s=0
 eta_h=0
 '''
+
 #Logging facilities
 
 # Levels
