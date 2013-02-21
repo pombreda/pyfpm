@@ -33,12 +33,12 @@ class fonctionsPreferences (object):
         generalLangue = gtk.Table(2,1)
         generalLangueLabel = gtk.Label(fctLang.traduire("language") + "*")
         generalLangueChoix = gtk.combo_box_new_text()
-        generalLangueAsterix = gtk.Label("*" + fctLang.traduire("need_reboot"))
         zoneGeneralDivers = gtk.Frame(fctLang.traduire("misc"))
         grilleGeneralCocher = gtk.Table(1,2)
         self.miseajourDemarrage = gtk.CheckButton(fctLang.traduire("start_update"))
         self.afficherGroupes = gtk.CheckButton(fctLang.traduire("use_prohibate_groups"))
-        self.modeDeveloppement = gtk.CheckButton(fctLang.traduire("development_mode"))
+        self.modeDeveloppement = gtk.CheckButton(fctLang.traduire("development_mode") + "*")
+        generalLangueAsterix = gtk.Label("*" + fctLang.traduire("need_reboot"))
 
         commande = gtk.Label(fctLang.traduire("pacman"))
         grilleCommande = gtk.Table(1,1)
@@ -61,7 +61,6 @@ class fonctionsPreferences (object):
 
         generalLangue.attach(generalLangueLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
         generalLangue.attach(generalLangueChoix, 1, 2, 0, 1, yoptions=gtk.FILL)
-        generalLangue.attach(generalLangueAsterix, 0, 2, 1, 2)
         generalLangue.set_border_width(4)
         zoneGeneralLangue.add(generalLangue)
         zoneGeneralLangue.set_border_width(4)
@@ -73,6 +72,7 @@ class fonctionsPreferences (object):
         zoneGeneralDivers.set_border_width(4)
         grilleGeneral.attach(zoneGeneralLangue, 0, 1, 0, 1)
         grilleGeneral.attach(zoneGeneralDivers, 0, 1, 1, 2, yoptions=gtk.FILL)
+        grilleGeneral.attach(generalLangueAsterix, 0, 1, 2, 3)
         onglets.append_page(grilleGeneral, general)
 
         self.remplirLangue(generalLangueChoix)

@@ -65,7 +65,7 @@ class fonctionsEvenement (object):
         listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
 
         interface.listeColonnePaquets.clear()
-        ensembleGroupes = fctPaquets.initialiserGroupes(interface)
+        ensembleGroupes = self.initialiserGroupes(interface)
 
         for nom in ensembleGroupes:
             if fctConfig.lireConfig("pyfpm", "useprohibategroups") == "false":
@@ -75,12 +75,75 @@ class fonctionsEvenement (object):
                 interface.listeColonneGroupes.append([nom])
 
 
+    def initialiserGroupes (self, interface):
+        """
+        Initialise la liste des groupes
+        """
+
+        baseDonnees = db_list[interface.listeSelectionGroupe.get_active()]
+        ensembleGroupes = []
+
+        i = pacman_db_getgrpcache(baseDonnees)
+
+        while i != 0:
+            groupe = pacman_list_getdata(i)
+
+            if not pointer_to_string(groupe) in ensembleGroupes:
+                ensembleGroupes.append(pointer_to_string(groupe))
+
+            i = pacman_list_next(i)
+
+        ensembleGroupes.sort()
+
+        return ensembleGroupes
+
+
+    def initialiserPaquets (self, interface, groupe):
+        """
+        Initialise les paquets correspondant au groupe sélectionné
+        """
+
+        ensemblePaquets = []
+
+        pm_group = pacman_db_readgrp (db_list[interface.listeSelectionGroupe.get_active()], groupe)
+        i = pacman_grp_getinfo (pm_group, PM_GRP_PKGNAMES)
+
+        while i != 0:
+            paquet = pacman_db_readpkg (db_list[interface.listeSelectionGroupe.get_active()], pacman_list_getdata(i))
+
+            if not paquet in ensemblePaquets:
+                ensemblePaquets.append(paquet)
+
+            i = pacman_list_next(i)
+
+        ensemblePaquets.sort()
+
+        return ensemblePaquets
+
+
+    def obtenirMiseAJour (self, liste):
+        """
+        Récupère les paquets dont une mise à jour est disponible
+        """
+
+        fctPaquets.printDebug("DEBUG", fctLang.traduire("add_update_list"))
+
+        if len(liste) > 0:
+            liste = []
+
+        listePaquetsMiseAJour = pacman_check_update()
+
+        if listePaquetsMiseAJour > 0:
+            for element in listePaquetsMiseAJour:
+                liste.append(pointer_to_string(element))
+
+
     def obtenirGroupe (self, interface, groupe):
         """
         Obtenir les paquets correspondant au groupe sélectionné
         """
 
-        paquets = fctPaquets.initialiserPaquets(interface, groupe)
+        paquets = self.initialiserPaquets(interface, groupe)
         self.remplirPaquets(interface, paquets)
 
 
@@ -220,7 +283,7 @@ class fonctionsEvenement (object):
             else:
                 interface.contenuPaquet.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
 
-            interface.contenuPaquet.append(None, [fctLang.traduire("install_date"), fctPaquets.changerDate(pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE))])
+            interface.contenuPaquet.append(None, [fctLang.traduire("install_date"), self.changerDate(pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE))])
             interface.contenuPaquet.append(None, [fctLang.traduire("size"), str(format(float(long(pacman_pkg_getinfo(paquetInstalle, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
             interface.contenuPaquet.append(None, [fctLang.traduire("packager"), pacman_pkg_get_info(paquetInstalle, PM_PKG_PACKAGER)])
         else:
@@ -458,8 +521,8 @@ class fonctionsEvenement (object):
         self.ajouterGroupes(interface)
         interface.changerTexteBarreStatus(fctLang.traduire("update_db_done"))
 
-        fctPaquets.initialiserGroupes(interface)
-        #~ fctPaquets.obtenirMiseAJour(interface.listeMiseAJourPacman)
+        self.initialiserGroupes(interface)
+        #~ self.obtenirMiseAJour(interface.listeMiseAJourPacman)
 
         if len(interface.listeMiseAJourPacman) > 0:
             interface.fenetreMiseAJour()
@@ -496,16 +559,16 @@ class fonctionsEvenement (object):
 
 
         if self.verifierUtilisateur() == 0:
-            os.system(fctConfig.lireConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/Pacman/package.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
+            os.system(fctConfig.lireConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/restriction.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
         else:
-            os.system("python -B " + os.path.realpath('.') + "/src/Pacman/package.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
+            os.system("python -B " + os.path.realpath('.') + "/src/restriction.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
 
         interface.effacerInterface()
         self.ajouterDepots(interface)
         self.ajouterGroupes(interface)
 
-        fctPaquets.initialiserGroupes(interface)
-        fctPaquets.obtenirMiseAJour(interface.listeMiseAJourPacman)
+        self.initialiserGroupes(interface)
+        #~ self.obtenirMiseAJour(interface.listeMiseAJourPacman)
 
         if len(interface.listeMiseAJourPacman) > 0:
             interface.fenetreMiseAJour()
@@ -537,4 +600,31 @@ class fonctionsEvenement (object):
             return 0
 
         return 1
+
+
+    def changerDate (self, date):
+        """
+        Adapte la date pour les pays francophone
+        """
+
+        # FORMAT : Jour Mois N° HH:MM:SS Année -> Jour N° Mois Année HH:MM:SS
+        date = string.split(date, " ")
+
+        if date[0] == "Mon":
+            date[0] = "Lun"
+        elif date[0] == "Tue":
+            date[0] = "Mar"
+        elif date[0] == "Wed":
+            date[0] = "Mer"
+        elif date[0] == "Thu":
+            date[0] = "Jeu"
+        elif date[0] == "Fri":
+            date[0] = "Ven"
+        elif date[0] == "Sat":
+            date[0] = "Sam"
+        elif date[0] == "Sun":
+            date[0] = "Dim"
+
+        nouvelleDate = date[0] + " " + date[2] + " " + date[1] + " " + date[4] + " " + date[3]
+        return nouvelleDate
 

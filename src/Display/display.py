@@ -22,9 +22,9 @@ from Pacman.libpacman import *
 from Pacman import package
 fctPaquets = package.fonctionsPaquets()
 
-from Misc import action, lang, config
+from Misc import events, lang, config
 fctLang = lang.fonctionsLang()
-fctEvent = action.fonctionsEvenement()
+fctEvent = events.fonctionsEvenement()
 fctConfig = config.fonctionsConfiguration()
 
 
@@ -425,8 +425,6 @@ class fonctionsInterface (object):
 
             if fctConfig.lireConfig("pyfpm", "startupdate") == "true":
                 self.fenetreMiseAJour()
-            else:
-                fctPaquets.obtenirMiseAJour(self.listeMiseAJourPacman)
 
         else:
             try:
@@ -855,7 +853,7 @@ class fonctionsInterface (object):
 
         self.fenetre.set_sensitive(False)
 
-        fctPaquets.obtenirMiseAJour(self.listeMiseAJourPacman)
+        fctEvent.obtenirMiseAJour(self.listeMiseAJourPacman)
         listeTmp = []
 
         if len(self.listeMiseAJourPacman) > 0:

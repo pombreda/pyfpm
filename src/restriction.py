@@ -10,7 +10,6 @@
 import sys
 
 from Pacman import package
-fctPaquets = package.fonctionsPaquets()
 
 
 def main (*args):
@@ -19,13 +18,12 @@ def main (*args):
     droits super-utilisateur
     """
 
-    for argument in sys.argv:
-        if argument == "cleancache":
-            fctPaquets.nettoyerCache()
-        elif argument == "updatedb":
-            fctPaquets.miseajourBaseDonnees()
-        elif argument == "install":
-            fctPaquets.lancerPacman(sys.argv[sys.argv.index(argument) + 1], sys.argv[sys.argv.index(argument) + 2])
+    argument = None
+
+    if sys.argv[1] == "install":
+        argument = sys.argv[sys.argv.index(sys.argv[1]) + 1], sys.argv[sys.argv.index(sys.argv[1]) + 2]
+
+    fctInstallation = package.fenetreInstallation(sys.argv[1], argument)
 
 if __name__ == "__main__":
     sys.exit(main())

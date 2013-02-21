@@ -1,3 +1,3 @@
 # Fonctions diverses
 
-__all__ = ['files','config','lang','action']
+__all__ = ['files','config','lang','events']
