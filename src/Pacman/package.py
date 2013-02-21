@@ -16,7 +16,11 @@ except ImportError:
 
 from libpacman import *
 
+from Misc import lang
+fctLang = lang.fonctionsLang()
+
 modeDebug = True
+printconsole = 0
 
 
 class fonctionsPaquets (object):
@@ -26,7 +30,7 @@ class fonctionsPaquets (object):
         """
 
         if os.path.exists(PM_LOCK):
-            sys.exit("pacman_already_run")
+            sys.exit(fctLang.traduire("pacman_already_run"))
 
 
     def initialiserPacman (self):
@@ -34,11 +38,11 @@ class fonctionsPaquets (object):
         Initialise pacman-g2 pour permettre d'être utilisé
         """
 
-        self.printDebug("DEBUG", "init_pacman")
+        self.printDebug("DEBUG", fctLang.traduire("init_pacman"))
         pacman_init()
-        self.printDebug("DEBUG", "init_db")
+        self.printDebug("DEBUG", fctLang.traduire("init_db"))
         pacman_init_database()
-        self.printDebug("DEBUG", "register_db")
+        self.printDebug("DEBUG", fctLang.traduire("register_db"))
         pacman_register_all_database()
 
 
@@ -47,7 +51,7 @@ class fonctionsPaquets (object):
         Termine l'instance de pacman-g2
         """
 
-        self.printDebug("DEBUG", "close_pacman")
+        self.printDebug("DEBUG", fctLang.traduire("close_pacman"))
         pacman_finally()
 
 
@@ -56,7 +60,7 @@ class fonctionsPaquets (object):
         Nettoye le cache de pacman-g2
         """
 
-        self.printDebug("DEBUG", "clean_cache")
+        self.printDebug("DEBUG", fctLang.traduire("clean_cache"))
         pacman_sync_cleancache()
 
 
@@ -65,10 +69,24 @@ class fonctionsPaquets (object):
         Met à jour les dépôts de paquets
         """
 
-        self.printDebug("DEBUG", "update_db")
+        from Display import display
+        fctInterface = display.fonctionsInterface()
+
+        self.printDebug("DEBUG", fctLang.traduire("update_db"))
         self.terminerPacman()
         self.initialiserPacman()
-        pacman_update_db()
+        #~ pacman_update_db()
+        print_debug("pacman_update_db")
+        
+        index = 0
+        for element in db_list:
+            if index != 0:
+                self.printDebug("DEBUG", fctLang.traduire("update_db_name") + " " + repo_list[i])
+                valeur = pacman_db_update (1, element)
+                if valeur == -1:
+                    self.printDebug("ERROR", "Can't update pacman-g2")
+                    pacman_print_error()
+            index += 1
 
 
     def initialiserGroupes (self, interface):
@@ -369,7 +387,7 @@ class fonctionsPaquets (object):
         Récupère les paquets dont une mise à jour est disponible
         """
 
-        self.printDebug("DEBUG", "add_update_list")
+        self.printDebug("DEBUG", fctLang.traduire("add_update_list"))
 
         if len(liste) > 0:
             liste = []

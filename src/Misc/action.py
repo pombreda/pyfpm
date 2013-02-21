@@ -7,7 +7,7 @@
 #
 # ----------------------------------------------------------------------
 
-import os, urllib
+import os, sys, urllib, codecs
 
 try:
     import pygtk, gtk
@@ -459,7 +459,7 @@ class fonctionsEvenement (object):
         interface.changerTexteBarreStatus(fctLang.traduire("update_db_done"))
 
         fctPaquets.initialiserGroupes(interface)
-        fctPaquets.obtenirMiseAJour(interface.listeMiseAJourPacman)
+        #~ fctPaquets.obtenirMiseAJour(interface.listeMiseAJourPacman)
 
         if len(interface.listeMiseAJourPacman) > 0:
             interface.fenetreMiseAJour()

@@ -9,8 +9,8 @@
 
 import sys
 
-from Pacman import *
-fctPaquets = fonctionsPaquets()
+from Pacman import package
+fctPaquets = package.fonctionsPaquets()
 
 
 def main (*args):

@@ -18,6 +18,7 @@ except ImportError:
 from . import preferences
 fctPrefs = preferences.fonctionsPreferences()
 
+from Pacman.libpacman import *
 from Pacman import package
 fctPaquets = package.fonctionsPaquets()
 
@@ -28,7 +29,7 @@ fctConfig = config.fonctionsConfiguration()
 
 
 class fonctionsInterface (object):
-    def initialiserFenetre(self):
+    def __init__(self):
 
             self.paquetSelectionne = ""
 
@@ -149,7 +150,7 @@ class fonctionsInterface (object):
 
     def fenetrePrincipale (self):
 
-        self.initialiserFenetre()
+        #~ self.initialiserFenetre()
         longueur = fctConfig.lireConfig("screen", "width")
         hauteur = fctConfig.lireConfig("screen", "height")
 
