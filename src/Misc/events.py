@@ -206,11 +206,12 @@ class fonctionsEvenement (object):
         FIXME : Fusioner avec obtenirDetailsPaquet
         """
 
-        interface.changerTexteBarreStatus(fctLang.traduire("read_pkg") + " " + nomPaquet)
         objetTrouve = 0
 
         if nomPaquet.find("]") != -1:
             nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
+            
+        interface.changerTexteBarreStatus(fctLang.traduire("read_pkg") + " " + nomPaquet)
 
         try:
             listePaquets = pacman_search_pkg(nomPaquet)
@@ -283,7 +284,7 @@ class fonctionsEvenement (object):
             else:
                 interface.contenuPaquet.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
 
-            interface.contenuPaquet.append(None, [fctLang.traduire("install_date"), self.changerDate(pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE))])
+            interface.contenuPaquet.append(None, [fctLang.traduire("install_date"), pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE)])
             interface.contenuPaquet.append(None, [fctLang.traduire("size"), str(format(float(long(pacman_pkg_getinfo(paquetInstalle, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
             interface.contenuPaquet.append(None, [fctLang.traduire("packager"), pacman_pkg_get_info(paquetInstalle, PM_PKG_PACKAGER)])
         else:

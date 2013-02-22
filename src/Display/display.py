@@ -547,7 +547,7 @@ class fonctionsInterface (object):
         Affiche l'ensemble des paquets correspondant à la recherche
         """
 
-        if self.texteRecherche.get_text != '':
+        if self.texteRecherche.get_text != None:
             self.listeColonnePaquets.clear()
             objetRechercher = self.texteRecherche.get_text()
 
@@ -675,8 +675,9 @@ class fonctionsInterface (object):
         about.set_version("0001")
         about.set_comments(fctLang.traduire("about_desc"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
-        about.set_authors(["Gaetan Gourdin (bouleetbil) - Module python pour pacman-g2", "Aurélien Lubert (PacMiam) - Interface"])
+        about.set_authors(["Gaetan Gourdin (bouleetbil) - Développement préliminaire", "Aurélien Lubert (PacMiam) - Interface"])
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer\net/ou le modifier conformément aux dispositions de la Licence Publique\nGénérale GNU, telle que publiée par la Free Software Foundation.")
+        about.set_website("http://www.frugalware.org")
         about.set_logo(logo)
 
         about.run()

@@ -20,6 +20,9 @@ Evénements (action.py)
         - Impossible d'affiche correctement le groupe du paquet dans les informations du paquet [DONE]
         - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
         - Lors d'une recherche, si l'un des paquets fait partie d'une mise à jour il n'est pas affiché [DONE]
+        
+    TODO
+        - Changer le format de date dans les détails du paquet
 
 
 Langue (lang.py)

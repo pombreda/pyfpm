@@ -20,7 +20,6 @@ from Misc import lang
 fctLang = lang.fonctionsLang()
 
 modeDebug = True
-printconsole = 0
 
 
 class fonctionsPaquets (object):
@@ -211,13 +210,17 @@ class fonctionsPaquets (object):
 
         pm_trans = PM_TRANS_TYPE_SYNC
 
-        flags = PM_TRANS_FLAG_NOCONFLICTS
+        #~ flags = PM_TRANS_FLAG_NOCONFLICTS
+        flags = PM_TRANS_FLAG_DOWNLOADONLY
+        
+        progres = 1.0
 
-        if pacman_trans_init(pm_trans, flags, pacman_trans_cb_event(self.progressionEvenement(interface)), pacman_trans_cb_conv(self.progressionPaquet), pacman_trans_cb_progress(self.progressionInstallation(interface))) == -1:
+        if pacman_trans_init(pm_trans, flags, pacman_trans_cb_event(self.progressionEvenement), pacman_trans_cb_conv(self.progressionPaquet), pacman_trans_cb_progress(self.progressionInstallation)) == -1:
             self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_init : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
             return -1
         else:
             self.printDebug ("DEBUG", "Initialisation complète")
+            interface.changerBarreProgres("Initialisation complète", progres)
 
         for element in listePaquets:
             if pacman_trans_addtarget(element) == -1:
@@ -225,31 +228,41 @@ class fonctionsPaquets (object):
                 return -1
             else:
                 self.printDebug ("DEBUG", element + " ajouté")
+                interface.changerBarreProgres(element + " ajouté", progres)
 
-        data = PM_LIST()
         self.printDebug ("DEBUG", "Récupération des dépendances")
+        interface.changerBarreProgres("Récupération des dépendances", progres)
+        
+        data = PM_LIST()
+        try:
+            if pacman_trans_prepare(data) == -1:
+                self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_prepare : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+                return -1
+            else:
+                self.printDebug ("DEBUG", "Téléchargement des paquets")
+                interface.changerBarreProgres("Téléchargement des paquets", progres)
 
-        if pacman_trans_prepare(data) == -1:
-            self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_prepare : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
-            return -1
-        else:
-            self.printDebug ("DEBUG", "Téléchargement des paquets")
-
-        if pacman_trans_commit(data) == -1:
-            self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_commit : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
-            return -1
-        else:
-            self.printDebug ("DEBUG", "Installation des paquets")
+            if pacman_trans_commit(data) == -1:
+                self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_commit : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+                return -1
+            else:
+                self.printDebug ("DEBUG", "Installation des paquets")
+                interface.changerBarreProgres("Installation des paquets", progres)
+        except:
+            self.printDebug ("ERROR", "pacman_trans_prepare")
 
         pacman_trans_release()
         return 1
 
 
-    def progressionInstallation (self, interface, *args):
+    def progressionInstallation (self, *args):
         """
         """
 
         printDebug ("DEBUG", "Progression de l'installation")
+        
+        from Pacman import package
+        interface = package.fenetreInstallation()
 
         index = 1
         pourcent = 0
@@ -262,7 +275,7 @@ class fonctionsPaquets (object):
         for arg in args:
             if index == 1 and arg != None:
                 event = arg
-            if index == 3 and arg != None:
+            elif index == 3 and arg != None:
                 pourcent = arg
             elif index == 4 and arg != None:
                 compte = arg
@@ -308,23 +321,23 @@ class fonctionsPaquets (object):
         interface.changerBarreProgres(texte, progres)
 
 
-    def progressionPaquet (*args):
+    def progressionPaquet (self, *args):
         printDebug ("DEBUG", "Progression de la transaction")
-        i = 1
+        index = 1
 
         for arg in args:
-            if i == 1:
+            if index == 1:
                 event = arg
                 self.printDebug ("DEBUG", "Evenement : " + str(event))
-            elif i == 2:
+            elif index == 2:
                 pkg = arg
-            elif i == 5:
+            elif index == 5:
                 INTP = ctypes.POINTER(ctypes.c_int)
                 reponse = ctypes.cast(arg, INTP)
             else:
                 self.printDebug ("DEBUG", "Pas implanté :)")
 
-            i += 1
+            index += 1
 
         if event == PM_TRANS_CONV_LOCAL_UPTODATE:
             #~ if terminalQuestion (pointer_to_string(pacman_pkg_getinfo(pkg, PM_PKG_NAME))+" local version is up to date. Upgrade anyway? [Y/n]" ) == 1:
@@ -337,12 +350,15 @@ class fonctionsPaquets (object):
             reponse[0] = 1
 
 
-    def progressionEvenement(self, interface, *args):
+    def progressionEvenement(self, *args):
         """
         Affiche l'evenement en cours
         """
 
         self.printDebug ("DEBUG", "Evenement")
+        
+        from Pacman import package
+        interface = package.fenetreInstallation()
 
         try:
             index = 1
@@ -542,7 +558,7 @@ class fonctionsPaquets (object):
         """
 
         if modeDebug:
-            print ("[" + typeErreur + "] " + erreur)
+            print ("[" + typeErreur + "] " + str(erreur))
 
 
     def fenetreQuestion (self, titre, texte):
@@ -569,7 +585,7 @@ class fonctionsPaquets (object):
 
 
 class fenetreInstallation (object):
-    def __init__ (self, mode, arguments=None):
+    def __init__ (self):
 
         self.fenetre = gtk.Window()
         self.grille = gtk.Table(1,2)
@@ -582,7 +598,7 @@ class fenetreInstallation (object):
         self.fenetre.set_resizable(True)
         self.fenetre.set_position(gtk.WIN_POS_CENTER)
         self.fenetre.set_decorated(False)
-        self.fenetre.set_skip_taskbar_hint(False)
+        self.fenetre.set_skip_taskbar_hint(True)
 
         self.grille.attach(self.informations, 0, 1, 0, 1, yoptions=gtk.FILL)
         self.grille.attach(self.barreProgres, 0, 1, 1, 2, yoptions=gtk.FILL)
@@ -592,6 +608,9 @@ class fenetreInstallation (object):
 
         self.fenetre.show_all()
         self.rafraichirFenetre()
+        
+    
+    def initialiserFenetre (self, mode, arguments=None):
 
         fctPaquets = fonctionsPaquets()
         if mode == "updatedb":
