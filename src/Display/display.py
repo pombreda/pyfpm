@@ -669,7 +669,7 @@ class fonctionsInterface (object):
         """
 
         about = gtk.AboutDialog()
-        logo = gtk.gdk.pixbuf_new_from_file("./data/logo.png")
+        logo = gtk.gdk.pixbuf_new_from_file("./data/icons/96x96/pyfpm.png")
 
         about.set_program_name("pyFPM")
         about.set_version("0001")

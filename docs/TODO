@@ -20,9 +20,6 @@ Evénements (action.py)
         - Impossible d'affiche correctement le groupe du paquet dans les informations du paquet [DONE]
         - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
         - Lors d'une recherche, si l'un des paquets fait partie d'une mise à jour il n'est pas affiché [DONE]
-        
-    TODO
-        - Changer le format de date dans les détails du paquet
 
 
 Langue (lang.py)
@@ -35,8 +32,10 @@ Paquet (package.py)
 
     FIXME
         - La base de données ne peut pas être mise à jour depuis root sans core dumped [DONE]
+        - Les paquets no-build provenant de repoman ne sont pas prient en compte
         
     TODO
         - Améliorer la fonction d'affichage de la date en format JJ/MM/AAAA
         - Gérer la version des paquets dans l'algo de vérification des dépendances [CANCELED]
         - Afficher les actions de pacman-g2 sur la fenêtre
+        - Utiliser dbus pour gérer les permissions root

@@ -15,9 +15,10 @@ except ImportError:
     sys.exit("pyGTK introuvable")
 
 
-from Misc import config, lang, files
+from Misc import config, lang, files, events
 fctLang = lang.fonctionsLang()
 fctConfig = config.fonctionsConfiguration()
+fctEvent = events.fonctionsEvenement()
 
 
 class fonctionsPreferences (object):
@@ -38,7 +39,7 @@ class fonctionsPreferences (object):
         self.miseajourDemarrage = gtk.CheckButton(fctLang.traduire("start_update"))
         self.afficherGroupes = gtk.CheckButton(fctLang.traduire("use_prohibate_groups"))
         self.modeDeveloppement = gtk.CheckButton(fctLang.traduire("development_mode") + "*")
-        generalLangueAsterix = gtk.Label("*" + fctLang.traduire("need_reboot"))
+        generalLangueAsterix = gtk.Label(" *" + fctLang.traduire("need_reboot"))
 
         commande = gtk.Label(fctLang.traduire("pacman"))
         grilleCommande = gtk.Table(1,1)
@@ -106,6 +107,7 @@ class fonctionsPreferences (object):
 
             if modificationInterface:
                 interface.effacerInterface()
+                fctEvent.ajouterDepots(interface)
                 fctEvent.ajouterGroupes(interface)
 
             interface.rafraichirFenetre()
