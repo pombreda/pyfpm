@@ -15,20 +15,21 @@
 #
 # ----------------------------------------------------------------------
 
+# Importation des modules
 import os, sys
 
 try:
     import pygtk, gtk
 except ImportError:
-    sys.exit(fctLang.traduire("pygtk_not_found"))
-
+    sys.exit(fctLang.translate("pygtk_not_found"))
 
 from Display import display
-fctInterface = display.fonctionsInterface()
-
 from Pacman import package
-fctPaquets = package.fonctionsPaquets()
+from Misc import config
 
+# Initialisation des modules
+Config = config.Config()
+Package = package.Package()
 
 # ----------------------------------------------------------------------
 #   Main
@@ -41,20 +42,29 @@ fctPaquets = package.fonctionsPaquets()
 
 
 def main():
-
+    """
+    Lancement de pyfpm
+    """
+    
     if len(sys.argv) > 1:
         if sys.argv[1] == "-h" or sys.argv[1] == "--help":
             print ("Utilisation : pyfpm <option>\n\t-h\taffiche l'aide\n\t-v\taffiche la version de pyfpm")
         elif sys.argv[1] == "-v" or sys.argv[1] == "--version":
             print ("pyFPM v.0001")
     else:
-        fctPaquets.demarrerPacman()
-        fctPaquets.initialiserPacman()
+        Config.checkConfig()
+        
+        Interface = display.Interface()
+        
+        Package.startPacman()
+        Package.initPacman()
 
-        fctInterface.fenetrePrincipale()
-        gtk.main()
+        Interface.mainWindow()
+        Interface.runWindow()
 
-        fctPaquets.terminerPacman()
+        Package.closePacman()
+        
+        return "Bye bye"
 
 
 if __name__ == "__main__":

@@ -39,3 +39,15 @@ Paquet (package.py)
         - Gérer la version des paquets dans l'algo de vérification des dépendances [CANCELED]
         - Afficher les actions de pacman-g2 sur la fenêtre
         - Utiliser dbus pour gérer les permissions root
+
+
+Démon (fpmd)
+
+    TODO
+        - Ecrire le démon pour qu'il soit utilisable indépendamment de pyFPM
+
+
+Configuration (config.py)
+
+    TODO
+        - Placer le fichier de configuration dans ~/.config/pyfpm/

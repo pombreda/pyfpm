@@ -7,6 +7,7 @@
 #
 # ----------------------------------------------------------------------
 
+# Importation des modules
 import os, sys, string, time
 
 try:
@@ -15,73 +16,74 @@ except ImportError:
     sys.exit("pygtk_not_found")
 
 from libpacman import *
-
 from Misc import lang
-fctLang = lang.fonctionsLang()
+
+# Initialisation des modules
+fctLang = lang.Lang()
 
 modeDebug = True
 
 
-class fonctionsPaquets (object):
-    def demarrerPacman (self):
+class Package (object):
+    def startPacman (self):
         """
         Vérifie qu'une instance de pacman-g2 n'est pas en cours
         """
 
         if os.path.exists(PM_LOCK):
-            sys.exit(fctLang.traduire("pacman_already_run"))
+            sys.exit(fctLang.translate("pacman_already_run"))
 
 
-    def initialiserPacman (self):
+    def initPacman (self):
         """
         Initialise pacman-g2 pour permettre d'être utilisé
         """
 
-        self.printDebug("DEBUG", fctLang.traduire("init_pacman"))
+        self.printDebug("DEBUG", fctLang.translate("init_pacman"))
         pacman_init()
-        self.printDebug("DEBUG", fctLang.traduire("init_db"))
+        self.printDebug("DEBUG", fctLang.translate("init_db"))
         pacman_init_database()
-        self.printDebug("DEBUG", fctLang.traduire("register_db"))
+        self.printDebug("DEBUG", fctLang.translate("register_db"))
         pacman_register_all_database()
 
 
-    def terminerPacman (self):
+    def closePacman (self):
         """
         Termine l'instance de pacman-g2
         """
 
-        self.printDebug("DEBUG", fctLang.traduire("close_pacman"))
+        self.printDebug("DEBUG", fctLang.translate("close_pacman"))
         pacman_finally()
 
 
-    def nettoyerCache (self):
+    def cleanCache (self):
         """
         Nettoye le cache de pacman-g2
         """
 
-        self.printDebug("DEBUG", fctLang.traduire("clean_cache"))
+        self.printDebug("DEBUG", fctLang.translate("clean_cache"))
         pacman_sync_cleancache()
 
 
-    def miseajourBaseDonnees (self, interface):
+    def updateDatabase (self, interface):
         """
         Met à jour les dépôts de paquets
         """
 
-        self.printDebug("DEBUG", fctLang.traduire("update_db"))
-        self.terminerPacman()
-        self.initialiserPacman()
+        self.printDebug("DEBUG", fctLang.translate("update_db"))
+        self.closePacman()
+        self.initPacman()
 
-        interface.changerLabel(fctLang.traduire("update_db"))
-        interface.rafraichirFenetre()
+        interface.changeLabel(fctLang.translate("update_db"))
+        interface.refreshWindow()
 
         index = 0
         for element in db_list:
             if index != 0:
-                self.printDebug("DEBUG", fctLang.traduire("update_db_name") + " " + str(index) + ":" + repo_list[index])
+                self.printDebug("DEBUG", fctLang.translate("update_db_name") + " " + str(index) + ":" + repo_list[index])
 
                 pourcentage = float(index - 1) / float(len(repo_list) - 1)
-                interface.changerBarreProgres(fctLang.traduire("update_db_name") + " " + repo_list[index], float(pourcentage))
+                interface.changeProgressbar(fctLang.translate("update_db_name") + " " + repo_list[index], float(pourcentage))
                 valeur = pacman_db_update (1, element)
                 if valeur == -1:
                     self.printDebug("ERROR", "Can't update pacman-g2")
@@ -89,11 +91,11 @@ class fonctionsPaquets (object):
             index += 1
             time.sleep(0.2)
 
-        interface.changerBarreProgres(fctLang.traduire("update_db_done"), 1)
-        interface.rafraichirFenetre()
+        interface.changeProgressbar(fctLang.translate("update_db_done"), 1)
+        interface.refreshWindow()
 
 
-    def lancerPacman (self, interface, listeInstallationPacman, listeSuppressionPacman):
+    def runPacman (self, interface, listeInstallationPacman, listeSuppressionPacman):
         """
         Installation et désinstallation de paquet
 
@@ -101,7 +103,7 @@ class fonctionsPaquets (object):
         Deuxième étape : Installation des paquets sélectionnés
         """
 
-        self.printDebug ("DEBUG", "lancerPacman")
+        self.printDebug ("DEBUG", "runPacman")
 
         if listeSuppressionPacman != "None":
             listeSuppression = listeSuppressionPacman.split(",")
@@ -115,27 +117,27 @@ class fonctionsPaquets (object):
 
 
         if len(listeSuppression) > 0:
-            self.terminerPacman()
-            self.initialiserPacman()
+            self.closePacman()
+            self.initPacman()
             self.printDebug("DEBUG", "Suppression de paquets")
-            self.suppressionPaquet(listeSuppression)
+            self.removePackage(listeSuppression)
 
         if len(listeInstallation) > 0:
-            self.terminerPacman()
-            self.initialiserPacman()
+            self.closePacman()
+            self.initPacman()
             self.printDebug("DEBUG", "Installation de paquets")
-            self.installationPaquet(interface, listeInstallation)
+            self.installPackage(interface, listeInstallation)
 
 
-    def suppressionPaquet (self, listePaquets, enleverDependances = 0):
+    def removePackage (self, listePaquets, enleverDependances = 0):
         """
         Fonction pour supprimer des paquets
         """
 
-        self.printDebug ("DEBUG", "suppressionPaquet")
+        self.printDebug ("DEBUG", "removePackage")
 
         for element in listePaquets:
-            if not element in self.recupererPaquetsInstalles(element):
+            if not element in self.getInstalledPackage(element):
                 # Dans le cas où le paquet ne serait pas installé
                 self.printDebug ("ERROR", "Paquet non installé")
                 return -1
@@ -195,15 +197,15 @@ class fonctionsPaquets (object):
             pacman_trans_release()
 
 
-    def installationPaquet (self, interface, listePaquets):
+    def installPackage (self, interface, listePaquets):
         """
         Fonction pour installer des paquets
         """
 
-        self.printDebug ("DEBUG", "installationPaquet")
+        self.printDebug ("DEBUG", "installPackage")
 
-        interface.changerLabel(fctLang.traduire("install_pkg"))
-        interface.rafraichirFenetre()
+        interface.changeLabel(fctLang.translate("install_pkg"))
+        interface.refresh()
 
         for element in repo_list:
                 pacman_set_option(PM_OPT_DLFNM, element)
@@ -215,12 +217,12 @@ class fonctionsPaquets (object):
         
         progres = 1.0
 
-        if pacman_trans_init(pm_trans, flags, pacman_trans_cb_event(self.progressionEvenement), pacman_trans_cb_conv(self.progressionPaquet), pacman_trans_cb_progress(self.progressionInstallation)) == -1:
+        if pacman_trans_init(pm_trans, flags, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.progressPackage), pacman_trans_cb_progress(self.progressInstall)) == -1:
             self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_init : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
             return -1
         else:
             self.printDebug ("DEBUG", "Initialisation complète")
-            interface.changerBarreProgres("Initialisation complète", progres)
+            interface.changeProgressbar("Initialisation complète", progres)
 
         for element in listePaquets:
             if pacman_trans_addtarget(element) == -1:
@@ -228,10 +230,10 @@ class fonctionsPaquets (object):
                 return -1
             else:
                 self.printDebug ("DEBUG", element + " ajouté")
-                interface.changerBarreProgres(element + " ajouté", progres)
+                interface.changeProgressbar(element + " ajouté", progres)
 
         self.printDebug ("DEBUG", "Récupération des dépendances")
-        interface.changerBarreProgres("Récupération des dépendances", progres)
+        interface.changeProgressbar("Récupération des dépendances", progres)
         
         data = PM_LIST()
         try:
@@ -240,14 +242,14 @@ class fonctionsPaquets (object):
                 return -1
             else:
                 self.printDebug ("DEBUG", "Téléchargement des paquets")
-                interface.changerBarreProgres("Téléchargement des paquets", progres)
+                interface.changeProgressbar("Téléchargement des paquets", progres)
 
             if pacman_trans_commit(data) == -1:
                 self.printDebug ("ERROR " + str(pacman.pacman_geterror()), "trans_commit : " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
                 return -1
             else:
                 self.printDebug ("DEBUG", "Installation des paquets")
-                interface.changerBarreProgres("Installation des paquets", progres)
+                interface.changeProgressbar("Installation des paquets", progres)
         except:
             self.printDebug ("ERROR", "pacman_trans_prepare")
 
@@ -255,7 +257,7 @@ class fonctionsPaquets (object):
         return 1
 
 
-    def progressionInstallation (self, *args):
+    def progressInstall (self, *args):
         """
         """
 
@@ -318,10 +320,10 @@ class fonctionsPaquets (object):
 
         self.printDebug ("DEBUG", "fpm_progress_install finish")
 
-        interface.changerBarreProgres(texte, progres)
+        interface.changeProgressbar(texte, progres)
 
 
-    def progressionPaquet (self, *args):
+    def progressPackage (self, *args):
         printDebug ("DEBUG", "Progression de la transaction")
         index = 1
 
@@ -350,7 +352,7 @@ class fonctionsPaquets (object):
             reponse[0] = 1
 
 
-    def progressionEvenement(self, *args):
+    def progressEvent(self, *args):
         """
         Affiche l'evenement en cours
         """
@@ -393,44 +395,44 @@ class fonctionsPaquets (object):
         progres = 0.0
 
         if event == PM_TRANS_EVT_CHECKDEPS_START:
-            texte = fctLang.traduire("checking_dependencies")
+            texte = fctLang.translate("checking_dependencies")
             progres = 1.0
         elif event == PM_TRANS_EVT_FILECONFLICTS_START:
-            texte = fctLang.traduire("checking_file_conflicts")
+            texte = fctLang.translate("checking_file_conflicts")
             progres = 1.0
         elif event == PM_TRANS_EVT_RESOLVEDEPS_START:
-            texte = fctLang.traduire("resolving_dependencies")
+            texte = fctLang.translate("resolving_dependencies")
         elif event == PM_TRANS_EVT_INTERCONFLICTS_START:
-            texte = fctLang.traduire("looking_interconflicts")
+            texte = fctLang.translate("looking_interconflicts")
             progres = 1.0
         elif event == PM_TRANS_EVT_INTERCONFLICTS_DONE:
-            texte = fctLang.traduire("looking_interconflicts_done")
+            texte = fctLang.translate("looking_interconflicts_done")
         elif event == PM_TRANS_EVT_ADD_START:
-            texte = fctLang.traduire("installing")
+            texte = fctLang.translate("installing")
             progres = 1.0
         elif event == PM_TRANS_EVT_ADD_DONE:
-            texte = fctLang.traduire("installing_done")
+            texte = fctLang.translate("installing_done")
         elif event == PM_TRANS_EVT_UPGRADE_START:
-            texte = fctLang.traduire("upgrading")
+            texte = fctLang.translate("upgrading")
             progres = 1.0
         elif event == PM_TRANS_EVT_UPGRADE_DONE:
-            texte = fctLang.traduire("upgrading_done")
+            texte = fctLang.translate("upgrading_done")
         elif event == PM_TRANS_EVT_REMOVE_START:
-            texte = fctLang.traduire("removing")
+            texte = fctLang.translate("removing")
         elif event == PM_TRANS_EVT_REMOVE_DONE:
-            texte = fctLang.traduire("removing_done")
+            texte = fctLang.translate("removing_done")
         elif event == PM_TRANS_EVT_INTEGRITY_START:
-            texte = fctLang.traduire("checking_integrity")
+            texte = fctLang.translate("checking_integrity")
         elif event == PM_TRANS_EVT_INTEGRITY_DONE:
-            texte = fctLang.traduire("checking_integrity_done")
+            texte = fctLang.translate("checking_integrity_done")
         elif event == PM_TRANS_EVT_SCRIPTLET_INFO:
             texte = pointer_to_string(data1)
         elif event == PM_TRANS_EVT_SCRIPTLET_START:
             texte = str_data1
         elif event == PM_TRANS_EVT_SCRIPTLET_DONE:
-            texte = fctLang.traduire("scriptlet_done")
+            texte = fctLang.translate("scriptlet_done")
         elif event == PM_TRANS_EVT_RETRIEVE_START:
-            texte = fctLang.traduire("retrieving_packages")
+            texte = fctLang.translate("retrieving_packages")
             progres = 1.0
             telechargement = True
         else :
@@ -439,10 +441,10 @@ class fonctionsPaquets (object):
         self.printDebug ("DEBUG", texte)
         self.printDebug ("DEBUG", "fpm_progress_event finish")
 
-        interface.changerBarreProgres(texte, progres)
+        interface.changeProgressbar(texte, progres)
 
 
-    def recupererPaquetsInstalles (self, nomPaquet):
+    def getInstalledPackage (self, nomPaquet):
         """
         Recupère la liste des paquets installés
         """
@@ -464,7 +466,7 @@ class fonctionsPaquets (object):
         return liste
 
 
-    def separerVersionNom (self, paquet):
+    def splitVersionName (self, paquet):
         """
         Permet de récupérer la version et le nom du paquet quand la chaîne est du format "kernel>=3.7"
         """
@@ -495,31 +497,7 @@ class fonctionsPaquets (object):
         return liste2
 
 
-    def verifierConflits (self, nomPaquet):
-        """
-        Vérifie si le paquet entre en conflit avec d'autres
-        """
-
-        if "frugalware" in repo_list:
-            index = repo_list.index("frugalware")
-        elif "frugalware-current" in repo_list:
-            index = repo_list.index("frugalware-current")
-
-        listePaquets = []
-
-        information = pacman_db_readpkg (db_list[index], nomPaquet)
-        paquets = pacman_pkg_getinfo(information, PM_PKG_CONFLICTS)
-
-        while paquets != 0:
-            if not pointer_to_string(pacman_list_getdata(paquets)) in interface.listeSuppressionPacman:
-                listePaquets.append(pointer_to_string(pacman_list_getdata(paquets)))
-            paquets = pacman_list_next(paquets)
-
-        return listePaquets
-
-
-    #~ def chercherPaquet (self, depot, nomPaquet):
-    def chercherPaquet (self, nomPaquet):
+    def searchPackage (self, nomPaquet):
         """
         Chercher les paquets correspondant à la recherche dans le dépôt sélectionné
         """
@@ -584,8 +562,15 @@ class fonctionsPaquets (object):
         return reponse
 
 
-class fenetreInstallation (object):
+class InstallWindow (object):
+    """
+    Fenêtre d'installation
+    """
+    
     def __init__ (self):
+        """
+        Initialisation de la fenêtre
+        """
 
         self.fenetre = gtk.Window()
         self.grille = gtk.Table(1,2)
@@ -593,7 +578,7 @@ class fenetreInstallation (object):
         self.informations = gtk.Label("")
         self.barreProgres = gtk.ProgressBar()
 
-        self.fenetre.set_title(fctLang.traduire("pacman_title"))
+        self.fenetre.set_title(fctLang.translate("pacman_title"))
         self.fenetre.set_size_request(300,50)
         self.fenetre.set_resizable(True)
         self.fenetre.set_position(gtk.WIN_POS_CENTER)
@@ -607,23 +592,24 @@ class fenetreInstallation (object):
         self.fenetre.add(self.grille)
 
         self.fenetre.show_all()
-        self.rafraichirFenetre()
+        self.refreshWindow()
         
     
-    def initialiserFenetre (self, mode, arguments=None):
+    def runWindow (self, mode, arguments=None):
 
-        fctPaquets = fonctionsPaquets()
+        Pkg = Package()
+        
         if mode == "updatedb":
-            fctPaquets.miseajourBaseDonnees(self)
+            Pkg.updateDatabase(self)
         elif mode == "cleancache":
-            fctPaquets.nettoyerCache()
+            Pkg.cleanCache()
         elif mode == "install":
-            fctPaquets.lancerPacman(self, arguments[0], arguments[1])
+            Pkg.runPacman(self, arguments[0], arguments[1])
 
-        self.fermerFenetre()
+        self.closeWindow()
 
 
-    def fermerFenetre (self):
+    def closeWindow (self):
         """
         Permet de fermer la fenetre d'installation
         """
@@ -631,16 +617,16 @@ class fenetreInstallation (object):
         self.fenetre.destroy()
 
 
-    def changerLabel (self, texte):
+    def changeLabel (self, texte):
         """
         Changer le contenu du label
         """
 
         self.informations.set_text(texte)
-        self.rafraichirFenetre()
+        self.refreshWindow()
 
 
-    def changerBarreProgres (self, texte, valeur):
+    def changeProgressbar (self, texte, valeur):
         """
         Mettre à jour la barre de progres
         """
@@ -648,10 +634,10 @@ class fenetreInstallation (object):
         self.barreProgres.set_text(texte)
 
         self.barreProgres.set_fraction(valeur)
-        self.rafraichirFenetre()
+        self.refreshWindow()
 
 
-    def rafraichirFenetre (self):
+    def refreshWindow (self):
         """
         Rafraichit l'self quand des changements ont lieux
         """

@@ -7,22 +7,28 @@
 #
 # ----------------------------------------------------------------------
 
+# Importation des modules
 import os, sys, string
 from ConfigParser import SafeConfigParser
 
 from . import config, files
-fctConfig = config.fonctionsConfiguration()
 
+# Initialisation des modules
+fctConfig = config.Config()
 
-class fonctionsLang (object):
-    def traduire (self, mot):
+class Lang (object):
+    """
+    Ensemble de fonctions pour translate pyfpm
+    """
+    
+    def translate (self, mot):
         """
         Récupère la traduction du mot dans le fichier de langue
         correspondant
         """
 
         if mot != "":
-            langue = fctConfig.lireConfig("pyfpm", "lang")
+            langue = fctConfig.readConfig("pyfpm", "lang")
             try:
                 traduction = SafeConfigParser()
                 traduction.read("lang/" + langue + ".ini")
@@ -36,7 +42,7 @@ class fonctionsLang (object):
                 return mot
 
 
-    def nomLangue (self, fichier):
+    def nameLanguage (self, fichier):
         """
         Récupère le nom de la langue
         """
@@ -51,7 +57,7 @@ class fonctionsLang (object):
                 return fichier
 
 
-    def recupererTraduction (self):
+    def getTranslation (self):
         """
         Récupère la liste des fichier de language dans ./lang
         """
@@ -66,13 +72,13 @@ class fonctionsLang (object):
         return liste2
 
 
-    def fichierLangue (self, nom):
+    def fileLanguage (self, nom):
 
-        liste = self.recupererTraduction()
+        liste = self.getTranslation()
 
         index = ""
         for element in liste:
-            if self.nomLangue(element) == nom:
+            if self.nameLanguage(element) == nom:
                 index = element
 
         return index

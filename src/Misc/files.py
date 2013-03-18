@@ -7,11 +7,15 @@
 #
 # ----------------------------------------------------------------------
 
+# Importation des modules
 import os, sys, codecs
 from urllib2 import Request, urlopen
 
-
-class fonctionsFichier (object):
+class File (object):
+    """
+    Ensemble de fonction permettant de gérer les fichiers
+    """
+    
     def fichier (self, chemin):
         """
         Vérifie l'existance d'un fichier
@@ -56,8 +60,8 @@ class fonctionsFichier (object):
         
         trouve = False
         
-        if self.fichier('./tmp.frugalbuild'):
-            fichierLocal = open('./tmp.frugalbuild', 'w')
+        if self.fichier('/tmp/frugalbuild'):
+            fichierLocal = open('/tmp/frugalbuild', 'w')
             
             print fichierLocal
             for element in fichierLocal.read():

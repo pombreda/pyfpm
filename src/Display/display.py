@@ -7,160 +7,172 @@
 #
 # ----------------------------------------------------------------------
 
+# Importation des modules
 import sys, pango
 
 try:
     import pygtk, gtk
 except ImportError:
-    sys.exit(fctLang.traduire("pygtk_not_found"))
-
+    sys.exit(Lang.translate("pygtk_not_found"))
 
 from . import preferences
-fctPrefs = preferences.fonctionsPreferences()
-
 from Pacman.libpacman import *
 from Pacman import package
-fctPaquets = package.fonctionsPaquets()
-
 from Misc import events, lang, config
-fctLang = lang.fonctionsLang()
-fctEvent = events.fonctionsEvenement()
-fctConfig = config.fonctionsConfiguration()
+
+# Initialisation des modules
+Preferences = preferences.Preferences()
+Package = package.Package()
+Lang = lang.Lang()
+Event = events.Events()
+Config = config.Config()
 
 
-class fonctionsInterface (object):
+class Interface (object):
+    """
+    Ensemble des fonctions de la fenêtre principale
+    """
+    
     def __init__(self):
+        """
+        Initialisation de la fenêtre principale
+        """
+        
+        self.listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
 
-            self.paquetSelectionne = ""
+        self.paquetSelectionne = ""
 
-            self.listeInstallationPacman = []
-            self.listeSuppressionPacman = []
-            self.listeMiseAJourPacman = []
+        self.listeInstallationPacman = []
+        self.listeSuppressionPacman = []
+        self.listeMiseAJourPacman = []
 
-            self.recherche_mode = False
-            self.recherche_nom = ""
+        self.recherche_mode = False
+        self.recherche_nom = ""
 
-            # ------------------------------------------------------------------
-            #       Fenetre
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        #       Fenetre
+        # ------------------------------------------------------------------
 
-            self.fenetre = gtk.Window()
-            self.grille = gtk.Table(1,4)
-            self.groupes = gtk.Table(1,2)
-            self.zoneColonnePaquets = gtk.Table(2,1)
-            self.zonePaquetsInformations = gtk.VPaned()
+        self.fenetre = gtk.Window()
+        self.grille = gtk.Table(1,4)
+        self.groupes = gtk.Table(1,2)
+        self.zoneColonnePaquets = gtk.Table(2,1)
+        self.zonePaquetsInformations = gtk.VPaned()
 
-            self.barreStatus = gtk.Statusbar()
+        self.barreStatus = gtk.Statusbar()
 
-            # ------------------------------------------------------------------
-            #       Menu
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        #       Menu
+        # ------------------------------------------------------------------
 
-            self.menu = gtk.MenuBar()
-            self.menu_action = gtk.MenuItem(label=fctLang.traduire("action"))
-            self.menu_action_list = gtk.Menu()
-            self.menu_action_install = gtk.ImageMenuItem(fctLang.traduire("apply_pkg"))
-            self.menu_action_clean = gtk.ImageMenuItem(fctLang.traduire("clean_cache"))
-            self.menu_action_update = gtk.ImageMenuItem(fctLang.traduire("update_database"))
-            self.menu_action_check = gtk.ImageMenuItem(fctLang.traduire("check_update"))
-            self.menu_action_quit = gtk.ImageMenuItem(fctLang.traduire("quit"))
-            self.menu_edit = gtk.MenuItem(label=fctLang.traduire("edit"))
-            self.menu_edit_list = gtk.Menu()
-            self.menu_edit_clear_changes = gtk.ImageMenuItem(fctLang.traduire("clear_changes"))
-            self.menu_edit_preference = gtk.ImageMenuItem(fctLang.traduire("preferences"))
-            self.menu_help = gtk.MenuItem(label=fctLang.traduire("help"))
-            self.menu_help_list = gtk.Menu()
-            self.menu_help_about = gtk.ImageMenuItem(fctLang.traduire("about"))
+        self.menu = gtk.MenuBar()
+        self.menu_action = gtk.MenuItem(label=Lang.translate("action"))
+        self.menu_action_list = gtk.Menu()
+        self.menu_action_install = gtk.ImageMenuItem(Lang.translate("apply_pkg"))
+        self.menu_action_clean = gtk.ImageMenuItem(Lang.translate("clean_cache"))
+        self.menu_action_update = gtk.ImageMenuItem(Lang.translate("update_database"))
+        self.menu_action_check = gtk.ImageMenuItem(Lang.translate("check_update"))
+        self.menu_action_quit = gtk.ImageMenuItem(Lang.translate("quit"))
+        self.menu_edit = gtk.MenuItem(label=Lang.translate("edit"))
+        self.menu_edit_list = gtk.Menu()
+        self.menu_edit_clear_changes = gtk.ImageMenuItem(Lang.translate("clear_changes"))
+        self.menu_edit_preference = gtk.ImageMenuItem(Lang.translate("preferences"))
+        self.menu_help = gtk.MenuItem(label=Lang.translate("help"))
+        self.menu_help_list = gtk.Menu()
+        self.menu_help_about = gtk.ImageMenuItem(Lang.translate("about"))
 
-            # ------------------------------------------------------------------
-            #       Barre d'outils
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        #       Barre d'outils
+        # ------------------------------------------------------------------
 
-            self.outils = gtk.Toolbar()
-            self.texteRecherche = gtk.Entry()
+        self.outils = gtk.Toolbar()
+        self.texteRecherche = gtk.Entry()
 
-            # ------------------------------------------------------------------
-            #       Liste des groupes
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        #       Liste des groupes
+        # ------------------------------------------------------------------
 
-            self.zoneSelectionGroupe = gtk.Frame(fctLang.traduire("select_group"))
-            self.listeSelectionGroupe = gtk.combo_box_new_text()
+        self.zoneSelectionGroupe = gtk.Frame(Lang.translate("select_group"))
+        self.listeSelectionGroupe = gtk.combo_box_new_text()
 
-            # ------------------------------------------------------------------
-            #       Colonnes des groupes
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        #       Colonnes des groupes
+        # ------------------------------------------------------------------
 
-            self.zoneGroupes = gtk.Frame(fctLang.traduire("list_groups"))
-            self.listeColonneGroupes = gtk.ListStore(str)
-            self.colonneGroupes = gtk.TreeView(self.listeColonneGroupes)
-            self.colonneGroupesNom = gtk.TreeViewColumn(fctLang.traduire("groups"))
-            self.celluleGroupesNom = gtk.CellRendererText()
-            self.defilementGroupes = gtk.ScrolledWindow()
+        self.zoneGroupes = gtk.Frame(Lang.translate("list_groups"))
+        self.listeColonneGroupes = gtk.ListStore(str)
+        self.colonneGroupes = gtk.TreeView(self.listeColonneGroupes)
+        self.colonneGroupesNom = gtk.TreeViewColumn(Lang.translate("groups"))
+        self.celluleGroupesNom = gtk.CellRendererText()
+        self.defilementGroupes = gtk.ScrolledWindow()
 
-            # ------------------------------------------------------------------
-            #       Colonnes des paquets
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        #       Colonnes des paquets
+        # ------------------------------------------------------------------
 
-            self.zonePaquets = gtk.Frame(fctLang.traduire("packages_list"))
-            self.listeColonnePaquets = gtk.ListStore(int, str, str, str, str)
-            self.colonnePaquets = gtk.TreeView(self.listeColonnePaquets)
-            self.colonnePaquetsCheckbox = gtk.TreeViewColumn(" ")
-            self.cellulePaquetsCheckbox = gtk.CellRendererToggle()
-            self.colonnePaquetsImage = gtk.TreeViewColumn(" ")
-            self.cellulePaquetsImage = gtk.CellRendererPixbuf()
-            self.colonnePaquetsNom = gtk.TreeViewColumn(fctLang.traduire("name"))
-            self.cellulePaquetsNom = gtk.CellRendererText()
-            self.colonnePaquetsVersionActuelle = gtk.TreeViewColumn(fctLang.traduire("actual_version"))
-            self.cellulePaquetsVersionActuelle = gtk.CellRendererText()
-            self.colonnePaquetsVersionDisponible = gtk.TreeViewColumn(fctLang.traduire("current_version"))
-            self.cellulePaquetsVersionDisponible = gtk.CellRendererText()
-            self.defilementPaquets = gtk.ScrolledWindow()
+        self.zonePaquets = gtk.Frame(Lang.translate("packages_list"))
+        self.listeColonnePaquets = gtk.ListStore(int, str, str, str, str)
+        self.colonnePaquets = gtk.TreeView(self.listeColonnePaquets)
+        self.colonnePaquetsCheckbox = gtk.TreeViewColumn(" ")
+        self.cellulePaquetsCheckbox = gtk.CellRendererToggle()
+        self.colonnePaquetsImage = gtk.TreeViewColumn(" ")
+        self.cellulePaquetsImage = gtk.CellRendererPixbuf()
+        self.colonnePaquetsNom = gtk.TreeViewColumn(Lang.translate("name"))
+        self.cellulePaquetsNom = gtk.CellRendererText()
+        self.colonnePaquetsVersionActuelle = gtk.TreeViewColumn(Lang.translate("actual_version"))
+        self.cellulePaquetsVersionActuelle = gtk.CellRendererText()
+        self.colonnePaquetsVersionDisponible = gtk.TreeViewColumn(Lang.translate("current_version"))
+        self.cellulePaquetsVersionDisponible = gtk.CellRendererText()
+        self.defilementPaquets = gtk.ScrolledWindow()
 
-            # ------------------------------------------------------------------
-            #       Informations sur le paquet
-            # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        #       Informations sur le paquet
+        # ------------------------------------------------------------------
 
-            self.zoneInformations = gtk.Notebook()
-            self.labelInformations = gtk.Label(fctLang.traduire("informations"))
-            self.listeInformations = gtk.TreeView()
-            self.colonneLabelInformations = gtk.TreeViewColumn()
-            self.celluleLabelInformations = gtk.CellRendererText()
-            self.colonneValeurInformations = gtk.TreeViewColumn()
-            self.celluleValeurInformations = gtk.CellRendererText()
-            self.contenuInformations = gtk.TreeStore(str,str)
-            self.defilementInformations = gtk.ScrolledWindow()
-            self.labelPaquet = gtk.Label(fctLang.traduire("package"))
-            self.listePaquet = gtk.TreeView()
-            self.colonneLabelPaquet = gtk.TreeViewColumn()
-            self.celluleLabelPaquet = gtk.CellRendererText()
-            self.colonneValeurPaquet = gtk.TreeViewColumn()
-            self.celluleValeurPaquet = gtk.CellRendererText()
-            self.contenuPaquet = gtk.TreeStore(str,str)
-            self.defilementPaquet = gtk.ScrolledWindow()
-            self.labelFichiers = gtk.Label(fctLang.traduire("files"))
-            self.listeFichiers = gtk.TextView()
-            self.defilementFichiers = gtk.ScrolledWindow()
-            self.labelJournal = gtk.Label(fctLang.traduire("changelog"))
-            self.listeJournal = gtk.TextView()
-            self.defilementJournal = gtk.ScrolledWindow()
-            self.labelFrugalbuild = gtk.Label(fctLang.traduire("frugalbuild"))
-            self.listeFrugalbuild = gtk.TextView()
-            self.defilementFrugalbuild = gtk.ScrolledWindow()
+        self.zoneInformations = gtk.Notebook()
+        self.labelInformations = gtk.Label(Lang.translate("informations"))
+        self.listeInformations = gtk.TreeView()
+        self.colonneLabelInformations = gtk.TreeViewColumn()
+        self.celluleLabelInformations = gtk.CellRendererText()
+        self.colonneValeurInformations = gtk.TreeViewColumn()
+        self.celluleValeurInformations = gtk.CellRendererText()
+        self.contenuInformations = gtk.TreeStore(str,str)
+        self.defilementInformations = gtk.ScrolledWindow()
+        self.labelPaquet = gtk.Label(Lang.translate("package"))
+        self.listePaquet = gtk.TreeView()
+        self.colonneLabelPaquet = gtk.TreeViewColumn()
+        self.celluleLabelPaquet = gtk.CellRendererText()
+        self.colonneValeurPaquet = gtk.TreeViewColumn()
+        self.celluleValeurPaquet = gtk.CellRendererText()
+        self.contenuPaquet = gtk.TreeStore(str,str)
+        self.defilementPaquet = gtk.ScrolledWindow()
+        self.labelFichiers = gtk.Label(Lang.translate("files"))
+        self.listeFichiers = gtk.TextView()
+        self.defilementFichiers = gtk.ScrolledWindow()
+        self.labelJournal = gtk.Label(Lang.translate("changelog"))
+        self.listeJournal = gtk.TextView()
+        self.defilementJournal = gtk.ScrolledWindow()
+        self.labelFrugalbuild = gtk.Label(Lang.translate("frugalbuild"))
+        self.listeFrugalbuild = gtk.TextView()
+        self.defilementFrugalbuild = gtk.ScrolledWindow()
 
 
-    def fenetrePrincipale (self):
+    def mainWindow (self):
+        """
+        Fenêtre principale
+        """
+        
+        longueur = Config.readConfig("screen", "width")
+        hauteur = Config.readConfig("screen", "height")
 
-        #~ self.initialiserFenetre()
-        longueur = fctConfig.lireConfig("screen", "width")
-        hauteur = fctConfig.lireConfig("screen", "height")
-
+        # Vérifie que la fenêtre n'a pas une taille inférieur à 800x600
         if int(longueur) >= 800 and int(hauteur) >= 600:
 
             # ------------------------------------------------------------------
             #       Fenetre
             # ------------------------------------------------------------------
 
-            self.fenetre.set_title(fctLang.traduire("title"))
+            self.fenetre.set_title(Lang.translate("title"))
             self.fenetre.set_size_request(int(longueur), int(hauteur))
             self.fenetre.set_resizable(True)
             self.fenetre.set_position(gtk.WIN_POS_CENTER)
@@ -170,22 +182,22 @@ class fonctionsInterface (object):
             # ------------------------------------------------------------------
 
             self.fenetre.connect("destroy", gtk.main_quit)
-            self.fenetre.connect("check-resize", self.redimensionnement)
+            self.fenetre.connect("check-resize", self.resize)
 
             self.menu_action_install.set_image(gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU))
-            self.menu_action_install.connect("activate", self.fenetreInstallation, self)
+            self.menu_action_install.connect("activate", self.installWindow, self)
 
             self.menu_action_clean.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
-            self.menu_action_clean.connect("activate", fctEvent.lancerNettoyerCache, self)
+            self.menu_action_clean.connect("activate", Event.lancerNettoyerCache, self)
 
             self.menu_action_update.set_image(gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU))
-            self.menu_action_update.connect("activate", fctEvent.lancerMiseajourBaseDonnees, self)
+            self.menu_action_update.connect("activate", Event.lancerMiseajourBaseDonnees, self)
 
             self.menu_action_check.set_image(gtk.image_new_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU))
-            self.menu_action_check.connect("activate", self.fenetreMiseAJour)
+            self.menu_action_check.connect("activate", self.updateWindow)
 
             self.menu_action_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
-            self.menu_action_quit.connect("activate", fctEvent.detruire)
+            self.menu_action_quit.connect("activate", self.closeWindow)
 
             self.menu.add(self.menu_action)
 
@@ -198,10 +210,10 @@ class fonctionsInterface (object):
             self.menu_action.set_submenu(self.menu_action_list)
 
             self.menu_edit_clear_changes.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
-            self.menu_edit_clear_changes.connect("activate", self.effacerListesPaquets)
+            self.menu_edit_clear_changes.connect("activate", self.erasePackage)
 
             self.menu_edit_preference.set_image(gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU))
-            self.menu_edit_preference.connect("activate", fctPrefs.fenetrePreferences, self)
+            self.menu_edit_preference.connect("activate", Preferences.runPreferences, self)
 
             self.menu.add(self.menu_edit)
 
@@ -210,7 +222,7 @@ class fonctionsInterface (object):
 
             self.menu_edit.set_submenu(self.menu_edit_list)
             self.menu_help_about.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
-            self.menu_help_about.connect("activate", self.fenetreAPropos)
+            self.menu_help_about.connect("activate", self.aboutWindow)
 
             self.menu.add(self.menu_help)
 
@@ -225,28 +237,28 @@ class fonctionsInterface (object):
             self.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
             self.outils.set_style(gtk.TOOLBAR_ICONS)
 
-            self.outils.insert_stock(gtk.STOCK_APPLY, fctLang.traduire("apply_pkg"), None, self.fenetreInstallation, self, 0)
-            self.outils.insert_stock(gtk.STOCK_REFRESH, fctLang.traduire("update_database"), None, fctEvent.lancerMiseajourBaseDonnees, self, 2)
+            self.outils.insert_stock(gtk.STOCK_APPLY, Lang.translate("apply_pkg"), None, self.installWindow, self, 0)
+            self.outils.insert_stock(gtk.STOCK_REFRESH, Lang.translate("update_database"), None, Event.lancerMiseajourBaseDonnees, self, 2)
             self.outils.insert_space(3)
             self.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
-            self.texteRecherche.connect("activate", self.effectuerRecherche, gtk.RESPONSE_OK)
-            self.texteRecherche.connect("icon-press", self.effacerRecherche)
+            self.texteRecherche.connect("activate", self.search, gtk.RESPONSE_OK)
+            self.texteRecherche.connect("icon-press", self.eraseSearch)
             self.texteRecherche.grab_focus()
-            self.outils.insert_widget(self.texteRecherche, fctLang.traduire("write_search"), None, 4)
-            self.outils.insert_stock(gtk.STOCK_FIND, fctLang.traduire("search"), None, self.effectuerRecherche, None, 5)
+            self.outils.insert_widget(self.texteRecherche, Lang.translate("write_search"), None, 4)
+            self.outils.insert_stock(gtk.STOCK_FIND, Lang.translate("search"), None, self.search, None, 5)
             self.outils.insert_space(6)
-            self.outils.insert_stock(gtk.STOCK_PREFERENCES, fctLang.traduire("preferences"), None, fctPrefs.fenetrePreferences, self, 7)
-            self.outils.insert_stock(gtk.STOCK_QUIT, fctLang.traduire("quit"), None, fctEvent.detruire, None, 8)
+            self.outils.insert_stock(gtk.STOCK_PREFERENCES, Lang.translate("preferences"), None, Preferences.runPreferences, self, 7)
+            self.outils.insert_stock(gtk.STOCK_QUIT, Lang.translate("quit"), None, self.closeWindow, None, 8)
 
             # ------------------------------------------------------------------
-            #       Liste des groupes
+            #       Liste des dépôts
             # ------------------------------------------------------------------
 
             self.zoneSelectionGroupe.add(self.listeSelectionGroupe)
             self.zoneSelectionGroupe.set_border_width(4)
-            self.listeSelectionGroupe.connect('changed', self.changementDepot, self)
+            self.listeSelectionGroupe.connect('changed', self.changeRepo, self)
 
-            fctEvent.ajouterDepots(self)
+            self.addRepos()
 
             # ------------------------------------------------------------------
             #       Colonnes des groupes
@@ -263,14 +275,14 @@ class fonctionsInterface (object):
             self.colonneGroupesNom.add_attribute(self.celluleGroupesNom, 'text', 0)
             self.colonneGroupes.append_column(self.colonneGroupesNom)
 
-            fctEvent.ajouterGroupes(self)
+            self.addGroups()
 
             self.defilementGroupes.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             self.defilementGroupes.add(self.colonneGroupes)
             self.defilementGroupes.set_border_width(4)
 
             self.selectionGroupe = self.colonneGroupes.get_selection()
-            self.selectionGroupe.connect('changed', self.selectionnerGroupe, self.listeColonneGroupes)
+            self.selectionGroupe.connect('changed', self.selectGroup, self.listeColonneGroupes)
 
             self.zoneGroupes.add(self.defilementGroupes)
             self.zoneGroupes.set_border_width(4)
@@ -298,7 +310,7 @@ class fonctionsInterface (object):
 
             self.cellulePaquetsCheckbox.set_property('active', 1)
             self.cellulePaquetsCheckbox.set_property('activatable', True)
-            self.cellulePaquetsCheckbox.connect('toggled', self.cocherPaquet, self.colonnePaquets)
+            self.cellulePaquetsCheckbox.connect('toggled', self.checkPackage, self.colonnePaquets)
 
             self.colonnePaquetsCheckbox.pack_start(self.cellulePaquetsCheckbox, True)
             self.colonnePaquetsCheckbox.add_attribute(self.cellulePaquetsCheckbox, 'active', 0)
@@ -322,7 +334,7 @@ class fonctionsInterface (object):
             self.defilementPaquets.set_border_width(4)
 
             self.selectionPaquet = self.colonnePaquets.get_selection()
-            self.selectionPaquet.connect('changed', self.selectionnerPaquet, self.listeColonnePaquets)
+            self.selectionPaquet.connect('changed', self.selectPackage, self.listeColonnePaquets)
 
             self.zonePaquets.add(self.defilementPaquets)
             self.zonePaquets.set_border_width(4)
@@ -402,7 +414,7 @@ class fonctionsInterface (object):
             self.zoneInformations.append_page(self.defilementPaquet, self.labelPaquet)
             self.zoneInformations.append_page(self.defilementFichiers, self.labelFichiers)
             self.zoneInformations.append_page(self.defilementJournal, self.labelJournal)
-            if fctConfig.lireConfig("pyfpm", "developmentmode") == "true":
+            if Config.readConfig("pyfpm", "developmentmode") == "true":
                 self.zoneInformations.append_page(self.defilementFrugalbuild, self.labelFrugalbuild)
             self.zoneInformations.set_border_width(4)
             self.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
@@ -420,22 +432,138 @@ class fonctionsInterface (object):
             self.grille.attach(self.barreStatus, 0, 1, 3, 4, yoptions=gtk.FILL)
 
             self.fenetre.add(self.grille)
-
             self.fenetre.show_all()
 
-            if fctConfig.lireConfig("pyfpm", "startupdate") == "true":
-                self.fenetreMiseAJour()
+            if Config.readConfig("pyfpm", "startupdate") == "true":
+                self.updateWindow()
 
         else:
             try:
-                self.fenetreInformation(fctLang.traduire("error"), fctLang.traduire("limit_size"))
+                self.informationWindow(Lang.translate("error"), Lang.translate("limit_size"))
             except:
                 pass
 
-            sys.exit("[ERROR] - " + fctLang.traduire("limit_size"))
+            sys.exit("[ERROR] - " + Lang.translate("limit_size"))
+            
+            
+    def runWindow (self):
+        """
+        Affiche l'interface
+        """
+
+        gtk.main()
+            
+            
+    def closeWindow (self, interface):
+        """
+        Détruit l'interface et termine pyFPM
+        """
+
+        gtk.main_quit()
+    
+    def addRepos (self):
+        """
+        Récupère les dépots disponible sur le système
+        """
+
+        # Met le dépôt du système en choix principal
+        index = 0
+        if "frugalware" in repo_list:
+            index = repo_list.index("frugalware")
+        elif "frugalware-current" in repo_list:
+            index = repo_list.index("frugalware-current")
+
+        # Intègre les dépôts dans la liste
+        for element in repo_list:
+            if element == "local":
+                element = Lang.translate("installed_packages")
+
+            self.listeSelectionGroupe.append_text(element)
+
+        # Met le dépôt du système en actif
+        self.listeSelectionGroupe.set_active(index)
 
 
-    def selectionnerGroupe (self, selection, modele):
+    def changeRepo (self, *args):
+        """
+        Permet de changer de dépôt
+        """
+
+        self.listeColonnePaquets.clear()
+        self.listeColonneGroupes.clear()
+        self.addGroups()
+
+        self.updateStatusbar(Lang.translate("change_repo") + " " + str(self.listeSelectionGroupe.get_active_text()))
+
+
+    def updateStatusbar (self, texte):
+        """
+        Changer le texte inscrit dans la barre inférieur
+        """
+
+        self.barreStatus.push(0, str(texte))
+
+
+    def eraseInterface (self):
+        """
+        Efface l'ensemble de l'interface
+        """
+
+        modele = self.listeSelectionGroupe.get_model()
+        modele.clear()
+        self.listeSelectionGroupe.set_model(modele)
+
+        self.listeColonneGroupes.clear()
+        self.listeColonnePaquets.clear()
+
+        self.contenuInformations.clear()
+        self.contenuPaquet.clear()
+
+        self.updateStatusbar("")
+
+
+    def resize (self, *args):
+        """
+        Redimensionne la largueur de celluleValeur afin que le texte
+        s'adapte à la fenêtre
+        """
+
+        self.celluleValeurInformations.set_property("wrap-width", self.fenetre.get_size()[0]/2)
+        self.celluleValeurPaquet.set_property("wrap-width", self.fenetre.get_size()[0]/2)
+        self.colonnePaquetsNom.set_min_width(self.fenetre.get_size()[0]/2)
+        self.colonnePaquets.set_size_request(0, self.fenetre.get_size()[1]/2)
+
+
+    @staticmethod
+    def refresh ():
+        """
+        Rafraichit l'interface quand des changements ont lieux
+        """
+
+        try :
+            while gtk.events_pending():
+                gtk.main_iteration_do(False)
+        except:
+            pass
+
+
+    def addGroups (self):
+        """
+        Ajouter les groupes dans l'interface
+        """
+
+        self.listeColonnePaquets.clear()
+        ensembleGroupes = Event.initGroups(self)
+
+        for nom in ensembleGroupes:
+            if Config.readConfig("pyfpm", "useprohibategroups") == "false":
+                if not nom in self.listeGroupesProhibes:
+                    self.listeColonneGroupes.append([nom])
+            else:
+                self.listeColonneGroupes.append([nom])
+
+
+    def selectGroup (self, selection, modele):
         """
         Récupère les informations concernant le groupe actuellement
         sélectionné.
@@ -447,17 +575,80 @@ class fonctionsInterface (object):
 
             modele = self.colonneGroupes.get_model()
 
-            selectionGroupe = modele.get_value(treeiter, 0)
+            nomGroupe = modele.get_value(treeiter, 0)
 
             self.recherche_mode = False
             self.recherche_nom = ""
 
-            fctEvent.obtenirGroupe(self, selectionGroupe)
+            self.getPackages(nomGroupe)
         except:
             return True
 
 
-    def selectionnerPaquet (self, selection, modele):
+    def getPackages (self, nomGroupe):
+        """
+        Obtenir les paquets correspondant au groupe sélectionné
+        """
+
+        paquets = Event.initPackages(self, nomGroupe)
+        self.addPackages(paquets)
+
+
+    def addPackages (self, paquets, recherche = False):
+        """
+        Ajoute les paquets dans l'interface
+        """
+
+        objetTrouve = 0
+        self.listeColonnePaquets.clear()
+
+        for element in paquets:
+            if not recherche:
+                nomPaquet = pacman_pkg_get_info(element, PM_PKG_NAME)
+                versionPaquet = pacman_pkg_get_info(element, PM_PKG_VERSION)
+            elif recherche:
+                nomPaquet = pacman_pkg_get_info(element[1], PM_PKG_NAME)
+                versionPaquet = pacman_pkg_get_info(element[1], PM_PKG_VERSION)
+
+            if pacman_package_intalled(nomPaquet, versionPaquet):
+                # Le paquet est installé
+                objetTrouve = 1
+                image = " "
+                nouvelleVersion = " "
+            elif nomPaquet in self.listeMiseAJourPacman:
+                # Le paquet à une mise à jour
+                objetTrouve = 1
+                if not nomPaquet in self.listeInstallationPacman:
+                    image = gtk.STOCK_REFRESH
+                else:
+                    image = gtk.STOCK_ADD
+                information = pacman_db_readpkg(db_list[0], nomPaquet)
+                nouvelleVersion = versionPaquet
+                versionPaquet = pacman_pkg_get_info(information, PM_PKG_VERSION)
+            else:
+                # Le paquet n'est pas installé
+                objetTrouve = 0
+                image = " "
+                nouvelleVersion = " "
+
+            if nomPaquet in self.listeInstallationPacman:
+                objetTrouve = 1
+                if not nomPaquet in self.listeMiseAJourPacman:
+                    image = gtk.STOCK_ADD
+            elif nomPaquet in self.listeSuppressionPacman:
+                objetTrouve = 0
+                image = gtk.STOCK_REMOVE
+
+            if recherche and len(repo_list) > 2:
+                nomPaquet = "[" + element[0] + "] " + nomPaquet
+
+            self.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
+
+        self.refresh()
+        self.updateStatusbar(str(len(self.listeColonnePaquets)) + " " + Lang.translate("read_packages_done"))
+
+
+    def selectPackage (self, selection, modele):
         """
         Récupère les informations concernant le paquet actuellement
         sélectionné.
@@ -472,28 +663,14 @@ class fonctionsInterface (object):
 
         try :
             nomPaquet, versionPaquet = modele.get(tableau, 2, 3)
-            fctEvent.obtenirPaquet(self, nomPaquet, versionPaquet)
+            Event.getPackageInfo(self, nomPaquet, versionPaquet)
         except :
             return True
 
         return True
 
 
-    def ouvrirNavigateur (self, cell_renderer, colonne, liste):
-        """
-        Ouvre le navigateur internet lorsque l'on clique sur le lien
-        """
-
-        try:
-            modele = liste.get_model()
-
-            if modele[colonne][0] == fctLang.traduire("url"):
-                print ("test")
-        except:
-            pass
-
-
-    def cocherPaquet (self, cell_renderer, colonne, liste):
+    def checkPackage (self, cell_renderer, colonne, liste):
         """
         Permet de gérer les paquets à installer/desinstaller via deux
         tableau qui se mettent à jour en fonction du cochage.
@@ -507,8 +684,8 @@ class fonctionsInterface (object):
         if nomPaquet.find("]") != -1:
             nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
 
-        elementAjouter = fctEvent.verifierDonnee(self.listeInstallationPacman, nomPaquet)
-        elementEnlever = fctEvent.verifierDonnee(self.listeSuppressionPacman, nomPaquet)
+        elementAjouter = Event.checkData(self.listeInstallationPacman, nomPaquet)
+        elementEnlever = Event.checkData(self.listeSuppressionPacman, nomPaquet)
 
         if modele[colonne][0] == 0:
             # Le paquet en question à été décoché
@@ -542,59 +719,7 @@ class fonctionsInterface (object):
                     modele[colonne][1] = gtk.STOCK_ADD
 
 
-    def effectuerRecherche (self, *args):
-        """
-        Affiche l'ensemble des paquets correspondant à la recherche
-        """
-
-        if self.texteRecherche.get_text != None:
-            self.listeColonnePaquets.clear()
-            objetRechercher = self.texteRecherche.get_text()
-
-            #~ paquets = fctPaquets.chercherPaquet(db_list[self.listeSelectionGroupe.get_active()], objetRechercher)
-            paquets = fctPaquets.chercherPaquet(objetRechercher)
-
-            #~ if not self.recherche_mode:
-            fctPaquets.printDebug("DEBUG", str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
-            self.changerTexteBarreStatus(str(len(paquets)) + " " + fctLang.traduire("search_package") + " " + objetRechercher)
-
-            self.recherche_mode = True
-            self.recherche_nom = objetRechercher
-
-            if len(paquets) > 0:
-                pacman_trans_release()
-                fctEvent.remplirPaquets(self, paquets, recherche = True)
-
-            self.effacerRecherche()
-
-
-    def effacerRecherche (self, *args):
-        """
-        Efface la zone de recherche
-        """
-
-        self.texteRecherche.set_text("")
-
-
-    def effacerInterface (self):
-        """
-        Efface l'ensemble de l'interface
-        """
-
-        modele = self.listeSelectionGroupe.get_model()
-        modele.clear()
-        self.listeSelectionGroupe.set_model(modele)
-
-        self.listeColonneGroupes.clear()
-        self.listeColonnePaquets.clear()
-
-        self.contenuInformations.clear()
-        self.contenuPaquet.clear()
-
-        self.changerTexteBarreStatus("")
-
-
-    def effacerListesPaquets (self, *args):
+    def erasePackage (self, *args):
         """
         Remet à zéro la liste des paquets à installer et désinstaller
         """
@@ -608,53 +733,39 @@ class fonctionsInterface (object):
         except:
             pass
 
-        self.changerTexteBarreStatus(fctLang.traduire("clear_changes_done"))
+        self.updateStatusbar(Lang.translate("clear_changes_done"))
 
 
-    def changementDepot (self, *args):
+    def search (self, *args):
         """
-        Permet de changer de dépôt
-        """
-
-        self.listeColonnePaquets.clear()
-        self.listeColonneGroupes.clear()
-        fctEvent.ajouterGroupes(self)
-
-        self.changerTexteBarreStatus(fctLang.traduire("change_repo") + " " + str(self.listeSelectionGroupe.get_active_text()))
-
-
-    def redimensionnement (self, *args):
-        """
-        Redimensionne la largueur de celluleValeur afin que le texte
-        s'adapte à la fenêtre
+        Affiche l'ensemble des paquets correspondant à la recherche
         """
 
-        self.celluleValeurInformations.set_property("wrap-width", self.fenetre.get_size()[0]/2)
-        self.celluleValeurPaquet.set_property("wrap-width", self.fenetre.get_size()[0]/2)
-        self.colonnePaquetsNom.set_min_width(self.fenetre.get_size()[0]/2)
-        self.colonnePaquets.set_size_request(0, self.fenetre.get_size()[1]/2)
+        if len(self.texteRecherche.get_text()) > 0:
+            self.listeColonnePaquets.clear()
+            objetRechercher = self.texteRecherche.get_text()
+
+            paquets = Package.searchPackage(objetRechercher)
+
+            Package.printDebug("DEBUG", str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
+            self.updateStatusbar(str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
+
+            self.recherche_mode = True
+            self.recherche_nom = objetRechercher
+
+            if len(paquets) > 0:
+                pacman_trans_release()
+                self.addPackages(paquets, recherche = True)
+
+            self.eraseSearch()
 
 
-    @staticmethod
-    def rafraichirFenetre ():
+    def eraseSearch (self, *args):
         """
-        Rafraichit l'interface quand des changements ont lieux
+        Efface la zone de recherche
         """
 
-        try :
-            while gtk.events_pending():
-                gtk.main_iteration_do(False)
-
-        except:
-            pass
-
-
-    def changerTexteBarreStatus (self, texte):
-        """
-        Changer le texte inscrit dans la barre inférieur
-        """
-
-        self.barreStatus.push(0, str(texte))
+        self.texteRecherche.set_text("")
 
 
 # ------------------------------------------------------------------------------------------------------------
@@ -663,7 +774,7 @@ class fonctionsInterface (object):
 #
 # ------------------------------------------------------------------------------------------------------------
 
-    def fenetreAPropos (self, widget, *event):
+    def aboutWindow (self, widget, *event):
         """
         Affiche la fenêtre A propos commune à toutes les applications :p
         """
@@ -672,8 +783,8 @@ class fonctionsInterface (object):
         logo = gtk.gdk.pixbuf_new_from_file("./data/icons/96x96/pyfpm.png")
 
         about.set_program_name("pyFPM")
-        about.set_version("0001")
-        about.set_comments(fctLang.traduire("about_desc"))
+        about.set_version("(Inky)")
+        about.set_comments(Lang.translate("about_desc"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
         about.set_authors(["Gaetan Gourdin (bouleetbil) - Développement préliminaire", "Aurélien Lubert (PacMiam) - Interface"])
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer\net/ou le modifier conformément aux dispositions de la Licence Publique\nGénérale GNU, telle que publiée par la Free Software Foundation.")
@@ -685,7 +796,7 @@ class fonctionsInterface (object):
         about.destroy()
 
 
-    def fenetreInformation (self, titre, texte):
+    def informationWindow (self, titre, texte):
         """
         Affiche une fenêtre d'information
         """
@@ -700,7 +811,7 @@ class fonctionsInterface (object):
         information.destroy()
 
 
-    def fenetreInstallation (self, widget, *event):
+    def installWindow (self, widget, *event):
         """
         Affiche les modifications à effectuer sur les paquets
         """
@@ -712,7 +823,7 @@ class fonctionsInterface (object):
 
         if self.recherche_mode == False:
             self.selectionGroupe = self.colonneGroupes.get_selection()
-            self.selectionnerGroupe(self.selectionGroupe, self.listeColonneGroupes)
+            self.selectGroup(self.selectionGroupe, self.listeColonneGroupes)
         else:
             self.texteRecherche.set_text(self.recherche_nom)
             self.effectuerRecherche()
@@ -721,11 +832,11 @@ class fonctionsInterface (object):
             self.listeInstallationPacman.sort()
             self.listeSuppressionPacman.sort()
 
-            fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
-            texteFenetre = gtk.Label(fctLang.traduire("change_todo"))
+            fenetre = gtk.Dialog(Lang.translate("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
+            texteFenetre = gtk.Label(Lang.translate("change_todo"))
 
             grilleInstallation = gtk.Table(1,3)
-            zoneInstallation = gtk.Frame(fctLang.traduire("install_pkg"))
+            zoneInstallation = gtk.Frame(Lang.translate("install_pkg"))
             listeInstallation = gtk.TreeStore(str, str)
             colonnesInstallation = gtk.TreeView()
             colonneInstallationNom = gtk.TreeViewColumn()
@@ -734,11 +845,11 @@ class fonctionsInterface (object):
             celluleInstallationTaille = gtk.CellRendererText()
             defilementInstallation = gtk.ScrolledWindow()
             tailleInstallation = gtk.Label("")
-            self.verifierDependancesInstallation = gtk.CheckButton(fctLang.traduire("skip_check_deps"))
-            self.seulementTelecharger = gtk.CheckButton(fctLang.traduire("download_only"))
+            self.verifierDependancesInstallation = gtk.CheckButton(Lang.translate("skip_check_deps"))
+            self.seulementTelecharger = gtk.CheckButton(Lang.translate("download_only"))
 
             grilleSuppression = gtk.Table(1,3)
-            zoneSuppression = gtk.Frame(fctLang.traduire("remove_pkg"))
+            zoneSuppression = gtk.Frame(Lang.translate("remove_pkg"))
             listeSuppression = gtk.TreeStore(str, str)
             colonnesSuppression = gtk.TreeView()
             colonneSuppressionNom = gtk.TreeViewColumn()
@@ -747,7 +858,7 @@ class fonctionsInterface (object):
             celluleSuppressionTaille = gtk.CellRendererText()
             defilementSuppression = gtk.ScrolledWindow()
             tailleSuppression = gtk.Label("")
-            self.verifierDependancesSuppression = gtk.CheckButton(fctLang.traduire("skip_check_deps"))
+            self.verifierDependancesSuppression = gtk.CheckButton(Lang.translate("skip_check_deps"))
 
             fenetre.set_default_response(gtk.RESPONSE_OK)
             fenetre.set_size_request(400, 400)
@@ -818,7 +929,7 @@ class fonctionsInterface (object):
 
                     valeurInstallation += float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024
 
-                tailleInstallation.set_text(fctLang.traduire("total_size") + " : " + str(format(valeurInstallation, '.2f')) + " MB")
+                tailleInstallation.set_text(Lang.translate("total_size") + " : " + str(format(valeurInstallation, '.2f')) + " MB")
                 fenetre.vbox.pack_start(zoneInstallation)
 
             if len(self.listeSuppressionPacman) != 0:
@@ -831,7 +942,7 @@ class fonctionsInterface (object):
 
                     valeurSuppression += float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024
 
-                tailleSuppression.set_text(fctLang.traduire("total_size") + " : " + str(format(valeurSuppression, '.2f')) + " MB")
+                tailleSuppression.set_text(Lang.translate("total_size") + " : " + str(format(valeurSuppression, '.2f')) + " MB")
                 fenetre.vbox.pack_start(zoneSuppression)
 
             fenetre.show_all()
@@ -839,22 +950,22 @@ class fonctionsInterface (object):
 
             if choix == gtk.RESPONSE_APPLY:
                 fenetre.destroy()
-                fctEvent.lancerInstallationPaquets(self)
-                self.effacerListesPaquets()
+                Event.lancerInstallationPaquets(self)
+                self.erasePackage()
             else:
                 fenetre.destroy()
         else:
-            self.fenetreInformation(fctLang.traduire("apply_pkg"), fctLang.traduire("no_change"))
+            self.informationWindow(Lang.translate("apply_pkg"), Lang.translate("no_change"))
 
 
-    def fenetreMiseAJour (self, *args):
+    def updateWindow (self, *args):
         """
         Prévient qu'il y a des mises à jour et propose de les installer
         """
 
         self.fenetre.set_sensitive(False)
 
-        fctEvent.obtenirMiseAJour(self.listeMiseAJourPacman)
+        Event.getUpdate(self.listeMiseAJourPacman)
         listeTmp = []
 
         if len(self.listeMiseAJourPacman) > 0:
@@ -863,9 +974,9 @@ class fonctionsInterface (object):
                     listeTmp.append(element)
 
             if len(listeTmp) > 0:
-                miseajour = gtk.Dialog(fctLang.traduire("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_ADD, gtk.RESPONSE_ACCEPT, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                miseajour = gtk.Dialog(Lang.translate("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_ADD, gtk.RESPONSE_ACCEPT, gtk.STOCK_OK, gtk.RESPONSE_OK))
 
-                texteInfo = gtk.Label(fctLang.traduire("update_available"))
+                texteInfo = gtk.Label(Lang.translate("update_available"))
                 listeInfo = gtk.TreeStore(str)
                 colonnesInfo = gtk.TreeView()
                 colonneInfoNom = gtk.TreeViewColumn()
@@ -912,60 +1023,6 @@ class fonctionsInterface (object):
                 else:
                     miseajour.destroy()
             else:
-                self.barreStatus.push(0, fctLang.traduire("no_update_available"))
+                self.barreStatus.push(0, Lang.translate("no_update_available"))
 
         self.fenetre.set_sensitive(True)
-
-
-    def fenetreConfirmation (self, nomPaquet, listePaquet):
-        """
-        Fenêtre de confirmation pour la fonction fctPaquets.lancerPacman
-        """
-
-        fenetre = gtk.Dialog(fctLang.traduire("apply_pkg"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
-
-        texteConfirmation = gtk.Label(fctLang.traduire(nomPaquet))
-        listeConfirmation = gtk.TreeStore(str)
-        colonnesConfirmation = gtk.TreeView()
-        colonneConfirmationNom = gtk.TreeViewColumn()
-        celluleConfirmation = gtk.CellRendererText()
-        defilementConfirmation = gtk.ScrolledWindow()
-        grille = gtk.Table(2,2)
-
-        #~ confirmation.set_has_separator(True)
-        confirmation.set_default_response(gtk.RESPONSE_ACCEPT)
-        confirmation.set_size_request(400, 400)
-
-        colonnesConfirmation.set_headers_visible(False)
-        colonnesConfirmation.set_hover_selection(True)
-        colonnesConfirmation.expand_all()
-
-        colonneConfirmationNom.pack_start(celluleConfirmation, True)
-        colonneConfirmationNom.add_attribute(celluleConfirmation, "text", 0)
-
-        colonnesConfirmation.append_column(colonneConfirmationNom)
-        colonnesConfirmation.set_model(listeConfirmation)
-
-        grille.set_border_width(4)
-
-        defilementConfirmation.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        defilementConfirmation.add(colonnesConfirmation)
-        defilementConfirmation.set_border_width(4)
-
-        confirmation.vbox.pack_start(grille)
-
-        grille.attach(texteConfirmation, 0, 1, 0, 1, yoptions=gtk.FILL)
-        grille.attach(defilementConfirmation, 0, 1, 1, 2)
-
-        for element in listePaquet:
-            listeConfirmation.append(None, [element])
-
-        confirmation.show_all()
-        choix = confirmation.run()
-
-        if choix == gtk.RESPONSE_ACCEPT:
-            confirmation.destroy()
-            return 1
-        else:
-            confirmation.destroy()
-            return 0

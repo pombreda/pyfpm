@@ -7,39 +7,65 @@
 #
 # ----------------------------------------------------------------------
 
+# Importation des modules
 import os, sys
 
 from string import strip
 from ConfigParser import SafeConfigParser
 
 from . import files
-fctFichier = files.fonctionsFichier()
 
+# Initialisation des modules
+File = files.File()
 
-class fonctionsConfiguration (object):
-    def lireConfig (self, section, option):
+# Variables globales
+config_path = os.path.expanduser('~') + "/.config/pyfpm/"
+
+class Config (object):
+    """
+    Ensemble de fonction permettant de gérer le fichier
+    de configuration utilisateur
+    """
+    
+    def checkConfig (self):
+        """
+        Créer le fichier de configuration si inexistant
+        """
+        
+        if File.fichier(config_path) == False:
+            # Le fichier de configuration doit être créé
+            os.mkdir(config_path, 0744)
+        
+        if File.fichier(config_path + "pyfpm.config") == False:
+            # Configuration par défaut
+            dico = {"lang" : "en_US", "developmentmode" : "false", "startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600", "command" : "gksu"}
+            self.writeConfig(dico)
+    
+    
+    def readConfig (self, section, option):
         """
         Récupère la valeur correspondant dans le fichier de configuration
         suivant la section choisie
         """
-        if fctFichier.fichier("./pyfpm.config") == True:
+        if File.fichier(config_path + "pyfpm.config") == True:
             try:
                 configuration = SafeConfigParser()
-                configuration.read("./pyfpm.config")
+                configuration.read(config_path + "pyfpm.config")
 
                 return configuration.get(section, option)
             except:
                 return False
         else:
-            print("[ERROR] - Fichier inexistant")
+            print("[ERROR] Fichier inexistant")
 
 
-    def ecrireConfig (self, dico):
+    def writeConfig (self, dico):
         """
         Modifie la configuration
         """
 
         try:
+            print str(dico)
             configuration = SafeConfigParser()
 
             configuration.add_section("pyfpm")
@@ -51,18 +77,18 @@ class fonctionsConfiguration (object):
             configuration.set("pyfpm", "startupdate", dico.get("startupdate", "true"))
             configuration.set("pyfpm", "useprohibategroups", dico.get("useprohibategroups", "false"))
 
-            configuration.set("screen", "width", self.lireConfig("screen", "width"))
-            configuration.set("screen", "height", self.lireConfig("screen", "height"))
+            configuration.set("screen", "width", dico.get("screen", "800"))
+            configuration.set("screen", "height", dico.get("screen", "600"))
 
             configuration.set("admin", "command", dico.get("command", "gksu"))
 
-            configuration.write(open("./pyfpm.config" , "w"))
+            configuration.write(open(config_path + "pyfpm.config" , "w"))
 
         except:
             return False
 
 
-    def booleenVersEntier (self, valeur):
+    def boolToInt (self, valeur):
         """
         Tranforme un booleen en entier
         """
@@ -75,7 +101,7 @@ class fonctionsConfiguration (object):
             return -1
 
 
-    def booleenMinuscule (self, valeur):
+    def boolMinus (self, valeur):
         """
         Met le booléen en minuscule pour le fichier de configuration
         """
