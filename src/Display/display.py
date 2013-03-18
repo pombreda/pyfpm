@@ -32,12 +32,12 @@ class Interface (object):
     """
     Ensemble des fonctions de la fenêtre principale
     """
-    
+
     def __init__(self):
         """
         Initialisation de la fenêtre principale
         """
-        
+
         self.listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
 
         self.paquetSelectionne = ""
@@ -161,7 +161,7 @@ class Interface (object):
         """
         Fenêtre principale
         """
-        
+
         longueur = Config.readConfig("screen", "width")
         hauteur = Config.readConfig("screen", "height")
 
@@ -173,7 +173,7 @@ class Interface (object):
             # ------------------------------------------------------------------
 
             self.fenetre.set_title(Lang.translate("title"))
-            self.fenetre.set_size_request(int(longueur), int(hauteur))
+            self.fenetre.set_default_size(int(longueur), int(hauteur))
             self.fenetre.set_resizable(True)
             self.fenetre.set_position(gtk.WIN_POS_CENTER)
 
@@ -444,23 +444,24 @@ class Interface (object):
                 pass
 
             sys.exit("[ERROR] - " + Lang.translate("limit_size"))
-            
-            
+
+
     def runWindow (self):
         """
         Affiche l'interface
         """
 
         gtk.main()
-            
-            
+
+
     def closeWindow (self, interface):
         """
-        Détruit l'interface et termine pyFPM
+        Termine pyFPM
         """
 
         gtk.main_quit()
-    
+
+
     def addRepos (self):
         """
         Récupère les dépots disponible sur le système
@@ -786,8 +787,11 @@ class Interface (object):
         about.set_version("(Inky)")
         about.set_comments(Lang.translate("about_desc"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
-        about.set_authors(["Gaetan Gourdin (bouleetbil) - Développement préliminaire", "Aurélien Lubert (PacMiam) - Interface"])
-        about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer\net/ou le modifier conformément aux dispositions de la Licence Publique\nGénérale GNU, telle que publiée par la Free Software Foundation.")
+        about.set_authors(["Gaetan Gourdin (bouleetbil)", "Aurélien Lubert (PacMiam)"])
+        about.set_artists(["Lubert Aurélien (PacMiam)"])
+        about.set_translator_credits("fr_FR - Anthony Jorion (Pingax)")
+        about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer et/ou le modifier conformément aux dispositions de la Licence Publique Générale GNU, telle que publiée par la Free Software Foundation.")
+        about.set_wrap_license(True)
         about.set_website("http://www.frugalware.org")
         about.set_logo(logo)
 

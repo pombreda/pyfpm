@@ -26,22 +26,22 @@ class Config (object):
     Ensemble de fonction permettant de gérer le fichier
     de configuration utilisateur
     """
-    
+
     def checkConfig (self):
         """
         Créer le fichier de configuration si inexistant
         """
-        
+
         if File.fichier(config_path) == False:
             # Le fichier de configuration doit être créé
             os.mkdir(config_path, 0744)
-        
+
         if File.fichier(config_path + "pyfpm.config") == False:
             # Configuration par défaut
             dico = {"lang" : "en_US", "developmentmode" : "false", "startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600", "command" : "gksu"}
             self.writeConfig(dico)
-    
-    
+
+
     def readConfig (self, section, option):
         """
         Récupère la valeur correspondant dans le fichier de configuration
@@ -65,20 +65,19 @@ class Config (object):
         """
 
         try:
-            print str(dico)
             configuration = SafeConfigParser()
 
             configuration.add_section("pyfpm")
             configuration.add_section("screen")
             configuration.add_section("admin")
 
-            configuration.set("pyfpm", "lang", dico.get("lang", "en"))
+            configuration.set("pyfpm", "lang", dico.get("lang", "en_US"))
             configuration.set("pyfpm", "developmentmode", dico.get("developmentmode", "true"))
             configuration.set("pyfpm", "startupdate", dico.get("startupdate", "true"))
             configuration.set("pyfpm", "useprohibategroups", dico.get("useprohibategroups", "false"))
 
-            configuration.set("screen", "width", dico.get("screen", "800"))
-            configuration.set("screen", "height", dico.get("screen", "600"))
+            configuration.set("screen", "width", dico.get("width", "800"))
+            configuration.set("screen", "height", dico.get("height", "600"))
 
             configuration.set("admin", "command", dico.get("command", "gksu"))
 

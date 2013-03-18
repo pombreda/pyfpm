@@ -27,7 +27,7 @@ class Preferences (object):
     """
     Gestion du fichier de configuration via une fenêtre
     """
-    
+
     def runPreferences (self, widget, interface):
         """
         Fenêtre de gestion des préférences
@@ -106,7 +106,7 @@ class Preferences (object):
         reponse = fenetre.run()
 
         if reponse == gtk.RESPONSE_APPLY:
-            dico = {"lang" : Lang.fileLanguage(generalLangueChoix.get_active_text()), "developmentmode" : Config.boolMinus(self.modeDeveloppement.get_active()), "startupdate" : Config.boolMinus(self.miseajourDemarrage.get_active()), "useprohibategroups" : Config.boolMinus(self.afficherGroupes.get_active()), "width" : "1024", "height" : "600", "command" : generalCommandeChoix.get_active_text()}
+            dico = {"lang" : Lang.fileLanguage(generalLangueChoix.get_active_text()), "developmentmode" : Config.boolMinus(self.modeDeveloppement.get_active()), "startupdate" : Config.boolMinus(self.miseajourDemarrage.get_active()), "useprohibategroups" : Config.boolMinus(self.afficherGroupes.get_active()), "width" : Config.readConfig("screen", "width"), "height" : Config.readConfig("screen", "height"), "command" : generalCommandeChoix.get_active_text()}
 
             modificationInterface = False
             if Config.readConfig("pyfpm", "useprohibategroups") != Config.boolMinus(self.afficherGroupes.get_active()):
