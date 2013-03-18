@@ -6,11 +6,15 @@
     
 --- Auteurs ------------------------------------------------------------
 
+    Développement --------------------------------------------------
     Gaetan Gourdin <bouleetbil@frogdev.info>
     Aurélien Lubert <PacMiam@gmx.fr>
+    
+    Traduction ----------------------------------------------------------
+    Anthony Jorion <pingax@frugalware.org>
 
 
---- Présentation -------------------------------------------------------
+--- Présentation ------------------------------------------------------
 
     pyFPM est une interface graphique pour le gestionnaire de paquet
     pacman-g2 de la distribution Frugalware. Il a pour but de faciliter
@@ -25,16 +29,7 @@
         - python 2.7
         - pyGTK 2.24.0
         - pango
-        - libpacman
         
-    Installation de la libpacman :
-    
-        # wget http://pacmiam.tuxfamily.org/data/documents/frugaltweak.tar.bz2
-        # tar xfvz frugaltweak.tar.bz2
-        # cd frugaltweak/libpacman/
-
-        $ python setup.py install   
-
     Récupération de pyfpm :
     
         # git clone git://git.tuxfamily.org/gitroot/blogapac/pyfpm.git

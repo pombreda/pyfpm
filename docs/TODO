@@ -1,8 +1,6 @@
 Affichage (display.py)
 
     FIXME
-        - Le redimensionnement des panneaux dans les limites extérieurs de la fenêtre affiche des erreurs [DONE]
-        - Remise à zéro de l'interface lors d'une mise à jour de la base de données [DONE]
         - Les paquets provenant de dépôts externe ne sont pas considéré dans les mises à jour
         - Les & dans les descriptions empèche celle-ci de s'afficher
 
@@ -11,15 +9,12 @@ Affichage (display.py)
         - Améliorer le nom des groupes affichés (merci Munto :p)
         - Faire une fenêtre de progression pour la mise à jour des bases de données [CANCELED]
         - Bouton sélectionner tout le groupe/recherche
-        - Faire en sorte de rafraichir la fenêtre en mode recherche [DONE]
 
 
 Evénements (action.py)
 
     FIXME
-        - Impossible d'affiche correctement le groupe du paquet dans les informations du paquet [DONE]
         - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
-        - Lors d'une recherche, si l'un des paquets fait partie d'une mise à jour il n'est pas affiché [DONE]
 
 
 Langue (lang.py)
@@ -31,7 +26,6 @@ Langue (lang.py)
 Paquet (package.py)
 
     FIXME
-        - La base de données ne peut pas être mise à jour depuis root sans core dumped [DONE]
         - Les paquets no-build provenant de repoman ne sont pas prient en compte
         
     TODO
@@ -48,6 +42,6 @@ Démon (fpmd)
 
 
 Configuration (config.py)
-
-    TODO
-        - Placer le fichier de configuration dans ~/.config/pyfpm/
+        
+    FIXME
+        - L'utilisateur root n'a plus accès au fichier de configuration
