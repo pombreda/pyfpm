@@ -1,5 +1,0 @@
-[D-BUS Service]
-Name=org.frugalware.pyfpm
-Exec=/usr/bin/pyfpmd
-User=root
-SystemdService=pyfpmd.service

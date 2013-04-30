@@ -1,7 +1,7 @@
 Affichage (display.py)
 
     FIXME
-        - Les paquets provenant de dépôts externe ne sont pas considéré dans les mises à jour
+        - Les paquets provenant de dépôts externe ne sont pas comptés dans les mises à jour
         - Les & dans les descriptions empèche celle-ci de s'afficher
 
     TODO
@@ -27,7 +27,7 @@ Paquet (package.py)
 
     FIXME
         - Les paquets no-build provenant de repoman ne sont pas prient en compte
-        
+
     TODO
         - Améliorer la fonction d'affichage de la date en format JJ/MM/AAAA
         - Gérer la version des paquets dans l'algo de vérification des dépendances [CANCELED]
@@ -42,6 +42,6 @@ Démon (fpmd)
 
 
 Configuration (config.py)
-        
+
     FIXME
         - L'utilisateur root n'a plus accès au fichier de configuration

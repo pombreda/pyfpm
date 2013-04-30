@@ -39,11 +39,11 @@ class Package (object):
         Initialise pacman-g2 pour permettre d'être utilisé
         """
 
-        self.printDebug("DEBUG", fctLang.translate("init_pacman"))
+        self.printDebug("INFO", fctLang.translate("init_pacman"))
         pacman_init()
-        self.printDebug("DEBUG", fctLang.translate("init_db"))
+        self.printDebug("INFO", fctLang.translate("init_db"))
         pacman_init_database()
-        self.printDebug("DEBUG", fctLang.translate("register_db"))
+        self.printDebug("INFO", fctLang.translate("register_db"))
         pacman_register_all_database()
 
 
@@ -52,7 +52,7 @@ class Package (object):
         Termine l'instance de pacman-g2
         """
 
-        self.printDebug("DEBUG", fctLang.translate("close_pacman"))
+        self.printDebug("INFO", fctLang.translate("close_pacman"))
         pacman_finally()
 
 
@@ -61,7 +61,7 @@ class Package (object):
         Nettoye le cache de pacman-g2
         """
 
-        self.printDebug("DEBUG", fctLang.translate("clean_cache"))
+        self.printDebug("INFO", fctLang.translate("clean_cache"))
         pacman_sync_cleancache()
 
 
@@ -70,7 +70,7 @@ class Package (object):
         Met à jour les dépôts de paquets
         """
 
-        self.printDebug("DEBUG", fctLang.translate("update_db"))
+        self.printDebug("INFO", fctLang.translate("update_db"))
         self.closePacman()
         self.initPacman()
 
@@ -214,7 +214,7 @@ class Package (object):
 
         #~ flags = PM_TRANS_FLAG_NOCONFLICTS
         flags = PM_TRANS_FLAG_DOWNLOADONLY
-        
+
         progres = 1.0
 
         if pacman_trans_init(pm_trans, flags, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.progressPackage), pacman_trans_cb_progress(self.progressInstall)) == -1:
@@ -234,7 +234,7 @@ class Package (object):
 
         self.printDebug ("DEBUG", "Récupération des dépendances")
         interface.changeProgressbar("Récupération des dépendances", progres)
-        
+
         data = PM_LIST()
         try:
             if pacman_trans_prepare(data) == -1:
@@ -262,7 +262,7 @@ class Package (object):
         """
 
         printDebug ("DEBUG", "Progression de l'installation")
-        
+
         from Pacman import package
         interface = package.fenetreInstallation()
 
@@ -358,7 +358,7 @@ class Package (object):
         """
 
         self.printDebug ("DEBUG", "Evenement")
-        
+
         from Pacman import package
         interface = package.fenetreInstallation()
 
@@ -535,8 +535,17 @@ class Package (object):
         Affiche une sortie terminal
         """
 
-        if modeDebug:
-            print ("[" + typeErreur + "] " + str(erreur))
+        if typeErreur == "DEBUG":
+            color = "\033[0;32m"
+        elif typeErreur == "ERROR":
+            color = "\033[0;34m"
+        elif typeErreur == "INFO":
+            color = "\033[0;36m"
+        else:
+            color = "\033[0m"
+
+        if modeDebug or typeErreur != "INFO":
+            print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur))
 
 
     def fenetreQuestion (self, titre, texte):
@@ -566,7 +575,7 @@ class InstallWindow (object):
     """
     Fenêtre d'installation
     """
-    
+
     def __init__ (self):
         """
         Initialisation de la fenêtre
@@ -593,12 +602,12 @@ class InstallWindow (object):
 
         self.fenetre.show_all()
         self.refreshWindow()
-        
-    
+
+
     def runWindow (self, mode, arguments=None):
 
         Pkg = Package()
-        
+
         if mode == "updatedb":
             Pkg.updateDatabase(self)
         elif mode == "cleancache":

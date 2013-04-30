@@ -3,11 +3,11 @@
 
 # ----------------------------------------------------------------------
 #
-#                        pyFPM version 0001
+#                        pyFPM - Inky
 #
 #   Auteurs :
-#       - Gaetan Gourdin
-#       - Aurélien Lubert
+#       - Gaetan Gourdin (bouleetbil)
+#       - Aurélien Lubert (PacMiam)
 #
 #   But du programme :
 #       Ce programme à pour but de fournir une interface graphique au
@@ -45,17 +45,17 @@ def main():
     """
     Lancement de pyfpm
     """
-    
+
     if len(sys.argv) > 1:
         if sys.argv[1] == "-h" or sys.argv[1] == "--help":
             print ("Utilisation : pyfpm <option>\n\t-h\taffiche l'aide\n\t-v\taffiche la version de pyfpm")
         elif sys.argv[1] == "-v" or sys.argv[1] == "--version":
-            print ("pyFPM v.0001")
+            print ("pyFPM (Inky)")
     else:
         Config.checkConfig()
-        
+
         Interface = display.Interface()
-        
+
         Package.startPacman()
         Package.initPacman()
 
@@ -63,8 +63,6 @@ def main():
         Interface.runWindow()
 
         Package.closePacman()
-        
-        return "Bye bye"
 
 
 if __name__ == "__main__":

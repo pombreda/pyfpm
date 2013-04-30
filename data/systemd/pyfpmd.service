@@ -1,7 +1,0 @@
-[Unit]
-Description=Pamac
-
-[Service]
-Type=dbus
-BusName=org.frugalware.pyfpm
-ExecStart=/usr/bin/pyfpmd

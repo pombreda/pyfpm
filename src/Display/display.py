@@ -188,10 +188,10 @@ class Interface (object):
             self.menu_action_install.connect("activate", self.installWindow, self)
 
             self.menu_action_clean.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
-            self.menu_action_clean.connect("activate", Event.lancerNettoyerCache, self)
+            #~ self.menu_action_clean.connect("activate", self.informationWindow, "test", "test")
 
             self.menu_action_update.set_image(gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU))
-            self.menu_action_update.connect("activate", Event.lancerMiseajourBaseDonnees, self)
+            #~ self.menu_action_update.connect("activate", self.informationWindow, "test", "test")
 
             self.menu_action_check.set_image(gtk.image_new_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU))
             self.menu_action_check.connect("activate", self.updateWindow)
@@ -238,7 +238,7 @@ class Interface (object):
             self.outils.set_style(gtk.TOOLBAR_ICONS)
 
             self.outils.insert_stock(gtk.STOCK_APPLY, Lang.translate("apply_pkg"), None, self.installWindow, self, 0)
-            self.outils.insert_stock(gtk.STOCK_REFRESH, Lang.translate("update_database"), None, Event.lancerMiseajourBaseDonnees, self, 2)
+            self.outils.insert_stock(gtk.STOCK_REFRESH, Lang.translate("update_database"), None, None, self, 2)
             self.outils.insert_space(3)
             self.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
             self.texteRecherche.connect("activate", self.search, gtk.RESPONSE_OK)
@@ -748,7 +748,7 @@ class Interface (object):
 
             paquets = Package.searchPackage(objetRechercher)
 
-            Package.printDebug("DEBUG", str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
+            Package.printDebug("INFO", str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
             self.updateStatusbar(str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
 
             self.recherche_mode = True
@@ -777,7 +777,7 @@ class Interface (object):
 
     def aboutWindow (self, widget, *event):
         """
-        Affiche la fenêtre A propos commune à toutes les applications :p
+        Affiche la fenêtre A propos commune à toutes les applications
         """
 
         about = gtk.AboutDialog()

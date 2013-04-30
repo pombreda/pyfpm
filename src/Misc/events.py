@@ -104,7 +104,7 @@ class Events (object):
 
         if nomPaquet.find("]") != -1:
             nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
-            
+
         interface.updateStatusbar(Lang.translate("read_pkg") + " " + nomPaquet)
 
         try:
@@ -156,7 +156,7 @@ class Events (object):
 
         # Affiche des informations supplémentaires si le paquet est installé
         if paquetInstalle != None:
-            interface.contenuInformations.append(None, [Lang.translate("url"), "<span foreground='blue'><u>" + pacman_pkg_get_info(paquetInstalle, PM_PKG_URL) + "</u></span>"])
+            interface.contenuInformations.append(None, [Lang.translate("url"), pacman_pkg_get_info(paquetInstalle, PM_PKG_URL)])
 
             if nomPaquet in interface.listeMiseAJourPacman:
                 interface.contenuPaquet.append(None, ["SHA1SUMS", Lang.translate("package_update_available")])
@@ -383,107 +383,4 @@ class Events (object):
             return 0
 
         return 1
-
-
-# ------------------------------------------------------------------------------------------------------------
-#
-#                Fonctions supplémentaires
-#
-# ------------------------------------------------------------------------------------------------------------
-
-    def lancerNettoyerCache (self, image, interface):
-        """
-        Lancer la commande de nettoyage du cache
-        """
-
-        interface.fenetre.set_sensitive(False)
-        interface.updateStatusbar(Lang.translate("clean_cache"))
-        interface.refresh()
-
-        if self.checkUser() == 0:
-            print
-            os.system(Config.readConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/restriction.py cleancache")
-        else:
-            os.system("python -B " + os.path.realpath('.') + "/src/restriction.py cleancache")
-
-        interface.eraseInterface()
-        interface.addRepos()
-        interface.addGroups()
-        interface.updateStatusbar(Lang.translate("clean_cache_done"))
-
-        interface.fenetre.set_sensitive(True)
-
-
-    def lancerMiseajourBaseDonnees (self, image, interface):
-        """
-        Lancer la commande de mise à jour des dépôts de paquets
-        """
-
-        interface.fenetre.set_sensitive(False)
-        interface.updateStatusbar(Lang.translate("update_db"))
-        interface.refresh()
-
-        if self.checkUser() == 0:
-            os.system(Config.readConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/restriction.py updatedb")
-        else:
-            os.system("python -B " + os.path.realpath('.') + "/src/restriction.py updatedb")
-
-        interface.eraseInterface()
-        interface.addRepos()
-        interface.addGroups()
-        interface.updateStatusbar(Lang.translate("update_db_done"))
-
-        self.initGroups(interface)
-        #~ self.getUpdate(interface.listeMiseAJourPacman)
-
-        if len(interface.listeMiseAJourPacman) > 0:
-            interface.fenetreMiseAJour()
-
-        interface.fenetre.set_sensitive(True)
-
-
-    def lancerInstallationPaquets (self, interface):
-        """
-        Lancer la commande d'installation de paquets
-        """
-
-        interface.fenetre.set_sensitive(False)
-        interface.refresh()
-
-        argumentInstallation = ""
-        argumentSuppression = ""
-
-        if len(interface.listeInstallationPacman) > 0:
-            for element in interface.listeInstallationPacman:
-                argumentInstallation += element
-                if interface.listeInstallationPacman.index(element) + 1 < len(interface.listeInstallationPacman):
-                    argumentInstallation += ","
-        else:
-            argumentInstallation = None
-
-        if len(interface.listeSuppressionPacman) > 0:
-            for element in interface.listeSuppressionPacman:
-                argumentSuppression += element
-                if interface.listeSuppressionPacman.index(element) + 1 < len(interface.listeSuppressionPacman):
-                    argumentSuppression += ","
-        else:
-            argumentSuppression = None
-
-
-        if self.checkUser() == 0:
-            os.system(Config.readConfig("admin", "command") + " python -B " + os.path.realpath('.') + "/src/restriction.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
-        else:
-            os.system("python -B " + os.path.realpath('.') + "/src/restriction.py install " + str(argumentInstallation) + " " + str(argumentSuppression))
-
-        interface.eraseInterface()
-        interface.addRepos()
-        interface.addGroups()
-
-        self.initGroups(interface)
-        #~ self.getUpdate(interface.listeMiseAJourPacman)
-
-        if len(interface.listeMiseAJourPacman) > 0:
-            interface.fenetreMiseAJour()
-
-        interface.fenetre.set_sensitive(True)
 
