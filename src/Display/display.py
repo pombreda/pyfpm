@@ -612,7 +612,7 @@ class Interface (object):
 
             nomPaquet = paquet.get("name")
             versionPaquet = paquet.get("version")
-            
+
             if Package.checkPackageInstalled(nomPaquet, versionPaquet):
                 # Le paquet est installé
                 objetTrouve = 1
@@ -625,7 +625,7 @@ class Interface (object):
                     image = gtk.STOCK_ADD
                 else:
                     image = gtk.STOCK_REFRESH
-                    
+
                 nouvelleVersion = versionPaquet
                 pointerPaquet = Package.getPackagePointer(nomPaquet)
                 paquetInstalle = Package.getPackageInfo(pointerPaquet)
@@ -759,7 +759,7 @@ class Interface (object):
             self.recherche_nom = objetRechercher
 
             if len(paquets) > 0:
-                pacman_trans_release()
+                #~ pacman_trans_release()
                 self.addPackages(paquets, recherche = True)
 
             self.eraseSearch()
@@ -934,7 +934,7 @@ class Interface (object):
                 for element in self.listeInstallationPacman:
                     if element.find("]") != -1:
                         element = element[element.find("]") + 1:].strip()
-                        
+
                     paquet = Package.getPackagePointer(element, index)
                     infoPaquet = Package.getPackageInfo(paquet)
 
@@ -942,7 +942,7 @@ class Interface (object):
                         size = "size"
                     else:
                         size = "compress_size"
-                    
+
                     listeInstallation.append(None, [element, str(format(float(long(infoPaquet.get(size))/1024)/1024, '.2f')) + " MB"])
 
                     valeurInstallation += float(long(infoPaquet.get(size))/1024)/1024
@@ -955,7 +955,7 @@ class Interface (object):
                 for element in self.listeSuppressionPacman:
                     if element.find("]") != -1:
                         element = element[element.find("]") + 1:].strip()
-                        
+
                     paquet = Package.getPackagePointer(element, index)
                     infoPaquet = Package.getPackageInfo(paquet)
                     listeSuppression.append(None, [element, str(format(float(long(infoPaquet.get("size"))/1024)/1024, '.2f')) + " MB"])
