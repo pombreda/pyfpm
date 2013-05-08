@@ -29,12 +29,13 @@
         - python 2.7
         - pyGTK 2.24.0
         - pango
+	- dbus-python
         
     Récupération de pyfpm :
     
         # git clone git://git.tuxfamily.org/gitroot/blogapac/pyfpm.git
         
-    Utilisation de pyfpm :
+    Utilisation de pyfpm (nécessite que fpmd soit lancé):
     
         # cd /pyfpm/
         # chmod +x pyfpm

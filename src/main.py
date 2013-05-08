@@ -56,13 +56,8 @@ def main():
 
         Interface = display.Interface()
 
-        Package.startPacman()
-        Package.initPacman()
-
         Interface.mainWindow()
         Interface.runWindow()
-
-        Package.closePacman()
 
 
 if __name__ == "__main__":

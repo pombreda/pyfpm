@@ -16,7 +16,6 @@ except ImportError:
     sys.exit(Lang.translate("pygtk_not_found"))
 
 from . import preferences
-from Pacman.libpacman import *
 from Pacman import package
 from Misc import events, lang, config
 
@@ -191,7 +190,7 @@ class Interface (object):
             #~ self.menu_action_clean.connect("activate", self.informationWindow, "test", "test")
 
             self.menu_action_update.set_image(gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU))
-            #~ self.menu_action_update.connect("activate", self.informationWindow, "test", "test")
+            self.menu_action_update.connect("activate", Package.updateDatabase, self)
 
             self.menu_action_check.set_image(gtk.image_new_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU))
             self.menu_action_check.connect("activate", self.updateWindow)
@@ -467,15 +466,17 @@ class Interface (object):
         Récupère les dépots disponible sur le système
         """
 
+        listeDepot = Package.getRepoList()
+
         # Met le dépôt du système en choix principal
         index = 0
-        if "frugalware" in repo_list:
-            index = repo_list.index("frugalware")
-        elif "frugalware-current" in repo_list:
-            index = repo_list.index("frugalware-current")
+        if "frugalware" in listeDepot:
+            index = listeDepot.index("frugalware")
+        elif "frugalware-current" in listeDepot:
+            index = listeDepot.index("frugalware-current")
 
         # Intègre les dépôts dans la liste
-        for element in repo_list:
+        for element in listeDepot:
             if element == "local":
                 element = Lang.translate("installed_packages")
 
@@ -554,7 +555,7 @@ class Interface (object):
         """
 
         self.listeColonnePaquets.clear()
-        ensembleGroupes = Event.initGroups(self)
+        ensembleGroupes = Package.getGroupsList(self.listeSelectionGroupe.get_active())
 
         for nom in ensembleGroupes:
             if Config.readConfig("pyfpm", "useprohibategroups") == "false":
@@ -591,7 +592,7 @@ class Interface (object):
         Obtenir les paquets correspondant au groupe sélectionné
         """
 
-        paquets = Event.initPackages(self, nomGroupe)
+        paquets = Package.getPackagesList(self.listeSelectionGroupe.get_active(), nomGroupe)
         self.addPackages(paquets)
 
 
@@ -605,27 +606,30 @@ class Interface (object):
 
         for element in paquets:
             if not recherche:
-                nomPaquet = pacman_pkg_get_info(element, PM_PKG_NAME)
-                versionPaquet = pacman_pkg_get_info(element, PM_PKG_VERSION)
+                paquet = Package.getPackageInfo(element)
             elif recherche:
-                nomPaquet = pacman_pkg_get_info(element[1], PM_PKG_NAME)
-                versionPaquet = pacman_pkg_get_info(element[1], PM_PKG_VERSION)
+                paquet = Package.getPackageInfo(element[1])
 
-            if pacman_package_intalled(nomPaquet, versionPaquet):
+            nomPaquet = paquet.get("name")
+            versionPaquet = paquet.get("version")
+            
+            if Package.checkPackageInstalled(nomPaquet, versionPaquet):
                 # Le paquet est installé
                 objetTrouve = 1
                 image = " "
                 nouvelleVersion = " "
-            elif nomPaquet in self.listeMiseAJourPacman:
+            elif str(nomPaquet) in self.listeMiseAJourPacman:
                 # Le paquet à une mise à jour
                 objetTrouve = 1
-                if not nomPaquet in self.listeInstallationPacman:
-                    image = gtk.STOCK_REFRESH
-                else:
+                if str(nomPaquet) in self.listeInstallationPacman:
                     image = gtk.STOCK_ADD
-                information = pacman_db_readpkg(db_list[0], nomPaquet)
+                else:
+                    image = gtk.STOCK_REFRESH
+                    
                 nouvelleVersion = versionPaquet
-                versionPaquet = pacman_pkg_get_info(information, PM_PKG_VERSION)
+                pointerPaquet = Package.getPackagePointer(nomPaquet)
+                paquetInstalle = Package.getPackageInfo(pointerPaquet)
+                versionPaquet = paquetInstalle.get("version")
             else:
                 # Le paquet n'est pas installé
                 objetTrouve = 0
@@ -640,7 +644,7 @@ class Interface (object):
                 objetTrouve = 0
                 image = gtk.STOCK_REMOVE
 
-            if recherche and len(repo_list) > 2:
+            if recherche and len(Package.getRepoList()) > 2:
                 nomPaquet = "[" + element[0] + "] " + nomPaquet
 
             self.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
@@ -690,7 +694,7 @@ class Interface (object):
 
         if modele[colonne][0] == 0:
             # Le paquet en question à été décoché
-            if pacman_package_intalled(nomPaquet, modele[colonne][3]) == 1:
+            if Package.checkPackageInstalled(nomPaquet, modele[colonne][3]) :
                 # Le paquet en question est installé
                 if elementEnlever == 0:
                     # Le paquet est mis dans la liste des paquets à supprimer
@@ -704,7 +708,7 @@ class Interface (object):
 
         else:
             # Le paquet en question à été coché
-            if pacman_package_intalled(nomPaquet, modele[colonne][3]) == 1:
+            if Package.checkPackageInstalled(nomPaquet, modele[colonne][3]):
                 # Le paquet en question est installé
                 if elementEnlever != 0:
                     # Le paquet est enlevé de la liste des paquets à supprimer
@@ -820,10 +824,12 @@ class Interface (object):
         Affiche les modifications à effectuer sur les paquets
         """
 
-        if "frugalware" in repo_list:
-            index = repo_list.index("frugalware")
-        elif "frugalware-current" in repo_list:
-            index = repo_list.index("frugalware-current")
+        listeDepot = Package.getRepoList()
+
+        if "frugalware" in listeDepot:
+            index = listeDepot.index("frugalware")
+        elif "frugalware-current" in listeDepot:
+            index = listeDepot.index("frugalware-current")
 
         if self.recherche_mode == False:
             self.selectionGroupe = self.colonneGroupes.get_selection()
@@ -928,10 +934,18 @@ class Interface (object):
                 for element in self.listeInstallationPacman:
                     if element.find("]") != -1:
                         element = element[element.find("]") + 1:].strip()
-                    paquet = pacman_db_readpkg(db_list[index], element)
-                    listeInstallation.append(None, [element, str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+                        
+                    paquet = Package.getPackagePointer(element, index)
+                    infoPaquet = Package.getPackageInfo(paquet)
 
-                    valeurInstallation += float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024
+                    if Package.checkPackageInstalled(infoPaquet.get("name"), infoPaquet.get("version")):
+                        size = "size"
+                    else:
+                        size = "compress_size"
+                    
+                    listeInstallation.append(None, [element, str(format(float(long(infoPaquet.get(size))/1024)/1024, '.2f')) + " MB"])
+
+                    valeurInstallation += float(long(infoPaquet.get(size))/1024)/1024
 
                 tailleInstallation.set_text(Lang.translate("total_size") + " : " + str(format(valeurInstallation, '.2f')) + " MB")
                 fenetre.vbox.pack_start(zoneInstallation)
@@ -941,10 +955,12 @@ class Interface (object):
                 for element in self.listeSuppressionPacman:
                     if element.find("]") != -1:
                         element = element[element.find("]") + 1:].strip()
-                    paquet = pacman_db_readpkg(db_list[index], element)
-                    listeSuppression.append(None, [element, str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
+                        
+                    paquet = Package.getPackagePointer(element, index)
+                    infoPaquet = Package.getPackageInfo(paquet)
+                    listeSuppression.append(None, [element, str(format(float(long(infoPaquet.get("size"))/1024)/1024, '.2f')) + " MB"])
 
-                    valeurSuppression += float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024
+                    valeurSuppression += float(long(infoPaquet.get("size"))/1024)/1024
 
                 tailleSuppression.set_text(Lang.translate("total_size") + " : " + str(format(valeurSuppression, '.2f')) + " MB")
                 fenetre.vbox.pack_start(zoneSuppression)

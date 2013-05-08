@@ -15,7 +15,6 @@ try:
 except ImportError:
     sys.exit("pyGTK introuvable")
 
-from Pacman.libpacman import *
 from Pacman import package
 from . import files, lang, config
 
@@ -32,51 +31,6 @@ class Events (object):
     informations
     """
 
-    def initGroups (self, interface):
-        """
-        Initialise la liste des groupes
-        """
-
-        baseDonnees = db_list[interface.listeSelectionGroupe.get_active()]
-        ensembleGroupes = []
-
-        i = pacman_db_getgrpcache(baseDonnees)
-
-        while i != 0:
-            groupe = pacman_list_getdata(i)
-
-            if not pointer_to_string(groupe) in ensembleGroupes:
-                ensembleGroupes.append(pointer_to_string(groupe))
-
-            i = pacman_list_next(i)
-
-        ensembleGroupes.sort()
-
-        return ensembleGroupes
-
-
-    def initPackages (self, interface, nomGroupe):
-        """
-        Initialise les paquets correspondant au groupe sélectionné
-        """
-
-        ensemblePaquets = []
-
-        pm_group = pacman_db_readgrp (db_list[interface.listeSelectionGroupe.get_active()], nomGroupe)
-        i = pacman_grp_getinfo (pm_group, PM_GRP_PKGNAMES)
-
-        while i != 0:
-            paquet = pacman_db_readpkg (db_list[interface.listeSelectionGroupe.get_active()], pacman_list_getdata(i))
-
-            if not paquet in ensemblePaquets:
-                ensemblePaquets.append(paquet)
-
-            i = pacman_list_next(i)
-
-        ensemblePaquets.sort()
-
-        return ensemblePaquets
-
 
     def getUpdate (self, liste):
         """
@@ -88,11 +42,11 @@ class Events (object):
         if len(liste) > 0:
             liste = []
 
-        listePaquetsMiseAJour = pacman_check_update()
+        listePaquetsMiseAJour = Package.getUpdateList()
 
         if listePaquetsMiseAJour > 0:
             for element in listePaquetsMiseAJour:
-                liste.append(pointer_to_string(element))
+                liste.append(element)
 
 
     def getPackageInfo (self, interface, nomPaquet, versionPaquet):
@@ -107,147 +61,74 @@ class Events (object):
 
         interface.updateStatusbar(Lang.translate("read_pkg") + " " + nomPaquet)
 
-        try:
-            listePaquets = pacman_search_pkg(nomPaquet)
-            interface.paquetSelectionne = nomPaquet
-
-            for paquet in listePaquets:
-                if pacman_pkg_get_info(paquet, PM_PKG_NAME) == nomPaquet and pacman_pkg_get_info(paquet, PM_PKG_VERSION) == versionPaquet:
-                    objetTrouve = 1
-                    self.obtenirDetailsPaquet(interface, nomPaquet, versionPaquet, paquet)
-                    break
-
-        except:
-            pass
-
-        if objetTrouve == 0:
-            paquet = pacman_db_readpkg(db_list[0], nomPaquet)
-
         texte = ""
-        paquetInstalle = None
 
         interface.contenuInformations.clear()
         interface.contenuPaquet.clear()
 
         # Récupère les informations depuis local si le paquet est installé
-        if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
-            paquetInstalle = pacman_db_readpkg (db_list[0], nomPaquet)
+        if Package.checkPackageInstalled(nomPaquet, versionPaquet):
+            depot = 0
+        else:
+            depot = int(interface.listeSelectionGroupe.get_active())
+            
+        pointerPaquet = Package.getPackagePointer(nomPaquet, depot)
+        infoPaquet = Package.getPackageInfo(pointerPaquet)
 
-        interface.contenuInformations.append(None, [Lang.translate("name"), nomPaquet])
-        interface.contenuInformations.append(None, [Lang.translate("version"), versionPaquet])
+        interface.contenuInformations.append(None, [Lang.translate("name"), infoPaquet.get("name")])
+        interface.contenuInformations.append(None, [Lang.translate("version"), infoPaquet.get("version")])
 
-        interface.contenuInformations.append(None, [Lang.translate("description"), pacman_pkg_get_info(paquet, PM_PKG_DESC).replace("&","&amp;")])
+        interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").replace("&","&amp;")])
 
         # Liste des groupes
-        texte = ""
-        groupes = pacman_pkg_getinfo(paquet, PM_PKG_GROUPS)
-
-        while groupes != 0:
-            nomGroupe = pointer_to_string(pacman_list_getdata(groupes))
-
-            texte += nomGroupe
-
-            groupes = pacman_list_next(groupes)
-            if groupes != 0:
-                texte += ", "
+        texte = infoPaquet.get("groups")
 
         if texte != "":
             interface.contenuInformations.append(None, [Lang.translate("groups"), texte])
 
         # Affiche des informations supplémentaires si le paquet est installé
-        if paquetInstalle != None:
-            interface.contenuInformations.append(None, [Lang.translate("url"), pacman_pkg_get_info(paquetInstalle, PM_PKG_URL)])
+        if Package.checkPackageInstalled(nomPaquet, versionPaquet):
+            interface.contenuInformations.append(None, [Lang.translate("url"), infoPaquet.get("url")])
 
             if nomPaquet in interface.listeMiseAJourPacman:
                 interface.contenuPaquet.append(None, ["SHA1SUMS", Lang.translate("package_update_available")])
             else:
-                interface.contenuPaquet.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
+                interface.contenuPaquet.append(None, ["SHA1SUMS", infoPaquet.get("sha1sums")])
 
-            interface.contenuPaquet.append(None, [Lang.translate("install_date"), pacman_pkg_get_info(paquetInstalle, PM_PKG_INSTALLDATE)])
-            interface.contenuPaquet.append(None, [Lang.translate("size"), str(format(float(long(pacman_pkg_getinfo(paquetInstalle, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
-            interface.contenuPaquet.append(None, [Lang.translate("packager"), pacman_pkg_get_info(paquetInstalle, PM_PKG_PACKAGER)])
+            interface.contenuPaquet.append(None, [Lang.translate("install_date"), infoPaquet.get("install_date")])
+            interface.contenuPaquet.append(None, [Lang.translate("size"), str(format(float(long(infoPaquet.get("size"))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuPaquet.append(None, [Lang.translate("packager"), infoPaquet.get("packager")])
         else:
-            interface.contenuPaquet.append(None, ["SHA1SUMS", pacman_pkg_get_info(paquet, PM_PKG_SHA1SUM)])
-            interface.contenuPaquet.append(None, [Lang.translate("compress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_SIZE))/1024)/1024, '.2f')) + " MB"])
-            interface.contenuPaquet.append(None, [Lang.translate("uncompress_size"), str(format(float(long(pacman_pkg_getinfo(paquet, PM_PKG_USIZE))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuPaquet.append(None, ["SHA1SUMS", infoPaquet.get("sha1sums")])
+            interface.contenuPaquet.append(None, [Lang.translate("compress_size"), str(format(float(long(infoPaquet.get("compress_size"))/1024)/1024, '.2f')) + " MB"])
+            interface.contenuPaquet.append(None, [Lang.translate("uncompress_size"), str(format(float(long(infoPaquet.get("uncompress_size"))/1024)/1024, '.2f')) + " MB"])
 
         # Liste des dépendances
-        texte = ""
-        paquets = pacman_pkg_getinfo(paquet, PM_PKG_DEPENDS)
-
-        while paquets != 0:
-            element = pointer_to_string(pacman_list_getdata(paquets))
-
-            nom = Package.splitVersionName(element)
-            texte += nom[0]
-
-            paquets = pacman_list_next(paquets)
-            if paquets != 0:
-                texte += ", "
+        texte = infoPaquet.get("depends")
 
         if texte != "":
             interface.contenuInformations.append(None, [Lang.translate("depends"), texte])
 
         # Liste des paquets ajoutés
-        texte = ""
-        paquets = pacman_pkg_getinfo(paquet, PM_PKG_PROVIDES)
-
-        while paquets != 0:
-            element = pointer_to_string(pacman_list_getdata(paquets))
-
-            texte += element
-
-            paquets = pacman_list_next(paquets)
-            if paquets != 0:
-                texte += ", "
+        texte = infoPaquet.get("provides")
 
         if texte != "":
             interface.contenuPaquet.append(None, [Lang.translate("provides"), texte])
 
         # Liste des paquets remplacés
-        texte = ""
-        paquets = pacman_pkg_getinfo(paquet, PM_PKG_REPLACES)
-
-        while paquets != 0:
-            element = pointer_to_string(pacman_list_getdata(paquets))
-
-            texte += element
-
-            paquets = pacman_list_next(paquets)
-            if paquets != 0:
-                texte += ", "
+        texte = infoPaquet.get("replaces")
 
         if texte != "":
             interface.contenuPaquet.append(None, [Lang.translate("replaces"), texte])
 
         # Liste des dépendances inverses
-        texte = ""
-        paquets = pacman_pkg_getinfo(paquet, PM_PKG_REQUIREDBY)
-
-        while paquets != 0:
-            element = pointer_to_string(pacman_list_getdata(paquets))
-
-            texte += element
-
-            paquets = pacman_list_next(paquets)
-            if paquets != 0:
-                texte += ", "
+        texte = infoPaquet.get("required_by")
 
         if texte != "":
-            interface.contenuInformations.append(None, [Lang.translate("required_by"), texte])
+            interface.contenuPaquet.append(None, [Lang.translate("required_by"), texte])
 
         # Liste des paquets en conflit
-        texte = ""
-        paquets = pacman_pkg_getinfo(paquet, PM_PKG_CONFLICTS)
-
-        while paquets != 0:
-            element = pointer_to_string(pacman_list_getdata(paquets))
-
-            texte += element
-
-            paquets = pacman_list_next(paquets)
-            if paquets != 0:
-                texte += ", "
+        texte = infoPaquet.get("conflits")
 
         if texte != "":
             interface.contenuPaquet.append(None, [Lang.translate("conflits"), texte])
@@ -256,11 +137,8 @@ class Events (object):
         texte = ""
         texteBuffer = interface.listeFichiers.get_buffer()
 
-        if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
-            fichiers = pacman_pkg_getinfo(paquetInstalle, PM_PKG_FILES)
-            while fichiers != 0:
-                texte += "  /" + pointer_to_string(pacman_list_getdata(fichiers)) + "\n"
-                fichiers = pacman_list_next(fichiers)
+        if Package.checkPackageInstalled(nomPaquet, versionPaquet):
+            texte = Package.getFileFromPackage(nomPaquet)
         else:
             texte = " " + Lang.translate("no_info")
 
@@ -270,9 +148,10 @@ class Events (object):
         texte = ""
         texteBuffer = interface.listeJournal.get_buffer()
 
-        if pacman_package_intalled(nomPaquet, versionPaquet) == 1:
+        if Package.checkPackageInstalled(nomPaquet, versionPaquet):
             try:
-                journal = PM_ROOT + PM_DBPATH + "/" + repo_list[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
+                listeDepot = Package.getRepoList()
+                journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
                 if os.path.exists(journal) == True:
                     file = codecs.open(journal, "r", "iso-8859-15")
                     for element in file:
@@ -288,23 +167,23 @@ class Events (object):
 
         texteBuffer.set_text(texte)
 
-        if Config.readConfig("pyfpm", "developmentmode") == "true":
-            # Fichier de création du paquet
-            texte = ""
-            texteBuffer = interface.listeFrugalbuild.get_buffer()
+        #~ if Config.readConfig("pyfpm", "developmentmode") == "true":
+            #~ # Fichier de création du paquet
+            #~ texte = ""
+            #~ texteBuffer = interface.listeFrugalbuild.get_buffer()
 
-            try:
-                if self.getFrugalBuild(paquet):
-                    if os.path.exists("/tmp/frugalbuild") == True:
-                        file = codecs.open("/tmp/frugalbuild", "r", "utf-8")
-                        for element in file:
-                            if element != "":
-                                texte += " " + element
-                        file.close()
-            except:
-                texte = " " + Lang.translate("no_file_found")
+            #~ try:
+                #~ if self.getFrugalBuild(paquet):
+                    #~ if os.path.exists("/tmp/frugalbuild") == True:
+                        #~ file = codecs.open("/tmp/frugalbuild", "r", "utf-8")
+                        #~ for element in file:
+                            #~ if element != "":
+                                #~ texte += " " + element
+                        #~ file.close()
+            #~ except:
+                #~ texte = " " + Lang.translate("no_file_found")
 
-            texteBuffer.set_text(texte)
+            #~ texteBuffer.set_text(texte)
 
 
     def getFrugalBuild (self, paquet):
