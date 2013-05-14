@@ -1,47 +1,33 @@
-Affichage (display.py)
+--- pyfpm (main.py) ------------------------------------------------------------
 
-    FIXME
-        - Les paquets provenant de dépôts externe ne sont pas comptés dans les mises à jour
-        - Les & dans les descriptions empèche celle-ci de s'afficher
+    [TODO]  - Lancer l'application que si le démon est actif
 
-    TODO
-        - Afficher une fenêtre avec barre de progrès lors de la recherche des dépendances [CANCELED]
-        - Améliorer le nom des groupes affichés (merci Munto :p)
-        - Faire une fenêtre de progression pour la mise à jour des bases de données [CANCELED]
-        - Bouton sélectionner tout le groupe/recherche
+--- Affichage (display.py) -----------------------------------------------------
 
+    [FIXME] - Utiliser les dépôts externes lors des mises à jour
+    [TODO]  - Affiche un nom générique pour les groupes
+    [TODO]  - Afficher une barre de progression pour les actions spécifiques à pacman-g2
+    [TODO]  - Permettre de sélectionner tout un groupe
 
-Evénements (action.py)
+--- Evénements (action.py) -----------------------------------------------------
 
-    FIXME
-        - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
+    [FIXME] - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
 
+--- Langue (lang.py) -----------------------------------------------------------
 
-Langue (lang.py)
+    [TODO]  - Utiliser gettext
 
-    TODO
-        - Intégrer une meilleure solution de traduction d'interface
+--- Paquet (package.py) --------------------------------------------------------
 
+    [FIXME] - Afficher les paquets no-build (utilisable avec repoman)
 
-Paquet (package.py)
+--- Démon (fpmd) ---------------------------------------------------------------
 
-    FIXME
-        - Les paquets no-build provenant de repoman ne sont pas prient en compte
+    [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)        [EN COURS]
+    [TODO]  - Ecrire le démon pour qu'il soit utilisable indépendamment de pyFPM                [EN COURS]
+    [TODO]  - Envoyer des signaux lors d'actions spécifiques (mise à jour, ...)                 [EN COURS]
+    [TODO]  - Adapter la libpacman généré par pacman-g2
 
-    TODO
-        - Améliorer la fonction d'affichage de la date en format JJ/MM/AAAA
-        - Gérer la version des paquets dans l'algo de vérification des dépendances [CANCELED]
-        - Afficher les actions de pacman-g2 sur la fenêtre
-        - Utiliser dbus pour gérer les permissions root
+--- Configuration (config.py) --------------------------------------------------
 
-
-Démon (fpmd)
-
-    TODO
-        - Ecrire le démon pour qu'il soit utilisable indépendamment de pyFPM
-
-
-Configuration (config.py)
-
-    FIXME
-        - L'utilisateur root n'a plus accès au fichier de configuration
+    [TODO]  - Réécrire l'interface

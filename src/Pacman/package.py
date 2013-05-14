@@ -43,6 +43,8 @@ fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', 'org
 
 fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', 'org.frugalware.fpmd.deamon')
 
+fpmd_sendSignal = proxy.get_dbus_method('sendSignal', 'org.frugalware.fpmd.deamon')
+
 
 class Package (object):
 
@@ -65,8 +67,9 @@ class Package (object):
         interface.fenetre.set_sensitive(False)
         interface.refresh()
 
-        fpmd_updateDatabase()
-        
+        while not fpmd_updateDatabase():
+            print fpmd_sendSignal()
+
         interface.eraseInterface()
         interface.addRepos()
         interface.addGroups()
@@ -444,7 +447,7 @@ class Package (object):
         """
         Récupère la liste des groupes de paquets
         """
-        
+
         return fpmd_getGroupsList(depot)
 
 
@@ -452,7 +455,7 @@ class Package (object):
         """
         Récupère la liste des paquets pour un groupe
         """
-        
+
         return fpmd_getPackagesList(depot, nomGroupe)
 
 
@@ -468,7 +471,7 @@ class Package (object):
         """
         Chercher les paquets correspondant à la recherche dans le dépôt sélectionné
         """
-        
+
         return fpmd_searchRepoPackage(nomPaquet)
 
 
@@ -483,7 +486,7 @@ class Package (object):
         """
         Obtient les informations d'un paquet
         """
-        
+
         return fpmd_getPackageInfo (paquet)
 
 
@@ -491,7 +494,7 @@ class Package (object):
         """
         Obtient le pointer d'un paquet à partir de son nom
         """
-        
+
         return fpmd_getPackagePointer (nomPaquet, repo)
 
 

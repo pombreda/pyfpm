@@ -64,6 +64,15 @@ class FPMd (dbus.service.Object):
         print ("[" + typeErreur + "] " + str(erreur))
 
 
+    @dbus.service.signal(BUSNAME, signature='s')
+    def sendSignal (self, string):
+        """
+        Send a string
+        """
+
+        pass
+
+
     @dbus.service.method (BUSNAME, in_signature='su', out_signature='u')
     def getPackagePointer (self, pkgName, repo):
         """
@@ -86,7 +95,7 @@ class FPMd (dbus.service.Object):
 
         pkgDict = {"name" : str(pkgName), \
                     "version" : str(pkgVersion), \
-                    "description" : str(pacman_pkg_get_info(pkg, PM_PKG_DESC)), \
+                    "description" : unicode(str(pacman_pkg_get_info(pkg, PM_PKG_DESC)), errors='replace'), \
                     "sha1sums" : str(pacman_pkg_get_info(pkg, PM_PKG_SHA1SUM)), \
                     "groups" : str(self.getInfoFromPackage(pkg, PM_PKG_GROUPS)), \
                     "depends" : str(self.getInfoFromPackage(pkg, PM_PKG_DEPENDS)), \
@@ -112,6 +121,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME, in_signature='s', out_signature='s')
     def getFileFromPackage (self, pkgName):
         """
+        Get the files list of the package
         """
 
         text = ""
@@ -128,6 +138,7 @@ class FPMd (dbus.service.Object):
 
     def getInfoFromPackage (self, pkg, typeInfo):
         """
+        Get informations about a package and put them into a string
         """
 
         text = ""
@@ -148,6 +159,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME, in_signature='ss', out_signature='b')
     def checkPackageInstalled (self, pkgName, pkgVersion):
         """
+        Check if a package is installed or not
         """
 
         return pacman_package_intalled(str(pkgName), str(pkgVersion))
@@ -156,6 +168,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME)
     def getRepoList (self):
         """
+        Get the repository list
         """
 
         return repo_list
@@ -163,6 +176,9 @@ class FPMd (dbus.service.Object):
 
     @dbus.service.method (BUSNAME, in_signature='u', out_signature='as')
     def getGroupsList (self, repo):
+        """
+        Get the groups list from a repository
+        """
 
         groupsList = []
 
@@ -181,6 +197,9 @@ class FPMd (dbus.service.Object):
 
     @dbus.service.method (BUSNAME, in_signature='us', out_signature='au')
     def getPackagesList (self, repo, groupName):
+        """
+        Get the packages list from a group and a repository
+        """
 
         packagesList = []
 
@@ -201,7 +220,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME, in_signature='s', out_signature='a(si)')
     def searchRepoPackage (self, pkgName):
         """
-        Chercher les paquets correspondant à la recherche dans le dépôt sélectionné
+        Search the pkgName into the repository
         """
 
         foundPkgList = []
@@ -268,16 +287,15 @@ class FPMd (dbus.service.Object):
 
         for element in db_list:
             if repo_list[db_list.index(element)] != "local":
-                #~ self.printDebug("DEBUG", "update_db_name " + str(db_list.index(element)) + ":" + repo_list[db_list.index(element)])
+                self.sendSignal("update_db_name " + str(db_list.index(element)) + ":" + repo_list[db_list.index(element)])
 
                 #~ pourcentage = float(index - 1) / float(len(repo_list) - 1)
-                #~ interface.changeProgressbar("update_db_name " + repo_list[index], float(pourcentage))
 
                 if pacman_db_update (1, element) == -1:
-                    #~ self.printDebug("ERROR", "Can't update pacman-g2")
-                    pacman_print_error()
+                    self.sendSignal("Can't update pacman-g2")
+                    #~ pacman_print_error()
 
-            #~ time.sleep(0.2)
+        return True
 
 
     @dbus.service.method (BUSNAME)

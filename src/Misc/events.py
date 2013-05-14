@@ -71,14 +71,14 @@ class Events (object):
             depot = 0
         else:
             depot = int(interface.listeSelectionGroupe.get_active())
-            
+
         pointerPaquet = Package.getPackagePointer(nomPaquet, depot)
         infoPaquet = Package.getPackageInfo(pointerPaquet)
 
         interface.contenuInformations.append(None, [Lang.translate("name"), infoPaquet.get("name")])
         interface.contenuInformations.append(None, [Lang.translate("version"), infoPaquet.get("version")])
 
-        interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").replace("&","&amp;")])
+        interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").encode('ascii', 'replace')])
 
         # Liste des groupes
         texte = infoPaquet.get("groups")

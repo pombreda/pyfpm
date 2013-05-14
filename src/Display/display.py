@@ -593,7 +593,8 @@ class Interface (object):
         """
 
         paquets = Package.getPackagesList(self.listeSelectionGroupe.get_active(), nomGroupe)
-        self.addPackages(paquets)
+        loader = self.addPackages(paquets)
+        gobject.idle_add(loader.next)
 
 
     def addPackages (self, paquets, recherche = False):
@@ -603,6 +604,10 @@ class Interface (object):
 
         objetTrouve = 0
         self.listeColonnePaquets.clear()
+
+        modeleColonnePaquets = self.colonnePaquets.get_model()
+        modeleColonnePaquets.set_default_sort_func(lambda *args: -1)
+        modeleColonnePaquets.set_sort_column_id(-1, gtk.SORT_ASCENDING)
 
         for element in paquets:
             if not recherche:
@@ -763,6 +768,12 @@ class Interface (object):
                 self.addPackages(paquets, recherche = True)
 
             self.eraseSearch()
+
+            try:
+                path, colonne = self.colonneGroupes.get_cursor()
+                self.colonneGroupes.get_selection().unselect_path(path)
+            except:
+                pass
 
 
     def eraseSearch (self, *args):
