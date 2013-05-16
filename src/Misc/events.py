@@ -24,6 +24,7 @@ Lang = lang.Lang()
 File = files.File()
 Config = config.Config()
 
+modeDebug = True
 
 class Events (object):
     """
@@ -37,7 +38,7 @@ class Events (object):
         Récupère les paquets dont une mise à jour est disponible
         """
 
-        Package.printDebug("DEBUG", Lang.translate("add_update_list"))
+        Event.printDebug("DEBUG", Lang.translate("add_update_list"))
 
         if len(liste) > 0:
             liste = []
@@ -57,6 +58,7 @@ class Events (object):
         objetTrouve = 0
 
         if nomPaquet.find("]") != -1:
+            # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
             nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
 
         interface.updateStatusbar(Lang.translate("read_pkg") + " " + nomPaquet)
@@ -78,7 +80,7 @@ class Events (object):
         interface.contenuInformations.append(None, [Lang.translate("name"), infoPaquet.get("name")])
         interface.contenuInformations.append(None, [Lang.translate("version"), infoPaquet.get("version")])
 
-        interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").encode('ascii', 'replace')])
+        interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").replace("&","&amp;").encode('ascii', 'replace')])
 
         # Liste des groupes
         texte = infoPaquet.get("groups")
@@ -86,50 +88,44 @@ class Events (object):
         if texte != "":
             interface.contenuInformations.append(None, [Lang.translate("groups"), texte])
 
+        if infoPaquet.get("name") in interface.listeMiseAJourPacman:
+            interface.contenuPaquet.append(None, ["SHA1SUMS", Lang.translate("package_update_available")])
+        else:
+            interface.contenuPaquet.append(None, ["SHA1SUMS", infoPaquet.get("sha1sums")])
+
         # Affiche des informations supplémentaires si le paquet est installé
         if Package.checkPackageInstalled(nomPaquet, versionPaquet):
             interface.contenuInformations.append(None, [Lang.translate("url"), infoPaquet.get("url")])
-
-            if nomPaquet in interface.listeMiseAJourPacman:
-                interface.contenuPaquet.append(None, ["SHA1SUMS", Lang.translate("package_update_available")])
-            else:
-                interface.contenuPaquet.append(None, ["SHA1SUMS", infoPaquet.get("sha1sums")])
 
             interface.contenuPaquet.append(None, [Lang.translate("install_date"), infoPaquet.get("install_date")])
             interface.contenuPaquet.append(None, [Lang.translate("size"), str(format(float(long(infoPaquet.get("size"))/1024)/1024, '.2f')) + " MB"])
             interface.contenuPaquet.append(None, [Lang.translate("packager"), infoPaquet.get("packager")])
         else:
-            interface.contenuPaquet.append(None, ["SHA1SUMS", infoPaquet.get("sha1sums")])
             interface.contenuPaquet.append(None, [Lang.translate("compress_size"), str(format(float(long(infoPaquet.get("compress_size"))/1024)/1024, '.2f')) + " MB"])
             interface.contenuPaquet.append(None, [Lang.translate("uncompress_size"), str(format(float(long(infoPaquet.get("uncompress_size"))/1024)/1024, '.2f')) + " MB"])
 
         # Liste des dépendances
         texte = infoPaquet.get("depends")
-
         if texte != "":
             interface.contenuInformations.append(None, [Lang.translate("depends"), texte])
 
         # Liste des paquets ajoutés
         texte = infoPaquet.get("provides")
-
         if texte != "":
             interface.contenuPaquet.append(None, [Lang.translate("provides"), texte])
 
         # Liste des paquets remplacés
         texte = infoPaquet.get("replaces")
-
         if texte != "":
             interface.contenuPaquet.append(None, [Lang.translate("replaces"), texte])
 
         # Liste des dépendances inverses
         texte = infoPaquet.get("required_by")
-
         if texte != "":
             interface.contenuPaquet.append(None, [Lang.translate("required_by"), texte])
 
         # Liste des paquets en conflit
         texte = infoPaquet.get("conflits")
-
         if texte != "":
             interface.contenuPaquet.append(None, [Lang.translate("conflits"), texte])
 
@@ -167,23 +163,23 @@ class Events (object):
 
         texteBuffer.set_text(texte)
 
-        #~ if Config.readConfig("pyfpm", "developmentmode") == "true":
-            #~ # Fichier de création du paquet
-            #~ texte = ""
-            #~ texteBuffer = interface.listeFrugalbuild.get_buffer()
+        if Config.readConfig("pyfpm", "developmentmode") == "true":
+            # Fichier de création du paquet
+            texte = ""
+            texteBuffer = interface.listeFrugalbuild.get_buffer()
 
-            #~ try:
-                #~ if self.getFrugalBuild(paquet):
-                    #~ if os.path.exists("/tmp/frugalbuild") == True:
-                        #~ file = codecs.open("/tmp/frugalbuild", "r", "utf-8")
-                        #~ for element in file:
-                            #~ if element != "":
-                                #~ texte += " " + element
-                        #~ file.close()
-            #~ except:
-                #~ texte = " " + Lang.translate("no_file_found")
+            try:
+                if self.getFrugalBuild(paquet):
+                    if os.path.exists("/tmp/frugalbuild") == True:
+                        file = codecs.open("/tmp/frugalbuild", "r", "utf-8")
+                        for element in file:
+                            if element != "":
+                                texte += " " + element
+                        file.close()
+            except:
+                texte = " " + Lang.translate("no_file_found")
 
-            #~ texteBuffer.set_text(texte)
+            texteBuffer.set_text(texte)
 
 
     def getFrugalBuild (self, paquet):
@@ -192,7 +188,7 @@ class Events (object):
         """
 
         if "frugalware" in repo_list:
-            index = "frugalware"
+            index = "frugalware-stable"
         elif "frugalware-current" in repo_list:
             index = "frugalware-current"
 
@@ -226,12 +222,12 @@ class Events (object):
                 fichierLocal.write(fichierFB.read())
                 fichierFB.close()
                 fichierLocal.close()
-                Package.printDebug("DEBUG", Lang.translate("download_complete") + " " + url)
+                Event.printDebug("DEBUG", Lang.translate("download_complete") + " " + url)
                 resultat = True
             else:
-                Package.printDebug("ERROR", Lang.translate("download_failed_404") + " " + url)
+                Event.printDebug("ERROR", Lang.translate("download_failed_404") + " " + url)
         except:
-            Package.printDebug("ERROR", Lang.translate("download_failed") + " " + url)
+            Event.printDebug("ERROR", Lang.translate("download_failed") + " " + url)
             resultat = False
             pass
 
@@ -240,7 +236,7 @@ class Events (object):
 
     def checkData (self, liste, donnee):
         """
-        Vérifie si nom est dans liste
+        Vérifie si donnee est dans liste
         """
 
         objetTrouve = 0
@@ -262,4 +258,22 @@ class Events (object):
             return 0
 
         return 1
+
+
+    def printDebug (self, typeErreur, erreur):
+        """
+        Affiche une sortie terminal
+        """
+
+        if typeErreur == "DEBUG":
+            color = "\033[0;32m"
+        elif typeErreur == "ERROR":
+            color = "\033[0;34m"
+        elif typeErreur == "INFO":
+            color = "\033[0;36m"
+        else:
+            color = "\033[0m"
+
+        if modeDebug or typeErreur != "INFO":
+            print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur))
 

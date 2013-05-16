@@ -10,6 +10,7 @@
 # Importation des modules
 import os, sys, string, time
 import dbus
+#~ import dbus.service, dbus.mainloop.glib, gobject
 
 try:
     import pygtk, gtk
@@ -20,8 +21,6 @@ from Misc import lang
 
 # Initialisation des modules
 fctLang = lang.Lang()
-
-modeDebug = True
 
 bus = dbus.SystemBus()
 proxy = bus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
@@ -42,8 +41,6 @@ fpmd_getUpdateList = proxy.get_dbus_method('getUpdateList', 'org.frugalware.fpmd
 fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', 'org.frugalware.fpmd.deamon')
 
 fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', 'org.frugalware.fpmd.deamon')
-
-fpmd_sendSignal = proxy.get_dbus_method('sendSignal', 'org.frugalware.fpmd.deamon')
 
 
 class Package (object):
@@ -535,46 +532,5 @@ class Package (object):
             liste2.append(separateur)
 
         return liste2
-
-
-    def printDebug (self, typeErreur, erreur):
-        """
-        Affiche une sortie terminal
-        """
-
-        if typeErreur == "DEBUG":
-            color = "\033[0;32m"
-        elif typeErreur == "ERROR":
-            color = "\033[0;34m"
-        elif typeErreur == "INFO":
-            color = "\033[0;36m"
-        else:
-            color = "\033[0m"
-
-        if modeDebug or typeErreur != "INFO":
-            print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur))
-
-
-    #~ def fenetreQuestion (self, titre, texte):
-        #~ """
-        #~ Affiche une fenêtre d'information
-        #~ """
-
-        #~ fenetre = gtk.Dialog(titre, None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
-        #~ texteConfirmation = gtk.Label(texte)
-
-        #~ fenetre.set_default_response(gtk.RESPONSE_OK)
-
-        #~ fenetre.vbox.pack_start(texteConfirmation)
-
-        #~ fenetre.show_all()
-        #~ choix = fenetre.run()
-        #~ reponse = False
-        #~ if choix == gtk.RESPONSE_OK:
-            #~ reponse = True
-
-        #~ fenetre.destroy()
-
-        #~ return reponse
 
 

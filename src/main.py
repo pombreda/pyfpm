@@ -24,12 +24,7 @@ except ImportError:
     sys.exit(fctLang.translate("pygtk_not_found"))
 
 from Display import display
-from Pacman import package
 from Misc import config
-
-# Initialisation des modules
-Config = config.Config()
-Package = package.Package()
 
 # ----------------------------------------------------------------------
 #   Main
@@ -52,6 +47,7 @@ def main():
         elif sys.argv[1] == "-v" or sys.argv[1] == "--version":
             print ("pyFPM (Inky)")
     else:
+        Config = config.Config()
         Config.checkConfig()
 
         Interface = display.Interface()

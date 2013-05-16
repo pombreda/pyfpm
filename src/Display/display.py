@@ -257,6 +257,7 @@ class Interface (object):
             self.zoneSelectionGroupe.set_border_width(4)
             self.listeSelectionGroupe.connect('changed', self.changeRepo, self)
 
+            # Ajout des dépôts
             self.addRepos()
 
             # ------------------------------------------------------------------
@@ -274,6 +275,7 @@ class Interface (object):
             self.colonneGroupesNom.add_attribute(self.celluleGroupesNom, 'text', 0)
             self.colonneGroupes.append_column(self.colonneGroupesNom)
 
+            # Ajout des groupes en fonction du dépôt initial
             self.addGroups()
 
             self.defilementGroupes.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
@@ -413,8 +415,11 @@ class Interface (object):
             self.zoneInformations.append_page(self.defilementPaquet, self.labelPaquet)
             self.zoneInformations.append_page(self.defilementFichiers, self.labelFichiers)
             self.zoneInformations.append_page(self.defilementJournal, self.labelJournal)
+
+            # Affiche la zone "FrugalBuild" uniquement si l'option est activé
             if Config.readConfig("pyfpm", "developmentmode") == "true":
                 self.zoneInformations.append_page(self.defilementFrugalbuild, self.labelFrugalbuild)
+
             self.zoneInformations.set_border_width(4)
             self.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
 
@@ -433,6 +438,7 @@ class Interface (object):
             self.fenetre.add(self.grille)
             self.fenetre.show_all()
 
+            # Récupère les mises à jour si l'option est activé
             if Config.readConfig("pyfpm", "startupdate") == "true":
                 self.updateWindow()
 
@@ -558,6 +564,7 @@ class Interface (object):
         ensembleGroupes = Package.getGroupsList(self.listeSelectionGroupe.get_active())
 
         for nom in ensembleGroupes:
+            # Affiche les groupes secondaires si l'option est activé
             if Config.readConfig("pyfpm", "useprohibategroups") == "false":
                 if not nom in self.listeGroupesProhibes:
                     self.listeColonneGroupes.append([nom])
@@ -593,8 +600,7 @@ class Interface (object):
         """
 
         paquets = Package.getPackagesList(self.listeSelectionGroupe.get_active(), nomGroupe)
-        loader = self.addPackages(paquets)
-        gobject.idle_add(loader.next)
+        self.addPackages(paquets)
 
 
     def addPackages (self, paquets, recherche = False):
@@ -610,6 +616,8 @@ class Interface (object):
         modeleColonnePaquets.set_sort_column_id(-1, gtk.SORT_ASCENDING)
 
         for element in paquets:
+            # Une recherche n'est pas composé de la même manière qu'une
+            # sélection normal
             if not recherche:
                 paquet = Package.getPackageInfo(element)
             elif recherche:
@@ -624,13 +632,15 @@ class Interface (object):
                 image = " "
                 nouvelleVersion = " "
             elif str(nomPaquet) in self.listeMiseAJourPacman:
-                # Le paquet à une mise à jour
+                # Le paquet peut être mis à jour
                 objetTrouve = 1
                 if str(nomPaquet) in self.listeInstallationPacman:
+                    # Le paquet est dans la liste des paquets à installer
                     image = gtk.STOCK_ADD
                 else:
                     image = gtk.STOCK_REFRESH
 
+                # On récupère la valeur de la version de mise à jour
                 nouvelleVersion = versionPaquet
                 pointerPaquet = Package.getPackagePointer(nomPaquet)
                 paquetInstalle = Package.getPackageInfo(pointerPaquet)
@@ -642,14 +652,17 @@ class Interface (object):
                 nouvelleVersion = " "
 
             if nomPaquet in self.listeInstallationPacman:
+                # Le paquet est dans la liste des paquets à installer
                 objetTrouve = 1
                 if not nomPaquet in self.listeMiseAJourPacman:
                     image = gtk.STOCK_ADD
             elif nomPaquet in self.listeSuppressionPacman:
+                # Le paquet est dans la liste des paquets à supprimer
                 objetTrouve = 0
                 image = gtk.STOCK_REMOVE
 
             if recherche and len(Package.getRepoList()) > 2:
+                # Dans le cas d'une recherche on préfixe avec [<nom_dépôt>]
                 nomPaquet = "[" + element[0] + "] " + nomPaquet
 
             self.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
@@ -686,12 +699,14 @@ class Interface (object):
         tableau qui se mettent à jour en fonction du cochage.
         """
 
+        # On met la checkbox à la valeur contraire (1 -> 0, 0 -> 1)
         modele = liste.get_model()
         modele[colonne][0] = not modele[colonne][0]
 
         nomPaquet = modele[colonne][2]
 
         if nomPaquet.find("]") != -1:
+            # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
             nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
 
         elementAjouter = Event.checkData(self.listeInstallationPacman, nomPaquet)
@@ -757,17 +772,18 @@ class Interface (object):
 
             paquets = Package.searchPackage(objetRechercher)
 
-            Package.printDebug("INFO", str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
+            Event.printDebug("INFO", str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
             self.updateStatusbar(str(len(paquets)) + " " + Lang.translate("search_package") + " " + objetRechercher)
 
             self.recherche_mode = True
             self.recherche_nom = objetRechercher
 
             if len(paquets) > 0:
-                #~ pacman_trans_release()
+                # Si la liste contient des paquets on lance l'ajout dans l'interface
                 self.addPackages(paquets, recherche = True)
 
-            self.eraseSearch()
+            # On efface le critère de recherche
+            #~ self.eraseSearch()
 
             try:
                 path, colonne = self.colonneGroupes.get_cursor()
@@ -803,7 +819,7 @@ class Interface (object):
         about.set_comments(Lang.translate("about_desc"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
         about.set_authors(["Gaetan Gourdin (bouleetbil)", "Aurélien Lubert (PacMiam)"])
-        about.set_artists(["Lubert Aurélien (PacMiam)"])
+        about.set_artists(["Aurélien Lubert (PacMiam)"])
         about.set_translator_credits("fr_FR - Anthony Jorion (Pingax)")
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer et/ou le modifier conformément aux dispositions de la Licence Publique Générale GNU, telle que publiée par la Free Software Foundation.")
         about.set_wrap_license(True)
@@ -837,19 +853,23 @@ class Interface (object):
 
         listeDepot = Package.getRepoList()
 
+        # Récupère l'index du dépôt initial
         if "frugalware" in listeDepot:
             index = listeDepot.index("frugalware")
         elif "frugalware-current" in listeDepot:
             index = listeDepot.index("frugalware-current")
 
         if self.recherche_mode == False:
+            # On réaffiche les paquets du groupe sélectionné
             self.selectionGroupe = self.colonneGroupes.get_selection()
             self.selectGroup(self.selectionGroupe, self.listeColonneGroupes)
         else:
+            # Dans le cas d'une recherche, on réaffiche l'ensemble
             self.texteRecherche.set_text(self.recherche_nom)
-            self.effectuerRecherche()
+            self.search()
 
         if len(self.listeInstallationPacman) != 0 or len(self.listeSuppressionPacman):
+            # On tri les paquets des deux listes
             self.listeInstallationPacman.sort()
             self.listeSuppressionPacman.sort()
 
@@ -940,15 +960,20 @@ class Interface (object):
             zoneSuppression.set_border_width(4)
 
             fenetre.vbox.pack_start(texteFenetre, expand=False)
+
             if len(self.listeInstallationPacman) != 0:
+                # S'il y a des paquets à installer, on affiche la zone Installation
                 valeurInstallation = 0
                 for element in self.listeInstallationPacman:
                     if element.find("]") != -1:
+                        # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
                         element = element[element.find("]") + 1:].strip()
 
                     paquet = Package.getPackagePointer(element, index)
                     infoPaquet = Package.getPackageInfo(paquet)
 
+                    # Le nom de la taille à récupérer est différent si le paquet
+                    # est installé ou pas
                     if Package.checkPackageInstalled(infoPaquet.get("name"), infoPaquet.get("version")):
                         size = "size"
                     else:
@@ -962,9 +987,11 @@ class Interface (object):
                 fenetre.vbox.pack_start(zoneInstallation)
 
             if len(self.listeSuppressionPacman) != 0:
+                # S'il y a des paquets à supprimer, on affiche la zone Suppression
                 valeurSuppression = 0
                 for element in self.listeSuppressionPacman:
                     if element.find("]") != -1:
+                        # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
                         element = element[element.find("]") + 1:].strip()
 
                     paquet = Package.getPackagePointer(element, index)
@@ -980,8 +1007,9 @@ class Interface (object):
             choix = fenetre.run()
 
             if choix == gtk.RESPONSE_APPLY:
+                # Lance l'installation/mise à jour/suppression des paquets sélectionnés
                 fenetre.destroy()
-                Event.lancerInstallationPaquets(self)
+                #~ Event.lancerInstallationPaquets(self)
                 self.erasePackage()
             else:
                 fenetre.destroy()
@@ -1000,11 +1028,15 @@ class Interface (object):
         listeTmp = []
 
         if len(self.listeMiseAJourPacman) > 0:
+            # Affiche les paquets dont une mise à jour est disponible
             for element in self.listeMiseAJourPacman:
                 if not element in self.listeInstallationPacman:
+                    # On ne récupère que ceux qui ne font pas partie de la
+                    # liste des paquets à installer
                     listeTmp.append(element)
 
             if len(listeTmp) > 0:
+                # Si la liste n'est pas vide
                 miseajour = gtk.Dialog(Lang.translate("update_system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_ADD, gtk.RESPONSE_ACCEPT, gtk.STOCK_OK, gtk.RESPONSE_OK))
 
                 texteInfo = gtk.Label(Lang.translate("update_available"))
@@ -1054,6 +1086,7 @@ class Interface (object):
                 else:
                     miseajour.destroy()
             else:
+                # Dans le cas où la liste est vide
                 self.barreStatus.push(0, Lang.translate("no_update_available"))
 
         self.fenetre.set_sensitive(True)

@@ -12,6 +12,7 @@
 --- Evénements (action.py) -----------------------------------------------------
 
     [FIXME] - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
+    [FIXME] - Le SHA1SUMS ne s'affiche plus pour les paquets installés
 
 --- Langue (lang.py) -----------------------------------------------------------
 

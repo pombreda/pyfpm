@@ -308,6 +308,57 @@ class FPMd (dbus.service.Object):
         pacman_sync_cleancache()
 
 
+    @dbus.service.method (BUSNAME, in_signature="su", out_signature="b")
+    def removePackage (self, pkgName, removeDeps = 0):
+        """
+        """
+
+        if not pkgName in self.searchInstalledPackage(pkgName):
+            # This package is already installed
+            return False
+
+        pm_trans_flag = PM_TRANS_FLAG_NOCONFLICTS
+        if removeDeps == 1:
+            pm_trans_flag = PM_TRANS_FLAG_CASCADE
+
+        if pacman_trans_init(PM_TRANS_TYPE_REMOVE, pm_trans_flag, pacman_trans_cb_event(fpm_progress_event), pacman_trans_cb_conv(fpm_trans_conv), pacman_trans_cb_progress(fpm_progress_install)) == -1:
+            return False
+
+        if pacman_trans_addtarget(pkgName) == -1:
+            return False
+
+        data = PM_LIST()
+
+        if pacman_trans_prepare(data) == -1:
+            if pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_UNSATISFIED_DEPS):
+                liste = []
+                index = pacman_list_first(data)
+                while index != 0:
+                    paquet = pacman_list_getdata(index)
+                    nom = pointer_to_string(pacman_dep_getinfo(paquet, PM_DEP_NAME))
+                    liste.append(nom)
+                    index = pacman_list_next(index)
+
+                #~ reponse = self.fenetreQuestion("DEBUG", element + " est requis par : " + str(liste) + "\nSouhaitez-vous continuer ?")
+                #~ if reponse == False:
+                    #~ pacman_trans_release()
+                    #~ return False
+
+                pacman_trans_release()
+
+                pacman_remove_pkg(pkgName, 1)
+                return True
+            else:
+                return False
+
+        if pacman_trans_commit(data) == -1:
+            return False
+
+        pacman_trans_release()
+
+        return True
+
+
     @dbus.service.method (BUSNAME)
     def closeDeamon (self):
         self.closePacman()
