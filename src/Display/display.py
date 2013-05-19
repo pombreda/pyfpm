@@ -1014,7 +1014,7 @@ class Interface (object):
             else:
                 fenetre.destroy()
         else:
-            self.informationWindow(Lang.translate("apply_pkg"), Lang.translate("no_change"))
+            self.barreStatus.push(0, Lang.translate("no_change"))
 
 
     def updateWindow (self, *args):
@@ -1088,5 +1088,8 @@ class Interface (object):
             else:
                 # Dans le cas où la liste est vide
                 self.barreStatus.push(0, Lang.translate("no_update_available"))
+        else:
+            # Dans le cas où la liste est vide
+            self.barreStatus.push(0, Lang.translate("no_update_available"))
 
         self.fenetre.set_sensitive(True)

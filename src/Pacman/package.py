@@ -58,8 +58,6 @@ class Package (object):
         Met à jour les dépôts de paquets
         """
 
-        self.printDebug("INFO", fctLang.translate("update_db"))
-
         interface.updateStatusbar(fctLang.translate("update_db"))
         interface.fenetre.set_sensitive(False)
         interface.refresh()
@@ -532,5 +530,6 @@ class Package (object):
             liste2.append(separateur)
 
         return liste2
+
 
 

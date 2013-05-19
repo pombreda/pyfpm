@@ -38,7 +38,7 @@ class Events (object):
         Récupère les paquets dont une mise à jour est disponible
         """
 
-        Event.printDebug("DEBUG", Lang.translate("add_update_list"))
+        self.printDebug("DEBUG", Lang.translate("add_update_list"))
 
         if len(liste) > 0:
             liste = []
@@ -83,9 +83,13 @@ class Events (object):
         interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").replace("&","&amp;").encode('ascii', 'replace')])
 
         # Liste des groupes
-        texte = infoPaquet.get("groups")
-
-        if texte != "":
+        texte = ""
+        groupes = infoPaquet.get("groups")
+        if len(groupes) > 0:
+            for element in groupes:
+                texte += str(element)
+                if groupes.index(element) < len(groupes) - 1:
+                    texte += ", "
             interface.contenuInformations.append(None, [Lang.translate("groups"), texte])
 
         if infoPaquet.get("name") in interface.listeMiseAJourPacman:
@@ -105,28 +109,53 @@ class Events (object):
             interface.contenuPaquet.append(None, [Lang.translate("uncompress_size"), str(format(float(long(infoPaquet.get("uncompress_size"))/1024)/1024, '.2f')) + " MB"])
 
         # Liste des dépendances
-        texte = infoPaquet.get("depends")
-        if texte != "":
+        texte = ""
+        depends = infoPaquet.get("depends")
+        if len(depends) > 0:
+            for element in depends:
+                texte += str(element)
+                if depends.index(element) < len(depends) - 1:
+                    texte += ", "
             interface.contenuInformations.append(None, [Lang.translate("depends"), texte])
 
         # Liste des paquets ajoutés
-        texte = infoPaquet.get("provides")
-        if texte != "":
+        texte = ""
+        provides = infoPaquet.get("provides")
+        if len(provides) > 0:
+            for element in provides:
+                texte += str(element)
+                if provides.index(element) < len(provides) - 1:
+                    texte += ", "
             interface.contenuPaquet.append(None, [Lang.translate("provides"), texte])
 
         # Liste des paquets remplacés
-        texte = infoPaquet.get("replaces")
-        if texte != "":
+        texte = ""
+        replaces = infoPaquet.get("replaces")
+        if len(replaces) > 0:
+            for element in replaces:
+                texte += str(element)
+                if replaces.index(element) < len(replaces) - 1:
+                    texte += ", "
             interface.contenuPaquet.append(None, [Lang.translate("replaces"), texte])
 
         # Liste des dépendances inverses
-        texte = infoPaquet.get("required_by")
-        if texte != "":
+        texte = ""
+        required = infoPaquet.get("required_by")
+        if len(required) > 0:
+            for element in required:
+                texte += str(element)
+                if required.index(element) < len(required) - 1:
+                    texte += ", "
             interface.contenuPaquet.append(None, [Lang.translate("required_by"), texte])
 
         # Liste des paquets en conflit
-        texte = infoPaquet.get("conflits")
-        if texte != "":
+        texte = ""
+        conflits = infoPaquet.get("conflits")
+        if len(conflits) > 0:
+            for element in conflits:
+                texte += str(element)
+                if conflits.index(element) < len(conflits) - 1:
+                    texte += ", "
             interface.contenuPaquet.append(None, [Lang.translate("conflits"), texte])
 
         # Liste des fichiers inclus dans le paquet
@@ -163,26 +192,26 @@ class Events (object):
 
         texteBuffer.set_text(texte)
 
-        if Config.readConfig("pyfpm", "developmentmode") == "true":
-            # Fichier de création du paquet
-            texte = ""
-            texteBuffer = interface.listeFrugalbuild.get_buffer()
+        #~ if Config.readConfig("pyfpm", "developmentmode") == "true":
+            #~ # Fichier de création du paquet
+            #~ texte = ""
+            #~ texteBuffer = interface.listeFrugalbuild.get_buffer()
 
-            try:
-                if self.getFrugalBuild(paquet):
-                    if os.path.exists("/tmp/frugalbuild") == True:
-                        file = codecs.open("/tmp/frugalbuild", "r", "utf-8")
-                        for element in file:
-                            if element != "":
-                                texte += " " + element
-                        file.close()
-            except:
-                texte = " " + Lang.translate("no_file_found")
+            #~ try:
+                #~ if self.getFrugalBuild(nomPaquet):
+                    #~ if os.path.exists("/tmp/frugalbuild") == True:
+                        #~ file = codecs.open("/tmp/frugalbuild", "r", "utf-8")
+                        #~ for element in file:
+                            #~ if element != "":
+                                #~ texte += " " + element
+                        #~ file.close()
+            #~ except:
+                #~ texte = " " + Lang.translate("no_file_found")
+#~ #~
+            #~ texteBuffer.set_text(texte)
 
-            texteBuffer.set_text(texte)
 
-
-    def getFrugalBuild (self, paquet):
+    def getFrugalBuild (self, nomPaquet, groupePaquet):
         """
         Récupère le FrugalBuild via le git de Frugalware
         """
@@ -194,19 +223,6 @@ class Events (object):
 
         listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
         listeGroupes = []
-
-        # Liste des groupes
-        texte = ""
-
-        nomPaquet = pacman_pkg_get_info(paquet, PM_PKG_NAME)
-        groupes = pacman_pkg_getinfo(paquet, PM_PKG_GROUPS)
-
-        while groupes != 0:
-            nomGroupe = pointer_to_string(pacman_list_getdata(groupes))
-
-            listeGroupes.append(nomGroupe)
-
-            groupes = pacman_list_next(groupes)
 
         for element in listeGroupes:
             if not element in listeGroupesProhibes:

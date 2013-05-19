@@ -36,9 +36,9 @@ class Config (object):
             # Le fichier de configuration doit être créé
             os.mkdir(config_path, 0744)
 
-        if File.fichier(config_path + "pyfpm.config") == False:
+        if File.fichier(config_path + "pyfpmrc") == False:
             # Configuration par défaut
-            dico = {"lang" : "en_US", "developmentmode" : "false", "startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600", "command" : "gksu"}
+            dico = {"lang" : "en_US", "developmentmode" : "false", "startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600"}
             self.writeConfig(dico)
 
 
@@ -47,10 +47,10 @@ class Config (object):
         Récupère la valeur correspondant dans le fichier de configuration
         suivant la section choisie
         """
-        if File.fichier(config_path + "pyfpm.config") == True:
+        if File.fichier(config_path + "pyfpmrc") == True:
             try:
                 configuration = SafeConfigParser()
-                configuration.read(config_path + "pyfpm.config")
+                configuration.read(config_path + "pyfpmrc")
 
                 return configuration.get(section, option)
             except:
@@ -79,9 +79,7 @@ class Config (object):
             configuration.set("screen", "width", dico.get("width", "800"))
             configuration.set("screen", "height", dico.get("height", "600"))
 
-            configuration.set("admin", "command", dico.get("command", "gksu"))
-
-            configuration.write(open(config_path + "pyfpm.config" , "w"))
+            configuration.write(open(config_path + "pyfpmrc" , "w"))
 
         except:
             return False

@@ -88,15 +88,15 @@ class Preferences (object):
         self.getLanguages(generalLangueChoix)
         self.fillCheckbox()
 
-        generalCommande.attach(generalCommandeLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
-        generalCommande.attach(generalCommandeChoix, 1, 2, 0, 1, yoptions=gtk.FILL)
-        generalCommande.set_border_width(4)
-        zoneCommande.add(generalCommande)
-        zoneCommande.set_border_width(4)
-        grilleCommande.attach(zoneCommande, 0, 1, 0, 1)
-        onglets.append_page(grilleCommande, commande)
+        #~ generalCommande.attach(generalCommandeLabel, 0, 1, 0, 1, yoptions=gtk.FILL)
+        #~ generalCommande.attach(generalCommandeChoix, 1, 2, 0, 1, yoptions=gtk.FILL)
+        #~ generalCommande.set_border_width(4)
+        #~ zoneCommande.add(generalCommande)
+        #~ zoneCommande.set_border_width(4)
+        #~ grilleCommande.attach(zoneCommande, 0, 1, 0, 1)
+        #~ onglets.append_page(grilleCommande, commande)
 
-        self.getTools(generalCommandeChoix)
+        #~ self.getTools(generalCommandeChoix)
 
         #~ onglets.append_page(zoneDivers, divers)
 

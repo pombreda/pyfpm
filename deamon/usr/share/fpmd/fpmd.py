@@ -24,12 +24,12 @@ OBJPATH = '/org/frugalware/fpmd/deamon/object'
 
 class FPMd (dbus.service.Object):
     def __init__ (self):
-        self.startPacman()
-
         # Connexion au bus system
         connection = dbus.service.BusName(BUSNAME, bus=dbus.SystemBus())
         # Initalisation de l'objet
         dbus.service.Object.__init__(self, connection, OBJPATH)
+
+        self.startPacman()
 
 
     def startPacman (self):
@@ -39,11 +39,11 @@ class FPMd (dbus.service.Object):
 
         pacman_started()
 
-        self.printDebug("INFO", "init_pacman")
+        self.sendSignal("init_pacman")
         pacman_init()
-        self.printDebug("INFO", "init_db")
+        self.sendSignal("init_db")
         pacman_init_database()
-        self.printDebug("INFO", "register_db")
+        self.sendSignal("register_db")
         pacman_register_all_database()
 
 
@@ -52,16 +52,8 @@ class FPMd (dbus.service.Object):
         End pacman-g2 instance
         """
 
-        self.printDebug("INFO", "close_pacman")
+        self.sendSignal("close_pacman")
         pacman_finally()
-
-
-    def printDebug (self, typeErreur, erreur):
-        """
-        Affiche une sortie terminal
-        """
-
-        print ("[" + typeErreur + "] " + str(erreur))
 
 
     @dbus.service.signal(BUSNAME, signature='s')
@@ -84,7 +76,7 @@ class FPMd (dbus.service.Object):
         return pkg
 
 
-    @dbus.service.method (BUSNAME, in_signature='u', out_signature='a{ss}')
+    @dbus.service.method (BUSNAME, in_signature='u', out_signature='a{sv}')
     def getPackageInfo (self, pkg):
         """
         Get some informations about the package
@@ -97,18 +89,18 @@ class FPMd (dbus.service.Object):
                     "version" : str(pkgVersion), \
                     "description" : unicode(str(pacman_pkg_get_info(pkg, PM_PKG_DESC)), errors='replace'), \
                     "sha1sums" : str(pacman_pkg_get_info(pkg, PM_PKG_SHA1SUM)), \
-                    "groups" : str(self.getInfoFromPackage(pkg, PM_PKG_GROUPS)), \
-                    "depends" : str(self.getInfoFromPackage(pkg, PM_PKG_DEPENDS)), \
-                    "provides" : str(self.getInfoFromPackage(pkg, PM_PKG_PROVIDES)), \
-                    "replaces" : str(self.getInfoFromPackage(pkg, PM_PKG_REPLACES)), \
-                    "required_by" : str(self.getInfoFromPackage(pkg, PM_PKG_REQUIREDBY)), \
-                    "conflits" : str(self.getInfoFromPackage(pkg, PM_PKG_CONFLICTS)) }
+                    "groups" : self.getInfoFromPackage(pkg, PM_PKG_GROUPS), \
+                    "depends" : self.getInfoFromPackage(pkg, PM_PKG_DEPENDS), \
+                    "provides" : self.getInfoFromPackage(pkg, PM_PKG_PROVIDES), \
+                    "replaces" : self.getInfoFromPackage(pkg, PM_PKG_REPLACES), \
+                    "required_by" : self.getInfoFromPackage(pkg, PM_PKG_REQUIREDBY), \
+                    "conflits" : self.getInfoFromPackage(pkg, PM_PKG_CONFLICTS) }
 
         if self.checkPackageInstalled(str(pkgName), str(pkgVersion)):
             pkgDict2 = {"url" : str(pacman_pkg_get_info(pkg, PM_PKG_URL)), \
                         "install_date" : str(pacman_pkg_get_info(pkg, PM_PKG_INSTALLDATE)), \
                         "size" : str(pacman_pkg_getinfo(pkg, PM_PKG_SIZE)), \
-                        "packager" : str(pacman_pkg_get_info(pkg, PM_PKG_PACKAGER)) }
+                        "packager" : unicode(str(pacman_pkg_get_info(pkg, PM_PKG_PACKAGER)), errors='replace') }
         else:
             pkgDict2 = {"compress_size" : str(pacman_pkg_getinfo(pkg, PM_PKG_SIZE)), \
                         "uncompress_size" : str(pacman_pkg_getinfo(pkg, PM_PKG_USIZE)) }
@@ -141,19 +133,20 @@ class FPMd (dbus.service.Object):
         Get informations about a package and put them into a string
         """
 
-        text = ""
+        content = []
         listInfo = pacman_pkg_getinfo(pkg, typeInfo)
 
         while listInfo != 0:
             infoName = pointer_to_string(pacman_list_getdata(listInfo))
 
-            text += infoName
+            content.append(str(infoName))
 
             listInfo = pacman_list_next(listInfo)
-            if listInfo != 0:
-                text += ", "
 
-        return text
+        if len(content) > 0:
+            return content
+        else:
+            return ""
 
 
     @dbus.service.method (BUSNAME, in_signature='ss', out_signature='b')
@@ -292,7 +285,7 @@ class FPMd (dbus.service.Object):
                 #~ pourcentage = float(index - 1) / float(len(repo_list) - 1)
 
                 if pacman_db_update (1, element) == -1:
-                    self.sendSignal("Can't update pacman-g2")
+                    self.sendSignal("cant_update_pacmang2")
                     #~ pacman_print_error()
 
         return True
@@ -304,7 +297,7 @@ class FPMd (dbus.service.Object):
         Nettoye le cache de pacman-g2
         """
 
-        self.printDebug("INFO", "clean_cache")
+        self.sendSignal("clean_cache")
         pacman_sync_cleancache()
 
 
