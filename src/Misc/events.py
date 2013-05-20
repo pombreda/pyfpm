@@ -56,10 +56,14 @@ class Events (object):
         """
 
         objetTrouve = 0
+        depotRecherche = ""
+        modeRecherche = False
 
         if nomPaquet.find("]") != -1:
             # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
+            depotRecherche = nomPaquet[nomPaquet.find("[") + 1:nomPaquet.find("]")].strip()
             nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
+            modeRecherche = True
 
         interface.updateStatusbar(Lang.translate("read_pkg") + " " + nomPaquet)
 
@@ -72,7 +76,11 @@ class Events (object):
         if Package.checkPackageInstalled(nomPaquet, versionPaquet):
             depot = 0
         else:
-            depot = int(interface.listeSelectionGroupe.get_active())
+            if not modeRecherche:
+                depot = int(interface.listeSelectionGroupe.get_active())
+            else:
+                # Il s'agit d'une recherche donc on prend le dépot entre []
+                depot = Package.getRepoList().index(depotRecherche)
 
         pointerPaquet = Package.getPackagePointer(nomPaquet, depot)
         infoPaquet = Package.getPackageInfo(pointerPaquet)
@@ -80,7 +88,8 @@ class Events (object):
         interface.contenuInformations.append(None, [Lang.translate("name"), infoPaquet.get("name")])
         interface.contenuInformations.append(None, [Lang.translate("version"), infoPaquet.get("version")])
 
-        interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").replace("&","&amp;").encode('ascii', 'replace')])
+        # [TODO] - Améliorer l'affichage
+        interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").encode('ascii', 'replace')])
 
         # Liste des groupes
         texte = ""
@@ -95,15 +104,15 @@ class Events (object):
         if infoPaquet.get("name") in interface.listeMiseAJourPacman:
             interface.contenuPaquet.append(None, ["SHA1SUMS", Lang.translate("package_update_available")])
         else:
-            interface.contenuPaquet.append(None, ["SHA1SUMS", infoPaquet.get("sha1sums")])
+            interface.contenuPaquet.append(None, ["SHA1SUMS", str(Package.getSha1sums(infoPaquet.get("name"), int(interface.listeSelectionGroupe.get_active())))])
 
         # Affiche des informations supplémentaires si le paquet est installé
         if Package.checkPackageInstalled(nomPaquet, versionPaquet):
-            interface.contenuInformations.append(None, [Lang.translate("url"), infoPaquet.get("url")])
+            interface.contenuInformations.append(None, [Lang.translate("url"), str(infoPaquet.get("url"))])
 
-            interface.contenuPaquet.append(None, [Lang.translate("install_date"), infoPaquet.get("install_date")])
+            interface.contenuPaquet.append(None, [Lang.translate("install_date"), str(infoPaquet.get("install_date"))])
             interface.contenuPaquet.append(None, [Lang.translate("size"), str(format(float(long(infoPaquet.get("size"))/1024)/1024, '.2f')) + " MB"])
-            interface.contenuPaquet.append(None, [Lang.translate("packager"), infoPaquet.get("packager")])
+            interface.contenuPaquet.append(None, [Lang.translate("packager"), str(infoPaquet.get("packager").encode('ascii', 'replace'))])
         else:
             interface.contenuPaquet.append(None, [Lang.translate("compress_size"), str(format(float(long(infoPaquet.get("compress_size"))/1024)/1024, '.2f')) + " MB"])
             interface.contenuPaquet.append(None, [Lang.translate("uncompress_size"), str(format(float(long(infoPaquet.get("uncompress_size"))/1024)/1024, '.2f')) + " MB"])

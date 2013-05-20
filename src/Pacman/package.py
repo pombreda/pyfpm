@@ -36,6 +36,7 @@ fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', 'org.frugalware.fpmd
 fpmd_searchInstalledPackage = proxy.get_dbus_method('searchInstalledPackage', 'org.frugalware.fpmd.deamon')
 fpmd_getPackagesList = proxy.get_dbus_method('getPackagesList', 'org.frugalware.fpmd.deamon')
 fpmd_getPackageInfo = proxy.get_dbus_method('getPackageInfo', 'org.frugalware.fpmd.deamon')
+fpmd_getSha1sums = proxy.get_dbus_method('getSha1sums', 'org.frugalware.fpmd.deamon')
 fpmd_getPackagePointer = proxy.get_dbus_method('getPackagePointer', 'org.frugalware.fpmd.deamon')
 fpmd_getUpdateList = proxy.get_dbus_method('getUpdateList', 'org.frugalware.fpmd.deamon')
 fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', 'org.frugalware.fpmd.deamon')
@@ -499,6 +500,14 @@ class Package (object):
         """
 
         return fpmd_checkPackageInstalled (nomPaquet, versionPaquet)
+
+
+    def getSha1sums (self, nomPaquet, repo=1):
+        """
+        Obtient le pointer d'un paquet à partir de son nom
+        """
+
+        return fpmd_getSha1sums (nomPaquet, repo)
 
 
     def splitVersionName (self, paquet):

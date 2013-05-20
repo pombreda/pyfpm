@@ -50,15 +50,15 @@ class Preferences (object):
         self.modeDeveloppement = gtk.CheckButton(Lang.translate("development_mode") + "*")
         generalLangueAsterix = gtk.Label(" *" + Lang.translate("need_reboot"))
 
-        commande = gtk.Label(Lang.translate("pacman"))
-        grilleCommande = gtk.Table(1,1)
-        zoneCommande = gtk.Frame(Lang.translate("preferences_command"))
-        generalCommande = gtk.Table(2,1)
-        generalCommandeLabel = gtk.Label(Lang.translate("choose_su"))
-        generalCommandeChoix = gtk.combo_box_new_text()
+        #~ commande = gtk.Label(Lang.translate("pacman"))
+        #~ grilleCommande = gtk.Table(1,1)
+        #~ zoneCommande = gtk.Frame(Lang.translate("preferences_command"))
+        #~ generalCommande = gtk.Table(2,1)
+        #~ generalCommandeLabel = gtk.Label(Lang.translate("choose_su"))
+        #~ generalCommandeChoix = gtk.combo_box_new_text()
 
-        divers = gtk.Label(Lang.translate("preferences_misc"))
-        zoneDivers = gtk.Table(1,1)
+        #~ divers = gtk.Label(Lang.translate("preferences_misc"))
+        #~ zoneDivers = gtk.Table(1,1)
 
         fenetre.set_has_separator(False)
         fenetre.set_default_response(gtk.RESPONSE_OK)
@@ -106,7 +106,7 @@ class Preferences (object):
         reponse = fenetre.run()
 
         if reponse == gtk.RESPONSE_APPLY:
-            dico = {"lang" : Lang.fileLanguage(generalLangueChoix.get_active_text()), "developmentmode" : Config.boolMinus(self.modeDeveloppement.get_active()), "startupdate" : Config.boolMinus(self.miseajourDemarrage.get_active()), "useprohibategroups" : Config.boolMinus(self.afficherGroupes.get_active()), "width" : Config.readConfig("screen", "width"), "height" : Config.readConfig("screen", "height"), "command" : generalCommandeChoix.get_active_text()}
+            dico = {"lang" : Lang.fileLanguage(generalLangueChoix.get_active_text()), "developmentmode" : Config.boolMinus(self.modeDeveloppement.get_active()), "startupdate" : Config.boolMinus(self.miseajourDemarrage.get_active()), "useprohibategroups" : Config.boolMinus(self.afficherGroupes.get_active()), "width" : Config.readConfig("screen", "width"), "height" : Config.readConfig("screen", "height")}
 
             modificationInterface = False
             if Config.readConfig("pyfpm", "useprohibategroups") != Config.boolMinus(self.afficherGroupes.get_active()):

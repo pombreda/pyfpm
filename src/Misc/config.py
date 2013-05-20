@@ -69,7 +69,6 @@ class Config (object):
 
             configuration.add_section("pyfpm")
             configuration.add_section("screen")
-            configuration.add_section("admin")
 
             configuration.set("pyfpm", "lang", dico.get("lang", "en_US"))
             configuration.set("pyfpm", "developmentmode", dico.get("developmentmode", "true"))

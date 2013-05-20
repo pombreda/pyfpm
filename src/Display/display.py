@@ -355,7 +355,7 @@ class Interface (object):
             self.colonneLabelInformations.pack_start(self.celluleLabelInformations, True)
             self.colonneLabelInformations.add_attribute(self.celluleLabelInformations, "text", 0)
             self.colonneValeurInformations.pack_start(self.celluleValeurInformations, True)
-            self.colonneValeurInformations.add_attribute(self.celluleValeurInformations, "markup", 1)
+            self.colonneValeurInformations.add_attribute(self.celluleValeurInformations, "text", 1)
 
             self.celluleValeurInformations.set_property('wrap-mode', pango.WRAP_WORD)
             self.celluleValeurInformations.set_property('editable', True)
@@ -376,7 +376,7 @@ class Interface (object):
             self.colonneLabelPaquet.pack_start(self.celluleLabelPaquet, True)
             self.colonneLabelPaquet.add_attribute(self.celluleLabelPaquet, "text", 0)
             self.colonneValeurPaquet.pack_start(self.celluleValeurPaquet, True)
-            self.colonneValeurPaquet.add_attribute(self.celluleValeurPaquet, "markup", 1)
+            self.colonneValeurPaquet.add_attribute(self.celluleValeurPaquet, "text", 1)
 
             self.celluleValeurPaquet.set_property('wrap-mode', pango.WRAP_WORD)
             self.celluleValeurPaquet.set_property('editable', True)

@@ -88,7 +88,6 @@ class FPMd (dbus.service.Object):
         pkgDict = {"name" : str(pkgName), \
                     "version" : str(pkgVersion), \
                     "description" : unicode(str(pacman_pkg_get_info(pkg, PM_PKG_DESC)), errors='replace'), \
-                    "sha1sums" : str(pacman_pkg_get_info(pkg, PM_PKG_SHA1SUM)), \
                     "groups" : self.getInfoFromPackage(pkg, PM_PKG_GROUPS), \
                     "depends" : self.getInfoFromPackage(pkg, PM_PKG_DEPENDS), \
                     "provides" : self.getInfoFromPackage(pkg, PM_PKG_PROVIDES), \
@@ -108,6 +107,19 @@ class FPMd (dbus.service.Object):
         pkgDict.update(pkgDict2)
 
         return pkgDict
+
+
+    @dbus.service.method (BUSNAME, in_signature='su', out_signature='s')
+    def getSha1sums (self, pkgName, repo):
+        """
+        Get the correct SHA1SUMS from frugalware/repos
+        """
+
+        pkg = pacman_db_readpkg(db_list[int(repo)], str(pkgName))
+
+        sha1sums = str(pacman_pkg_get_info(pkg, PM_PKG_SHA1SUM))
+
+        return sha1sums
 
 
     @dbus.service.method (BUSNAME, in_signature='s', out_signature='s')

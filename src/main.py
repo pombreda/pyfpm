@@ -46,6 +46,8 @@ def main():
             print ("Utilisation : pyfpm <option>\n\t-h\taffiche l'aide\n\t-v\taffiche la version de pyfpm")
         elif sys.argv[1] == "-v" or sys.argv[1] == "--version":
             print ("pyFPM (Inky)")
+        else:
+            print ("Utilisation : pyfpm <option>\n\t-h\taffiche l'aide\n\t-v\taffiche la version de pyfpm")
     else:
         Config = config.Config()
         Config.checkConfig()

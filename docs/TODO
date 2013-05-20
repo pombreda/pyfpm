@@ -11,9 +11,8 @@
 
 --- Evénements (action.py) -----------------------------------------------------
 
-    [FIXME] - Le SHA1SUMS ne s'affichera pas si une version plus récente existe dans les dépots
-    [FIXME] - Le SHA1SUMS ne s'affiche plus pour les paquets installés
     [FIXME] - L'encodage des informations n'est pas effectué en utf-8                           [EN COURS]
+    [TODO]  - Permettre d'ouvrir le lien site web via un clic
 
 --- Langue (lang.py) -----------------------------------------------------------
 
@@ -21,7 +20,7 @@
 
 --- Paquet (package.py) --------------------------------------------------------
 
-    [FIXME] - Afficher les paquets no-build (utilisable avec repoman)
+    [TODO]  - Afficher les paquets no-build (utilisable avec repoman)
 
 --- Démon (fpmd) ---------------------------------------------------------------
 
@@ -33,3 +32,4 @@
 --- Configuration (config.py) --------------------------------------------------
 
     [TODO]  - Réécrire l'interface
+    [TODO]  - Option : Afficher des fenêtres d'informations
