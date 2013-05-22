@@ -187,7 +187,7 @@ class Interface (object):
             self.menu_action_install.connect("activate", self.installWindow, self)
 
             self.menu_action_clean.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
-            #~ self.menu_action_clean.connect("activate", self.informationWindow, "test", "test")
+            self.menu_action_clean.connect("activate", Package.cleanCache, self)
 
             self.menu_action_update.set_image(gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU))
             self.menu_action_update.connect("activate", Package.updateDatabase, self)

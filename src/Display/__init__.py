@@ -1,3 +1,3 @@
 # Fonctions d'affichage
 
-__all__ = ['display','preferences']
+__all__ = ['display','preferences','pacman']

@@ -20,16 +20,15 @@ except ImportError:
 from Misc import lang
 
 # Initialisation des modules
-fctLang = lang.Lang()
+Lang = lang.Lang()
 
+# Récupération des fonctions de FPMd
 bus = dbus.SystemBus()
 proxy = bus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
 
 fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', 'org.frugalware.fpmd.deamon')
-
 fpmd_updateDatabase = proxy.get_dbus_method('updateDatabase', 'org.frugalware.fpmd.deamon')
 fpmd_cleanCache = proxy.get_dbus_method('cleanCache', 'org.frugalware.fpmd.deamon')
-
 fpmd_getRepoList = proxy.get_dbus_method('getRepoList', 'org.frugalware.fpmd.deamon')
 fpmd_searchRepoPackage = proxy.get_dbus_method('searchRepoPackage', 'org.frugalware.fpmd.deamon')
 fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', 'org.frugalware.fpmd.deamon')
@@ -40,18 +39,25 @@ fpmd_getSha1sums = proxy.get_dbus_method('getSha1sums', 'org.frugalware.fpmd.dea
 fpmd_getPackagePointer = proxy.get_dbus_method('getPackagePointer', 'org.frugalware.fpmd.deamon')
 fpmd_getUpdateList = proxy.get_dbus_method('getUpdateList', 'org.frugalware.fpmd.deamon')
 fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', 'org.frugalware.fpmd.deamon')
-
 fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', 'org.frugalware.fpmd.deamon')
 
 
 class Package (object):
 
-    def cleanCache (self):
+    def cleanCache (self, widget, interface):
         """
         Nettoye le cache de pacman-g2
         """
 
+        interface.updateStatusbar(Lang.translate("clean_cache"))
+        interface.fenetre.set_sensitive(False)
+        interface.refresh()
+
         fpmd_cleanCache()
+
+        interface.updateStatusbar(Lang.translate("clean_cache_done"))
+        interface.fenetre.set_sensitive(True)
+        interface.refresh()
 
 
     def updateDatabase (self, widget, interface):
@@ -59,12 +65,11 @@ class Package (object):
         Met à jour les dépôts de paquets
         """
 
-        interface.updateStatusbar(fctLang.translate("update_db"))
+        interface.updateStatusbar(Lang.translate("update_db"))
         interface.fenetre.set_sensitive(False)
         interface.refresh()
 
-        while not fpmd_updateDatabase():
-            print fpmd_sendSignal()
+        fpmd_updateDatabase()
 
         interface.eraseInterface()
         interface.addRepos()
@@ -183,7 +188,7 @@ class Package (object):
 
         #~ self.printDebug ("DEBUG", "installPackage")
 
-        #~ interface.changeLabel(fctLang.translate("install_pkg"))
+        #~ interface.changeLabel(Lang.translate("install_pkg"))
         #~ interface.refresh()
 
         #~ for element in repo_list:
@@ -374,44 +379,44 @@ class Package (object):
         #~ progres = 0.0
 
         #~ if event == PM_TRANS_EVT_CHECKDEPS_START:
-            #~ texte = fctLang.translate("checking_dependencies")
+            #~ texte = Lang.translate("checking_dependencies")
             #~ progres = 1.0
         #~ elif event == PM_TRANS_EVT_FILECONFLICTS_START:
-            #~ texte = fctLang.translate("checking_file_conflicts")
+            #~ texte = Lang.translate("checking_file_conflicts")
             #~ progres = 1.0
         #~ elif event == PM_TRANS_EVT_RESOLVEDEPS_START:
-            #~ texte = fctLang.translate("resolving_dependencies")
+            #~ texte = Lang.translate("resolving_dependencies")
         #~ elif event == PM_TRANS_EVT_INTERCONFLICTS_START:
-            #~ texte = fctLang.translate("looking_interconflicts")
+            #~ texte = Lang.translate("looking_interconflicts")
             #~ progres = 1.0
         #~ elif event == PM_TRANS_EVT_INTERCONFLICTS_DONE:
-            #~ texte = fctLang.translate("looking_interconflicts_done")
+            #~ texte = Lang.translate("looking_interconflicts_done")
         #~ elif event == PM_TRANS_EVT_ADD_START:
-            #~ texte = fctLang.translate("installing")
+            #~ texte = Lang.translate("installing")
             #~ progres = 1.0
         #~ elif event == PM_TRANS_EVT_ADD_DONE:
-            #~ texte = fctLang.translate("installing_done")
+            #~ texte = Lang.translate("installing_done")
         #~ elif event == PM_TRANS_EVT_UPGRADE_START:
-            #~ texte = fctLang.translate("upgrading")
+            #~ texte = Lang.translate("upgrading")
             #~ progres = 1.0
         #~ elif event == PM_TRANS_EVT_UPGRADE_DONE:
-            #~ texte = fctLang.translate("upgrading_done")
+            #~ texte = Lang.translate("upgrading_done")
         #~ elif event == PM_TRANS_EVT_REMOVE_START:
-            #~ texte = fctLang.translate("removing")
+            #~ texte = Lang.translate("removing")
         #~ elif event == PM_TRANS_EVT_REMOVE_DONE:
-            #~ texte = fctLang.translate("removing_done")
+            #~ texte = Lang.translate("removing_done")
         #~ elif event == PM_TRANS_EVT_INTEGRITY_START:
-            #~ texte = fctLang.translate("checking_integrity")
+            #~ texte = Lang.translate("checking_integrity")
         #~ elif event == PM_TRANS_EVT_INTEGRITY_DONE:
-            #~ texte = fctLang.translate("checking_integrity_done")
+            #~ texte = Lang.translate("checking_integrity_done")
         #~ elif event == PM_TRANS_EVT_SCRIPTLET_INFO:
             #~ texte = pointer_to_string(data1)
         #~ elif event == PM_TRANS_EVT_SCRIPTLET_START:
             #~ texte = str_data1
         #~ elif event == PM_TRANS_EVT_SCRIPTLET_DONE:
-            #~ texte = fctLang.translate("scriptlet_done")
+            #~ texte = Lang.translate("scriptlet_done")
         #~ elif event == PM_TRANS_EVT_RETRIEVE_START:
-            #~ texte = fctLang.translate("retrieving_packages")
+            #~ texte = Lang.translate("retrieving_packages")
             #~ progres = 1.0
             #~ telechargement = True
         #~ else :

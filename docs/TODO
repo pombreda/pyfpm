@@ -22,6 +22,10 @@
 
     [TODO]  - Afficher les paquets no-build (utilisable avec repoman)
 
+--- Installation (pacman.py) ---------------------------------------------------
+
+    [TODO]  - Récupérer les signaux                                                             [EN COURS]
+
 --- Démon (fpmd) ---------------------------------------------------------------
 
     [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)        [EN COURS]

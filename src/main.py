@@ -23,7 +23,7 @@ try:
 except ImportError:
     sys.exit(fctLang.translate("pygtk_not_found"))
 
-from Display import display
+from Display import display, pacman
 from Misc import config
 
 # ----------------------------------------------------------------------
@@ -56,6 +56,10 @@ def main():
 
         Interface.mainWindow()
         Interface.runWindow()
+
+        #~ Pacman = pacman.Pacman()
+        #~ Pacman.mainWindow("clean")
+        #~ Pacman.runWindow()
 
 
 if __name__ == "__main__":

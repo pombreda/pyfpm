@@ -311,6 +311,7 @@ class FPMd (dbus.service.Object):
 
         self.sendSignal("clean_cache")
         pacman_sync_cleancache()
+        self.sendSignal("done")
 
 
     @dbus.service.method (BUSNAME, in_signature="su", out_signature="b")

@@ -2,4 +2,4 @@
 
 __import__("pkg_resources").declare_namespace(__name__)
 
-__all__ = ['package','libpacman']
+__all__ = ['package']
