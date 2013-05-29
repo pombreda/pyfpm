@@ -88,11 +88,11 @@ class Interface (object):
         self.texteRecherche = gtk.Entry()
 
         # ------------------------------------------------------------------
-        #       Liste des groupes
+        #       Liste des dépôts
         # ------------------------------------------------------------------
 
-        self.zoneSelectionGroupe = gtk.Frame(Lang.translate("select_group"))
-        self.listeSelectionGroupe = gtk.combo_box_new_text()
+        self.zoneSelectionDepots = gtk.Frame(Lang.translate("select_group"))
+        self.listeSelectionDepots = gtk.combo_box_new_text()
 
         # ------------------------------------------------------------------
         #       Colonnes des groupes
@@ -253,9 +253,9 @@ class Interface (object):
             #       Liste des dépôts
             # ------------------------------------------------------------------
 
-            self.zoneSelectionGroupe.add(self.listeSelectionGroupe)
-            self.zoneSelectionGroupe.set_border_width(4)
-            self.listeSelectionGroupe.connect('changed', self.changeRepo, self)
+            self.zoneSelectionDepots.add(self.listeSelectionDepots)
+            self.zoneSelectionDepots.set_border_width(6)
+            self.listeSelectionDepots.connect('changed', self.changeRepo, self)
 
             # Ajout des dépôts
             self.addRepos()
@@ -266,7 +266,7 @@ class Interface (object):
 
             self.listeColonneGroupes.clear()
 
-            self.colonneGroupes.set_headers_visible(False)
+            self.colonneGroupes.set_headers_visible(True)
             self.colonneGroupes.set_size_request(180,0)
             self.colonneGroupes.set_search_column(0)
 
@@ -280,17 +280,19 @@ class Interface (object):
 
             self.defilementGroupes.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             self.defilementGroupes.add(self.colonneGroupes)
-            self.defilementGroupes.set_border_width(4)
+            self.defilementGroupes.set_border_width(8)
+            self.defilementGroupes.set_resize_mode(gtk.RESIZE_PARENT)
 
             self.selectionGroupe = self.colonneGroupes.get_selection()
             self.selectionGroupe.connect('changed', self.selectGroup, self.listeColonneGroupes)
 
-            self.zoneGroupes.add(self.defilementGroupes)
-            self.zoneGroupes.set_border_width(4)
-            self.zoneGroupes.set_resize_mode(gtk.RESIZE_PARENT)
+            #~ self.zoneGroupes.add(self.defilementGroupes)
+            #~ self.zoneGroupes.set_border_width(4)
+            #~ self.zoneGroupes.set_resize_mode(gtk.RESIZE_PARENT)
 
-            self.groupes.attach(self.zoneSelectionGroupe, 0, 1, 0, 1, yoptions=gtk.FILL)
-            self.groupes.attach(self.zoneGroupes, 0, 1, 1, 2)
+            self.groupes.attach(self.zoneSelectionDepots, 0, 1, 0, 1, yoptions=gtk.FILL)
+            #~ self.groupes.attach(self.zoneGroupes, 0, 1, 1, 2)
+            self.groupes.attach(self.defilementGroupes, 0, 1, 1, 2)
 
             # ------------------------------------------------------------------
             #       Colonnes des paquets
@@ -486,10 +488,10 @@ class Interface (object):
             if element == "local":
                 element = Lang.translate("installed_packages")
 
-            self.listeSelectionGroupe.append_text(element)
+            self.listeSelectionDepots.append_text(element)
 
         # Met le dépôt du système en actif
-        self.listeSelectionGroupe.set_active(index)
+        self.listeSelectionDepots.set_active(index)
 
 
     def changeRepo (self, *args):
@@ -501,7 +503,7 @@ class Interface (object):
         self.listeColonneGroupes.clear()
         self.addGroups()
 
-        self.updateStatusbar(Lang.translate("change_repo") + " " + str(self.listeSelectionGroupe.get_active_text()))
+        self.updateStatusbar(Lang.translate("change_repo") + " " + str(self.listeSelectionDepots.get_active_text()))
 
 
     def updateStatusbar (self, texte):
@@ -517,9 +519,9 @@ class Interface (object):
         Efface l'ensemble de l'interface
         """
 
-        modele = self.listeSelectionGroupe.get_model()
+        modele = self.listeSelectionDepots.get_model()
         modele.clear()
-        self.listeSelectionGroupe.set_model(modele)
+        self.listeSelectionDepots.set_model(modele)
 
         self.listeColonneGroupes.clear()
         self.listeColonnePaquets.clear()
@@ -561,7 +563,7 @@ class Interface (object):
         """
 
         self.listeColonnePaquets.clear()
-        ensembleGroupes = Package.getGroupsList(self.listeSelectionGroupe.get_active())
+        ensembleGroupes = Package.getGroupsList(self.listeSelectionDepots.get_active())
 
         for nom in ensembleGroupes:
             # Affiche les groupes secondaires si l'option est activé
@@ -599,7 +601,7 @@ class Interface (object):
         Obtenir les paquets correspondant au groupe sélectionné
         """
 
-        paquets = Package.getPackagesList(self.listeSelectionGroupe.get_active(), nomGroupe)
+        paquets = Package.getPackagesList(self.listeSelectionDepots.get_active(), nomGroupe)
         self.addPackages(paquets)
 
 
@@ -609,11 +611,18 @@ class Interface (object):
         """
 
         objetTrouve = 0
+        n = 0
         self.listeColonnePaquets.clear()
 
+        listePaquetsInstalles = Package.getInstalledList()
+
+        # Supprime le mode de tri des colonnes
         modeleColonnePaquets = self.colonnePaquets.get_model()
         modeleColonnePaquets.set_default_sort_func(lambda *args: -1)
         modeleColonnePaquets.set_sort_column_id(-1, gtk.SORT_ASCENDING)
+
+        self.colonnePaquets.set_model(None)
+        self.colonnePaquets.freeze_child_notify()
 
         for element in paquets:
             # Une recherche n'est pas composé de la même manière qu'une
@@ -626,6 +635,7 @@ class Interface (object):
             nomPaquet = paquet.get("name")
             versionPaquet = paquet.get("version")
 
+            #~ if nomPaquet in listePaquetsInstalles:
             if Package.checkPackageInstalled(nomPaquet, versionPaquet):
                 # Le paquet est installé
                 objetTrouve = 1
@@ -665,8 +675,16 @@ class Interface (object):
                 # Dans le cas d'une recherche on préfixe avec [<nom_dépôt>]
                 nomPaquet = "[" + element[0] + "] " + nomPaquet
 
-            self.listeColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
+            modeleColonnePaquets.append([objetTrouve, image, nomPaquet, versionPaquet, nouvelleVersion])
 
+            n += 1
+            if (n / 100 == 1):
+                self.updateStatusbar(Lang.translate("load_packages"))
+                self.refresh()
+                n = 0
+
+        self.colonnePaquets.set_model(modeleColonnePaquets)
+        self.colonnePaquets.thaw_child_notify()
         self.refresh()
         self.updateStatusbar(str(len(self.listeColonnePaquets)) + " " + Lang.translate("read_packages_done"))
 

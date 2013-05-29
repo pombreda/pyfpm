@@ -77,7 +77,7 @@ class Events (object):
             depot = 0
         else:
             if not modeRecherche:
-                depot = int(interface.listeSelectionGroupe.get_active())
+                depot = int(interface.listeSelectionDepots.get_active())
             else:
                 # Il s'agit d'une recherche donc on prend le dépot entre []
                 depot = Package.getRepoList().index(depotRecherche)
@@ -92,19 +92,14 @@ class Events (object):
         interface.contenuInformations.append(None, [Lang.translate("description"), infoPaquet.get("description").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").encode('ascii', 'replace')])
 
         # Liste des groupes
-        texte = ""
         groupes = infoPaquet.get("groups")
         if len(groupes) > 0:
-            for element in groupes:
-                texte += str(element)
-                if groupes.index(element) < len(groupes) - 1:
-                    texte += ", "
-            interface.contenuInformations.append(None, [Lang.translate("groups"), texte])
+            interface.contenuInformations.append(None, [Lang.translate("groups"), ', '.join(groupes)])
 
         if infoPaquet.get("name") in interface.listeMiseAJourPacman:
             interface.contenuPaquet.append(None, ["SHA1SUMS", Lang.translate("package_update_available")])
         else:
-            interface.contenuPaquet.append(None, ["SHA1SUMS", str(Package.getSha1sums(infoPaquet.get("name"), int(interface.listeSelectionGroupe.get_active())))])
+            interface.contenuPaquet.append(None, ["SHA1SUMS", str(Package.getSha1sums(infoPaquet.get("name"), int(interface.listeSelectionDepots.get_active())))])
 
         # Affiche des informations supplémentaires si le paquet est installé
         if Package.checkPackageInstalled(nomPaquet, versionPaquet):
@@ -118,54 +113,29 @@ class Events (object):
             interface.contenuPaquet.append(None, [Lang.translate("uncompress_size"), str(format(float(long(infoPaquet.get("uncompress_size"))/1024)/1024, '.2f')) + " MB"])
 
         # Liste des dépendances
-        texte = ""
         depends = infoPaquet.get("depends")
         if len(depends) > 0:
-            for element in depends:
-                texte += str(element)
-                if depends.index(element) < len(depends) - 1:
-                    texte += ", "
-            interface.contenuInformations.append(None, [Lang.translate("depends"), texte])
+            interface.contenuInformations.append(None, [Lang.translate("depends"), ', '.join(depends)])
 
         # Liste des paquets ajoutés
-        texte = ""
         provides = infoPaquet.get("provides")
         if len(provides) > 0:
-            for element in provides:
-                texte += str(element)
-                if provides.index(element) < len(provides) - 1:
-                    texte += ", "
-            interface.contenuPaquet.append(None, [Lang.translate("provides"), texte])
+            interface.contenuPaquet.append(None, [Lang.translate("provides"), ', '.join(provides)])
 
         # Liste des paquets remplacés
-        texte = ""
         replaces = infoPaquet.get("replaces")
         if len(replaces) > 0:
-            for element in replaces:
-                texte += str(element)
-                if replaces.index(element) < len(replaces) - 1:
-                    texte += ", "
-            interface.contenuPaquet.append(None, [Lang.translate("replaces"), texte])
+            interface.contenuPaquet.append(None, [Lang.translate("replaces"), ', '.join(replaces)])
 
         # Liste des dépendances inverses
-        texte = ""
         required = infoPaquet.get("required_by")
         if len(required) > 0:
-            for element in required:
-                texte += str(element)
-                if required.index(element) < len(required) - 1:
-                    texte += ", "
-            interface.contenuPaquet.append(None, [Lang.translate("required_by"), texte])
+            interface.contenuPaquet.append(None, [Lang.translate("required_by"), ', '.join(required)])
 
         # Liste des paquets en conflit
-        texte = ""
         conflits = infoPaquet.get("conflits")
         if len(conflits) > 0:
-            for element in conflits:
-                texte += str(element)
-                if conflits.index(element) < len(conflits) - 1:
-                    texte += ", "
-            interface.contenuPaquet.append(None, [Lang.translate("conflits"), texte])
+            interface.contenuPaquet.append(None, [Lang.translate("conflits"), ', '.join(conflits)])
 
         # Liste des fichiers inclus dans le paquet
         texte = ""
@@ -216,7 +186,7 @@ class Events (object):
                         #~ file.close()
             #~ except:
                 #~ texte = " " + Lang.translate("no_file_found")
-#~ #~
+
             #~ texteBuffer.set_text(texte)
 
 

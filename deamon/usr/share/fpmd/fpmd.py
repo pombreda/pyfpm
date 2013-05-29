@@ -284,6 +284,14 @@ class FPMd (dbus.service.Object):
         return stringList
 
 
+    @dbus.service.method (BUSNAME, out_signature="as")
+    def getInstalledList (self):
+        """
+        """
+
+        return pacman_package_installed()
+
+
     @dbus.service.method (BUSNAME)
     def updateDatabase (self):
         """
@@ -317,8 +325,10 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME, in_signature="su", out_signature="b")
     def removePackage (self, pkgName, removeDeps = 0):
         """
+        Remove a package
         """
 
+        self.sendSignal("remove_package")
         if not pkgName in self.searchInstalledPackage(pkgName):
             # This package is already installed
             return False
@@ -327,14 +337,17 @@ class FPMd (dbus.service.Object):
         if removeDeps == 1:
             pm_trans_flag = PM_TRANS_FLAG_CASCADE
 
-        if pacman_trans_init(PM_TRANS_TYPE_REMOVE, pm_trans_flag, pacman_trans_cb_event(fpm_progress_event), pacman_trans_cb_conv(fpm_trans_conv), pacman_trans_cb_progress(fpm_progress_install)) == -1:
+        self.sendSignal("pacman_trans_init")
+        if pacman_trans_init(PM_TRANS_TYPE_REMOVE, pm_trans_flag, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.transConv), pacman_trans_cb_progress(self.progressInstall)) == -1:
             return False
 
+        self.sendSignal("add_target")
         if pacman_trans_addtarget(pkgName) == -1:
             return False
 
         data = PM_LIST()
 
+        self.sendSignal("pacman_trans_prepare")
         if pacman_trans_prepare(data) == -1:
             if pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_UNSATISFIED_DEPS):
                 liste = []
@@ -350,17 +363,21 @@ class FPMd (dbus.service.Object):
                     #~ pacman_trans_release()
                     #~ return False
 
+                self.sendSignal("pacman_trans_release")
                 pacman_trans_release()
 
+                self.sendSignal("pacman_remove_pkg")
                 pacman_remove_pkg(pkgName, 1)
                 return True
             else:
                 return False
 
+        self.sendSignal("pacman_trans_commit")
         if pacman_trans_commit(data) == -1:
             return False
 
         pacman_trans_release()
+        self.sendSignal("done")
 
         return True
 
@@ -369,6 +386,161 @@ class FPMd (dbus.service.Object):
     def closeDeamon (self):
         self.closePacman()
         loop.quit()
+
+
+    def progressInstall (self, *args):
+        """
+        """
+
+        index = 1
+        pourcent = 0
+        event = 0
+        compte = 0
+
+        texte = ""
+
+        for arg in args:
+            if index == 1 and arg != None:
+                event = arg
+            elif index == 3 and arg != None:
+                pourcent = arg
+            elif index == 4 and arg != None:
+                compte = arg
+            else:
+                pass
+
+            index += 1
+
+        if event == PM_TRANS_PROGRESS_ADD_START:
+            if compte > 1:
+                self.sendSignal("Installing packages...")
+            else:
+                self.sendSignal("Installing package...")
+        elif event == PM_TRANS_PROGRESS_UPGRADE_START:
+            if compte > 1:
+                self.sendSignal("Upgrading packages...")
+            else:
+                self.sendSignal("Upgrading package...")
+        elif event == PM_TRANS_PROGRESS_REMOVE_START:
+            if compte > 1:
+                self.sendSignal("Removing packages...")
+            else:
+                self.sendSignal("Removing package...")
+        elif event == PM_TRANS_PROGRESS_CONFLICTS_START:
+            if compte > 1:
+                self.sendSignal("Checking packages for file conflicts...")
+            else:
+                self.sendSignal("Checking package for file conflicts...")
+        else:
+            pass
+
+
+    def transConv (self, *args):
+        """
+        """
+
+        index = 1
+
+        for arg in args:
+            if index == 1:
+                event = arg
+                self.sendSignal("Evenement : " + str(event))
+            elif index == 2:
+                pkg = arg
+            elif index == 5:
+                INTP = ctypes.POINTER(ctypes.c_int)
+                reponse = ctypes.cast(arg, INTP)
+            else:
+                self.sendSignal("We must work on it -_-")
+
+            index += 1
+
+        #~ if event == PM_TRANS_CONV_LOCAL_UPTODATE:
+            #~ if terminalQuestion (pointer_to_string(pacman_pkg_getinfo(pkg, PM_PKG_NAME))+" local version is up to date. Upgrade anyway? [Y/n]" ) == 1:
+            #~ reponse[0] = 1
+        #~ if event==PM_TRANS_CONV_LOCAL_NEWER:
+            #~ if terminalQuestion (pointer_to_string(pacman_pkg_getinfo(pkg, PM_PKG_NAME))+" local version is newer. Upgrade anyway? [Y/n]" ) == 1:
+            #~ reponse[0] = 1
+        #~ if event==PM_TRANS_CONV_CORRUPTED_PKG:
+            #~ if terminalQuestion ("Archive is corrupted. Do you want to delete it?") == 1:
+            #~ reponse[0] = 1
+
+
+    def progressEvent(self, *args):
+        """
+        Affiche l'evenement en cours
+        """
+
+        try:
+            index = 1
+
+            event = None
+            data1 = None
+            data2 = None
+
+            for arg in args:
+                if index == 1 and arg != None:
+                    event = arg
+                elif index == 2 and arg != None:
+                    data1 = arg
+                elif index == 3 and arg != None:
+                    data2=arg
+                else:
+                    pass
+
+                index += 1
+        except :
+            pass
+
+        if event != PM_TRANS_EVT_RETRIEVE_START and event != PM_TRANS_EVT_RESOLVEDEPS_START and event != PM_TRANS_EVT_RESOLVEDEPS_DONE:
+            telechargement = False
+
+        texte = ""
+        progres = 0.0
+
+        if event == PM_TRANS_EVT_CHECKDEPS_START:
+            self.sendSignal("checking_dependencies")
+            progres = 1.0
+        elif event == PM_TRANS_EVT_FILECONFLICTS_START:
+            self.sendSignal("checking_file_conflicts")
+            progres = 1.0
+        elif event == PM_TRANS_EVT_RESOLVEDEPS_START:
+            self.sendSignal("resolving_dependencies")
+        elif event == PM_TRANS_EVT_INTERCONFLICTS_START:
+            self.sendSignal("looking_interconflicts")
+            progres = 1.0
+        elif event == PM_TRANS_EVT_INTERCONFLICTS_DONE:
+            self.sendSignal("looking_interconflicts_done")
+        elif event == PM_TRANS_EVT_ADD_START:
+            self.sendSignal("installing")
+            progres = 1.0
+        elif event == PM_TRANS_EVT_ADD_DONE:
+            self.sendSignal("installing_done")
+        elif event == PM_TRANS_EVT_UPGRADE_START:
+            self.sendSignal("upgrading")
+            progres = 1.0
+        elif event == PM_TRANS_EVT_UPGRADE_DONE:
+            self.sendSignal("upgrading_done")
+        elif event == PM_TRANS_EVT_REMOVE_START:
+            self.sendSignal("removing")
+        elif event == PM_TRANS_EVT_REMOVE_DONE:
+            self.sendSignal("removing_done")
+        elif event == PM_TRANS_EVT_INTEGRITY_START:
+            self.sendSignal("checking_integrity")
+        elif event == PM_TRANS_EVT_INTEGRITY_DONE:
+            self.sendSignal("checking_integrity_done")
+        elif event == PM_TRANS_EVT_SCRIPTLET_INFO:
+            self.sendSignal(pointer_to_string(data1))
+        elif event == PM_TRANS_EVT_SCRIPTLET_START:
+            self.sendSignal(str_data1)
+        elif event == PM_TRANS_EVT_SCRIPTLET_DONE:
+            self.sendSignal("scriptlet_done")
+        elif event == PM_TRANS_EVT_RETRIEVE_START:
+            self.sendSignal("retrieving_packages")
+            progres = 1.0
+            telechargement = True
+        else :
+            pass
 
 
 if __name__ == '__main__':

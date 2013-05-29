@@ -16,7 +16,7 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import os, sys
+import sys, argparse
 
 try:
     import pygtk, gtk
@@ -42,12 +42,12 @@ def main():
     """
 
     if len(sys.argv) > 1:
-        if sys.argv[1] == "-h" or sys.argv[1] == "--help":
-            print ("Utilisation : pyfpm <option>\n\t-h\taffiche l'aide\n\t-v\taffiche la version de pyfpm")
-        elif sys.argv[1] == "-v" or sys.argv[1] == "--version":
-            print ("pyFPM (Inky)")
-        else:
-            print ("Utilisation : pyfpm <option>\n\t-h\taffiche l'aide\n\t-v\taffiche la version de pyfpm")
+        parser = argparse.ArgumentParser(description='pyFPM is a pacman-g2 front-end', epilog='(C) 2012-2013 Frugalware Developer Team (GPL)')
+
+        parser.add_argument('-v', '--version', action='version', version="pyFPM Inky Licence GPL", help="show the current version")
+        parser.add_argument('--fpm', action='store_true', help="install or update a package with fpm file [TODO]")
+
+        args = parser.parse_args()
     else:
         Config = config.Config()
         Config.checkConfig()
@@ -56,10 +56,6 @@ def main():
 
         Interface.mainWindow()
         Interface.runWindow()
-
-        #~ Pacman = pacman.Pacman()
-        #~ Pacman.mainWindow("clean")
-        #~ Pacman.runWindow()
 
 
 if __name__ == "__main__":

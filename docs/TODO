@@ -1,10 +1,12 @@
 --- pyfpm (main.py) ------------------------------------------------------------
 
     [TODO]  - Lancer l'application que si le démon est actif
+    [TODO]  - Installer un paquet fpm via un argument (--fpm)
 
 --- Affichage (display.py) -----------------------------------------------------
 
     [FIXME] - Utiliser les dépôts externes lors des mises à jour
+    [FIXME] - Accélérer l'affichage de la liste des paquets
     [TODO]  - Affiche un nom générique pour les groupes
     [TODO]  - Afficher une barre de progression pour les actions spécifiques à pacman-g2
     [TODO]  - Permettre de sélectionner tout un groupe
@@ -37,3 +39,11 @@
 
     [TODO]  - Réécrire l'interface
     [TODO]  - Option : Afficher des fenêtres d'informations
+
+--- libpacman (libpacman.py) ---------------------------------------------------
+
+    [FIXME] - pm-quirks n'apparait pas dans la liste des paquets installés
+    [TODO]  - Créer une fonction unique pour celles de pacman-g2
+    [TODO]  - Créer une classe pacman-g2
+    [TODO]  - Vérifier les paquets ignorés avec pacman_set_option(PM_OPT_IGNOREPKG, pkg)
+    [TODO]  - Ajouter pacman_set_option(PM_OPT_DLCB, (long)progress_update)

@@ -23,6 +23,7 @@
 import os, tempfile, shutil, sys
 import ctypes
 import dircache
+import re
 
 from ctypes import *
 from _ctypes import PyObj_FromPtr
@@ -704,9 +705,13 @@ def pacman_package_installed():
   print_debug("pacman_package_is_installed")
   tab_pkgs=[]
   lst = dircache.listdir(PM_ROOT+PM_DBPATH+"/"+FW_LOCAL)
+
+  pattern = '-\d{1,}\.'
+
   for pkg in lst:
-    lstpkg=pkg.split("-")
-    lpkg=lstpkg[0]
+    for element in re.findall(pattern, pkg):
+        lpkg = pkg[0 : pkg.find(element)].strip()
+    #~ lpkg=lstpkg[0]
     tab_pkgs.append(lpkg)
   return tab_pkgs
 
