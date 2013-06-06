@@ -122,22 +122,22 @@ class FPMd (dbus.service.Object):
         return sha1sums
 
 
-    @dbus.service.method (BUSNAME, in_signature='s', out_signature='s')
+    @dbus.service.method (BUSNAME, in_signature='s', out_signature='as')
     def getFileFromPackage (self, pkgName):
         """
         Get the files list of the package
         """
 
-        text = ""
+        filesList = []
 
         pkg = pacman_db_readpkg(db_list[0], str(pkgName))
 
         files = pacman_pkg_getinfo(pkg, PM_PKG_FILES)
         while files != 0:
-            text += "  /" + pointer_to_string(pacman_list_getdata(files)) + "\n"
+            filesList.append(pointer_to_string(pacman_list_getdata(files)))
             files = pacman_list_next(files)
 
-        return text
+        return filesList
 
 
     def getInfoFromPackage (self, pkg, typeInfo):
@@ -249,7 +249,8 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME, in_signature='s')
     def searchInstalledPackage (self, pkgName):
         """
-        Recupère la liste des paquets installés
+        Get the list of installed packages for a specific
+        package name
         """
 
         foundPkgList = []
@@ -272,6 +273,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME, out_signature="as")
     def getUpdateList (self):
         """
+        Get the list of packages to update
         """
 
         stringList = []
@@ -287,6 +289,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME, out_signature="as")
     def getInstalledList (self):
         """
+        Get the list of installed packages
         """
 
         return pacman_package_installed()
@@ -295,7 +298,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME)
     def updateDatabase (self):
         """
-        Met à jour les dépôts de paquets
+        Update pacman-g2 database
         """
 
         for element in db_list:
@@ -314,7 +317,7 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME)
     def cleanCache (self):
         """
-        Nettoye le cache de pacman-g2
+        Clean pacman-g2 cache
         """
 
         self.sendSignal("clean_cache")
@@ -328,25 +331,31 @@ class FPMd (dbus.service.Object):
         Remove a package
         """
 
+        data = PM_LIST()
+
+        # Check if package is installed
         self.sendSignal("remove_package")
         if not pkgName in self.searchInstalledPackage(pkgName):
             # This package is already installed
             return False
 
+        # Use a specific flag
         pm_trans_flag = PM_TRANS_FLAG_NOCONFLICTS
         if removeDeps == 1:
             pm_trans_flag = PM_TRANS_FLAG_CASCADE
 
+        # Step 1 : Create a new transaction
         self.sendSignal("pacman_trans_init")
         if pacman_trans_init(PM_TRANS_TYPE_REMOVE, pm_trans_flag, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.transConv), pacman_trans_cb_progress(self.progressInstall)) == -1:
             return False
 
+        # Add target to it
         self.sendSignal("add_target")
         if pacman_trans_addtarget(pkgName) == -1:
+            pacman_trans_release()
             return False
 
-        data = PM_LIST()
-
+        # Step 2 : Prepare the transaction based on its type, targets and flags
         self.sendSignal("pacman_trans_prepare")
         if pacman_trans_prepare(data) == -1:
             if pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_UNSATISFIED_DEPS):
@@ -370,12 +379,16 @@ class FPMd (dbus.service.Object):
                 pacman_remove_pkg(pkgName, 1)
                 return True
             else:
+                pacman_trans_release()
                 return False
 
+        # Step 3 : Actually perform the removal
         self.sendSignal("pacman_trans_commit")
         if pacman_trans_commit(data) == -1:
+            pacman_trans_release()
             return False
 
+        # Step 4 : Release transaction resources
         pacman_trans_release()
         self.sendSignal("done")
 
@@ -384,6 +397,10 @@ class FPMd (dbus.service.Object):
 
     @dbus.service.method (BUSNAME)
     def closeDeamon (self):
+        """
+        Close FPMd
+        """
+
         self.closePacman()
         loop.quit()
 

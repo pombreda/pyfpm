@@ -17,7 +17,7 @@ try:
 except ImportError:
     sys.exit("pygtk_not_found")
 
-from Misc import lang
+from . import lang
 
 # Initialisation des modules
 Lang = lang.Lang()
@@ -74,10 +74,12 @@ class Package (object):
 
         interface.eraseInterface()
         interface.addRepos()
-        interface.addGroups()
+        #~ interface.addGroups()
 
         interface.fenetre.set_sensitive(True)
         interface.refresh()
+
+        interface.getUpdateList()
 
 
     #~ def runPacman (self, interface, listeInstallationPacman, listeSuppressionPacman):
@@ -129,6 +131,24 @@ class Package (object):
         """
 
         return fpmd_getRepoList()
+
+
+    def getIndexFromRepo (self):
+        """
+        Récupère l'index du dépôt principal (frugalware ou
+        frugalware-current)
+        """
+
+        repoList = self.getRepoList()
+
+        if "frugalware" in repoList:
+            index = repoList.index("frugalware")
+        elif "frugalware-current" in repoList:
+            index = repoList.index("frugalware-current")
+        else:
+            index = 0
+
+        return int(index)
 
 
     def getGroupsList (self, depot):

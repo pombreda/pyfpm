@@ -16,7 +16,7 @@ try:
 except ImportError:
     sys.exit(fctLang.translate("pygtk_not_found"))
 
-from Misc import lang
+from Functions import lang
 
 # Initialisation des modules
 Lang = lang.Lang()

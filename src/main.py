@@ -23,38 +23,39 @@ try:
 except ImportError:
     sys.exit(fctLang.translate("pygtk_not_found"))
 
-from Display import display, pacman
-from Misc import config
+from Interfaces import display, pacman
+from Functions import config
 
 # ----------------------------------------------------------------------
 #   Main
-#
-#       Utilisation : pyfpm <option>
-#               -h      affiche l'aide
-#               -v      affiche la version de pyfpm
-#
 # ----------------------------------------------------------------------
-
 
 def main():
     """
     Lancement de pyfpm
     """
 
-    if len(sys.argv) > 1:
-        parser = argparse.ArgumentParser(description='pyFPM is a pacman-g2 front-end', epilog='(C) 2012-2013 Frugalware Developer Team (GPL)')
+    parser = argparse.ArgumentParser(description='pyFPM is a pacman-g2 front-end', epilog='(C) 2012-2013 Frugalware Developer Team (GPL)')
 
-        parser.add_argument('-v', '--version', action='version', version="pyFPM Inky Licence GPL", help="show the current version")
-        parser.add_argument('--fpm', action='store_true', help="install or update a package with fpm file [TODO]")
+    parser.add_argument('-v', '--version', action='version', version="pyFPM Inky Licence GPL", help="show the current version")
 
-        args = parser.parse_args()
-    else:
+    parser.add_argument('--debug', action='store_true', help="use debug mode [TODO]")
+
+    parserGrpPkg = parser.add_argument_group('package')
+    parserGrpPkg.add_argument('--fpm', action='store', metavar='FILE', help="install or update a package with fpm file [TODO]")
+
+    parserGrpDev = parser.add_argument_group('development')
+    parserGrpDev.add_argument('--dev', action='store_true', help="use pyFPM with development mode [TODO]")
+
+    args = parser.parse_args()
+
+    if len(sys.argv) == 1 or args.dev or args.debug:
         Config = config.Config()
         Config.checkConfig()
 
         Interface = display.Interface()
 
-        Interface.mainWindow()
+        Interface.mainWindow(args.dev)
         Interface.runWindow()
 
 

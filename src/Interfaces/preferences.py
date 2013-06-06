@@ -15,12 +15,11 @@ try:
 except ImportError:
     sys.exit("pyGTK introuvable")
 
-from Misc import config, lang, files, events
+from Functions import config, lang, files
 
 # Initialisation des modules
 Lang = lang.Lang()
 Config = config.Config()
-Event = events.Events()
 
 
 class Preferences (object):
