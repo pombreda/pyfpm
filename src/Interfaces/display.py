@@ -8,7 +8,7 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import sys, pango
+import os, sys, pango, codecs, urllib
 
 try:
     import pygtk, gtk
@@ -16,12 +16,13 @@ except ImportError:
     sys.exit(Lang.translate("pygtk_not_found"))
 
 from . import preferences
-from Functions import package, lang, config
+from Functions import package, lang, config, files
 
 # Initialisation des modules
 Preferences = preferences.Preferences()
 Package = package.Package()
 Lang = lang.Lang()
+File = files.File()
 Config = config.Config()
 
 
