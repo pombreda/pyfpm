@@ -86,7 +86,7 @@ msgstr "Nom du paquet"
 
 #: src/Interfaces/display.py:125
 msgid "Actual version"
-msgstr "Version actuel"
+msgstr "Version actuelle"
 
 #: src/Interfaces/display.py:127
 msgid "Available version"
@@ -130,11 +130,11 @@ msgstr "Erreur"
 
 #: src/Interfaces/display.py:481 src/Interfaces/display.py:485
 msgid "Window is under limit size"
-msgstr "La fenêtre est en dessous des limites autorisés"
+msgstr "La fenêtre est en dessous des limites autorisées"
 
 #: src/Interfaces/display.py:509
 msgid "Get the update packages list"
-msgstr "Obtenir la liste des paquets disponible*"
+msgstr "Obtenir la liste des paquets disponibles"
 
 #: src/Interfaces/display.py:538
 msgid "Installed packages"
@@ -201,7 +201,7 @@ msgstr "Taille décompressé"
 
 #: src/Interfaces/display.py:841
 msgid "Depends"
-msgstr "Dépendences"
+msgstr "Dépendances"
 
 #: src/Interfaces/display.py:846
 msgid "Provides"
@@ -279,7 +279,7 @@ msgstr "Mise à jour"
 
 #: src/Interfaces/display.py:1357
 msgid "Update available"
-msgstr "Des mises à jour sont disponible"
+msgstr "Des mises à jour sont disponibles"
 
 #: src/Interfaces/display.py:1405 src/Interfaces/display.py:1408
 msgid "No update available"
@@ -307,7 +307,7 @@ msgstr "Utiliser les groupes redondants"
 
 #: src/Interfaces/preferences.py:53
 msgid "Development mode*"
-msgstr "Mode dévellopeur*"
+msgstr "Mode développeur*"
 
 #: src/Interfaces/preferences.py:54
 msgid "* Need pyfpm reboot"
