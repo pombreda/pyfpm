@@ -9,17 +9,16 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import dbus, dbus.mainloop.glib, gobject
+import dbus, dbus.mainloop.glib, gobject, gettext
+
+gettext.bindtextdomain('pyfpm', 'lang')
+gettext.textdomain('pyfpm')
+_ = gettext.gettext
 
 try:
     import pygtk, gtk
 except ImportError:
-    sys.exit(fctLang.translate("pygtk_not_found"))
-
-from Functions import lang
-
-# Initialisation des modules
-Lang = lang.Lang()
+    sys.exit(_("pygtk was not found"))
 
 
 class Pacman (object):
@@ -52,7 +51,7 @@ class Pacman (object):
 
         self.logInfo = gtk.TextView()
 
-        self.boutonFermer = gtk.Button(Lang.translate("close"))
+        self.boutonFermer = gtk.Button(_("Close"))
 
 
     def mainWindow (self, titre):

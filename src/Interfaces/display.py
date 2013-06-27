@@ -20,12 +20,11 @@ except ImportError:
     sys.exit(_("pygtk was not found"))
 
 from . import preferences
-from Functions import package, lang, config, files
+from Functions import package, config, files
 
 # Initialisation des modules
 Preferences = preferences.Preferences()
 Package = package.Package()
-Lang = lang.Lang()
 File = files.File()
 Config = config.Config()
 

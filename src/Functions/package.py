@@ -16,11 +16,6 @@ gettext.bindtextdomain('pyfpm', 'lang')
 gettext.textdomain('pyfpm')
 _ = gettext.gettext
 
-from . import lang
-
-# Initialisation des modules
-Lang = lang.Lang()
-
 # Récupération des fonctions de FPMd
 bus = dbus.SystemBus()
 proxy = bus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
