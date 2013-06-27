@@ -8,12 +8,16 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import sys, pango, os
+import sys, pango, os, gettext
+
+gettext.bindtextdomain('pyfpm', 'lang')
+gettext.textdomain('pyfpm')
+_ = gettext.gettext
 
 try:
     import pygtk, gtk
 except ImportError:
-    sys.exit("pyGTK introuvable")
+    sys.exit("pygtk was not found")
 
 from Functions import config, lang, files
 
@@ -32,22 +36,22 @@ class Preferences (object):
         Fenêtre de gestion des préférences
         """
 
-        fenetre = gtk.Dialog(Lang.translate("preferences_title"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
+        fenetre = gtk.Dialog(_("Preferences"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_APPLY))
 
         onglets = gtk.Notebook()
 
-        general = gtk.Label(Lang.translate("preferences_main"))
+        general = gtk.Label(_("General"))
         grilleGeneral = gtk.Table(1,2)
-        zoneGeneralLangue = gtk.Frame(Lang.translate("preferences_main"))
+        zoneGeneralLangue = gtk.Frame(_("General"))
         generalLangue = gtk.Table(2,1)
-        generalLangueLabel = gtk.Label(Lang.translate("language") + "*")
+        generalLangueLabel = gtk.Label(_("Language*"))
         generalLangueChoix = gtk.combo_box_new_text()
-        zoneGeneralDivers = gtk.Frame(Lang.translate("misc"))
+        zoneGeneralDivers = gtk.Frame(_("Misc"))
         grilleGeneralCocher = gtk.Table(1,2)
-        self.miseajourDemarrage = gtk.CheckButton(Lang.translate("start_update"))
-        self.afficherGroupes = gtk.CheckButton(Lang.translate("use_prohibate_groups"))
-        self.modeDeveloppement = gtk.CheckButton(Lang.translate("development_mode") + "*")
-        generalLangueAsterix = gtk.Label(" *" + Lang.translate("need_reboot"))
+        self.miseajourDemarrage = gtk.CheckButton(_("Show update list when pyfpm start"))
+        self.afficherGroupes = gtk.CheckButton(_("Use 'prohibate' groups"))
+        self.modeDeveloppement = gtk.CheckButton(_("Development mode*"))
+        generalLangueAsterix = gtk.Label(_("* Need pyfpm reboot"))
 
         #~ commande = gtk.Label(Lang.translate("pacman"))
         #~ grilleCommande = gtk.Table(1,1)

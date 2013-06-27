@@ -8,14 +8,13 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import os, sys, string, time
+import os, sys, string, time, gettext
 import dbus
 #~ import dbus.service, dbus.mainloop.glib, gobject
 
-try:
-    import pygtk, gtk
-except ImportError:
-    sys.exit("pygtk_not_found")
+gettext.bindtextdomain('pyfpm', 'lang')
+gettext.textdomain('pyfpm')
+_ = gettext.gettext
 
 from . import lang
 
@@ -45,18 +44,19 @@ fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', 'org.frugalwar
 
 class Package (object):
 
+
     def cleanCache (self, widget, interface):
         """
         Nettoye le cache de pacman-g2
         """
 
-        interface.updateStatusbar(Lang.translate("clean_cache"))
+        interface.updateStatusbar(_("Clean cache"))
         interface.fenetre.set_sensitive(False)
         interface.refresh()
 
         fpmd_cleanCache()
 
-        interface.updateStatusbar(Lang.translate("clean_cache_done"))
+        interface.updateStatusbar(_("Clean cache complete"))
         interface.fenetre.set_sensitive(True)
         interface.refresh()
 
@@ -66,7 +66,7 @@ class Package (object):
         Met à jour les dépôts de paquets
         """
 
-        interface.updateStatusbar(Lang.translate("update_db"))
+        interface.updateStatusbar(_("Update databases"))
         interface.fenetre.set_sensitive(False)
         interface.refresh()
 

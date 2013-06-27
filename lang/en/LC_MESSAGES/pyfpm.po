@@ -1,0 +1,314 @@
+# French translations for PACKAGE package
+# Traductions françaises du paquet PACKAGE.
+# Copyright (C) 2013 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# PacMiam <PacMiam@gmx.fr>, 2013.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-06-27 18:53+0200\n"
+"PO-Revision-Date: 2013-06-27 18:54+0200\n"
+"Last-Translator: PacMiam <PacMiam@gmx.fr>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: src/main.py:28 src/Interfaces/display.py:20
+msgid "pygtk was not found"
+msgstr ""
+
+#: src/Functions/package.py:53 src/Interfaces/display.py:75
+msgid "Clean cache"
+msgstr ""
+
+#: src/Functions/package.py:59
+msgid "Clean cache complete"
+msgstr ""
+
+#: src/Functions/package.py:69 src/Interfaces/display.py:76
+#: src/Interfaces/display.py:255
+msgid "Update databases"
+msgstr ""
+
+#: src/Interfaces/display.py:72
+msgid "Action"
+msgstr ""
+
+#: src/Interfaces/display.py:74 src/Interfaces/display.py:254
+msgid "Apply changes"
+msgstr ""
+
+#: src/Interfaces/display.py:77
+msgid "Check update"
+msgstr ""
+
+#: src/Interfaces/display.py:78 src/Interfaces/display.py:265
+msgid "Quit"
+msgstr ""
+
+#: src/Interfaces/display.py:79
+msgid "Edit"
+msgstr ""
+
+#: src/Interfaces/display.py:81
+msgid "Reset installation list"
+msgstr ""
+
+#: src/Interfaces/display.py:82 src/Interfaces/display.py:264
+#: src/Interfaces/preferences.py:39
+msgid "Preferences"
+msgstr ""
+
+#: src/Interfaces/display.py:83
+msgid "Help"
+msgstr ""
+
+#: src/Interfaces/display.py:85
+msgid "About"
+msgstr ""
+
+#: src/Interfaces/display.py:98
+msgid "Select a group"
+msgstr ""
+
+#: src/Interfaces/display.py:108 src/Interfaces/display.py:814
+msgid "Groups"
+msgstr ""
+
+#: src/Interfaces/display.py:123
+msgid "Package name"
+msgstr ""
+
+#: src/Interfaces/display.py:125
+msgid "Actual version"
+msgstr ""
+
+#: src/Interfaces/display.py:127
+msgid "Available version"
+msgstr ""
+
+#: src/Interfaces/display.py:137
+msgid "Informations"
+msgstr ""
+
+#: src/Interfaces/display.py:146
+msgid "Package"
+msgstr ""
+
+#: src/Interfaces/display.py:155
+msgid "Files"
+msgstr ""
+
+#: src/Interfaces/display.py:163
+msgid "Changelog"
+msgstr ""
+
+#: src/Interfaces/display.py:167
+msgid "FrugalBuild"
+msgstr ""
+
+#: src/Interfaces/display.py:189
+msgid "Install and Remove packages"
+msgstr ""
+
+#: src/Interfaces/display.py:261
+msgid "Write your search here"
+msgstr ""
+
+#: src/Interfaces/display.py:262
+msgid "Search"
+msgstr ""
+
+#: src/Interfaces/display.py:481 src/Interfaces/display.py:896
+msgid "Error"
+msgstr ""
+
+#: src/Interfaces/display.py:481 src/Interfaces/display.py:485
+msgid "Window is under limit size"
+msgstr ""
+
+#: src/Interfaces/display.py:509
+msgid "Get the update packages list"
+msgstr ""
+
+#: src/Interfaces/display.py:538
+msgid "Installed packages"
+msgstr ""
+
+#: src/Interfaces/display.py:555
+#, python-format
+msgid "Change repository to %s"
+msgstr ""
+
+#: src/Interfaces/display.py:736
+msgid "Load packages"
+msgstr ""
+
+#: src/Interfaces/display.py:743
+#, python-format
+msgid "%s packages were found"
+msgstr ""
+
+#: src/Interfaces/display.py:783
+#, python-format
+msgid "Get informations about %s"
+msgstr ""
+
+#: src/Interfaces/display.py:805
+msgid "Name"
+msgstr ""
+
+#: src/Interfaces/display.py:806
+msgid "Version"
+msgstr ""
+
+#: src/Interfaces/display.py:809
+msgid "Description"
+msgstr ""
+
+#: src/Interfaces/display.py:818 src/Interfaces/display.py:825
+msgid "SHA1SUMS"
+msgstr ""
+
+#: src/Interfaces/display.py:829
+msgid "url"
+msgstr ""
+
+#: src/Interfaces/display.py:831
+msgid "Install date"
+msgstr ""
+
+#: src/Interfaces/display.py:832
+msgid "Size"
+msgstr ""
+
+#: src/Interfaces/display.py:833
+msgid "Packager"
+msgstr ""
+
+#: src/Interfaces/display.py:835
+msgid "Compress size"
+msgstr ""
+
+#: src/Interfaces/display.py:836
+msgid "Uncompress size"
+msgstr ""
+
+#: src/Interfaces/display.py:841
+msgid "Depends"
+msgstr ""
+
+#: src/Interfaces/display.py:846
+msgid "Provides"
+msgstr ""
+
+#: src/Interfaces/display.py:851
+msgid "Replaces"
+msgstr ""
+
+#: src/Interfaces/display.py:856
+msgid "Required_by"
+msgstr ""
+
+#: src/Interfaces/display.py:861
+msgid "Conflits"
+msgstr ""
+
+#: src/Interfaces/display.py:877 src/Interfaces/display.py:898
+msgid "No info"
+msgstr ""
+
+#: src/Interfaces/display.py:894
+msgid "No file found"
+msgstr ""
+
+#: src/Interfaces/display.py:1030
+msgid "Clear changes done"
+msgstr ""
+
+#: src/Interfaces/display.py:1045 src/Interfaces/display.py:1046
+#, python-format
+msgid "%(nbr)s search package for %(search)s"
+msgstr ""
+
+#: src/Interfaces/display.py:1135
+msgid "A pacman-g2 front-end for Frugalware Linux"
+msgstr ""
+
+#: src/Interfaces/display.py:1192
+msgid "pyFPM"
+msgstr ""
+
+#: src/Interfaces/display.py:1193
+msgid "Changements to do"
+msgstr ""
+
+#: src/Interfaces/display.py:1196
+msgid "To install packages"
+msgstr ""
+
+#: src/Interfaces/display.py:1205 src/Interfaces/display.py:1218
+msgid "Skip check dependances"
+msgstr ""
+
+#: src/Interfaces/display.py:1206
+msgid "Download only"
+msgstr ""
+
+#: src/Interfaces/display.py:1209
+msgid "To remove packages"
+msgstr ""
+
+#: src/Interfaces/display.py:1302 src/Interfaces/display.py:1319
+#, python-format
+msgid "Total size : %s MB"
+msgstr ""
+
+#: src/Interfaces/display.py:1333
+msgid "No change"
+msgstr ""
+
+#: src/Interfaces/display.py:1355
+msgid "Update system"
+msgstr ""
+
+#: src/Interfaces/display.py:1357
+msgid "Update available"
+msgstr ""
+
+#: src/Interfaces/display.py:1405 src/Interfaces/display.py:1408
+msgid "No update available"
+msgstr ""
+
+#: src/Interfaces/preferences.py:43 src/Interfaces/preferences.py:45
+msgid "General"
+msgstr ""
+
+#: src/Interfaces/preferences.py:47
+msgid "Language*"
+msgstr ""
+
+#: src/Interfaces/preferences.py:49
+msgid "Misc"
+msgstr ""
+
+#: src/Interfaces/preferences.py:51
+msgid "Show update list when pyfpm start"
+msgstr ""
+
+#: src/Interfaces/preferences.py:52
+msgid "Use 'prohibate' groups"
+msgstr ""
+
+#: src/Interfaces/preferences.py:53
+msgid "Development mode*"
+msgstr ""
+
+#: src/Interfaces/preferences.py:54
+msgid "* Need pyfpm reboot"
+msgstr ""

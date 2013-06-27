@@ -16,12 +16,16 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import sys, argparse
+import sys, argparse, gettext
+
+gettext.bindtextdomain('pyfpm', 'lang')
+gettext.textdomain('pyfpm')
+_ = gettext.gettext
 
 try:
     import pygtk, gtk
 except ImportError:
-    sys.exit(fctLang.translate("pygtk_not_found"))
+    sys.exit(_("pygtk was not found"))
 
 from Interfaces import display, pacman
 from Functions import config
