@@ -1,50 +1,92 @@
+Meilleur lissibilité en mode txt2tags et avec une police mono
+
 --- pyfpm (main.py) ------------------------------------------------------------
 
+    Script de lancement de pyFPM
+
+    ---
+
     [TODO]  - Lancer l'application que si le démon est actif
-    [TODO]  - Installer un paquet fpm via les pramètres (--fpm)                                 [ULTERIEUR]
+    [TODO]  - Installer un paquet fpm via les paramètres (--fpm)................................[ULTERIEUR]
     [TODO]  - Activer le mode debug via les paramètres (--debug)
+
 
 --- Affichage (display.py) -----------------------------------------------------
 
+    Script de gestion de l'interface de pyFPM
+
+    ---
+
     [FIXME] - Utiliser les dépôts externes lors des mises à jour
-    [FIXME] - Accélérer l'affichage de la liste des paquets                                     [EN COURS]
-    [FIXME] - L'ajout de groupe s'effectue 2 fois                                               [EN COURS]
+        Adapter libpacman.py
+    [FIXME] - Accélérer l'affichage de la liste des paquets
+        Utiliser un thread pour remplir la listview
+    [FIXME] - L'ajout de groupe s'effectue 2 fois
     [FIXME] - Le clic sur un groupe pendant le chargement d'un autre n'est pas pris en compte
-    [FIXME] - L'encodage des informations n'est pas effectué en utf-8                           [EN COURS]
+        Bloquer la fonction lors du clic
+    [FIXME] - L'encodage des informations n'est pas effectué en utf-8
 
     [TODO]  - Affiche un nom générique pour les groupes
-    [TODO]  - Afficher une barre de progression pour les actions spécifiques à pacman-g2        [EN COURS]
+    [TODO]  - Afficher le README.Frugalware d'un paquet installé
+    [TODO]  - Afficher une barre de progression pour les actions spécifiques à pacman-g2........[EN COURS]
+        Le lancement de l'action pacman-g2 nécessite l'utilisation du threading
     [TODO]  - Permettre de sélectionner tout un groupe
-    [TODO]  - Permettre d'ouvrir le lien site web via un clic                                   [ULTERIEUR]
-    [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild                                  [ULTERIEUR]
-
---- Langue (lang.py) -----------------------------------------------------------
+    [TODO]  - Permettre d'ouvrir le lien site web via un clic...................................[ULTERIEUR]
+    [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild..................................[ULTERIEUR]
 
 
 --- Paquet (package.py) --------------------------------------------------------
 
-    [TODO]  - Afficher les paquets no-build (utilisable avec repoman)                           [ULTERIEUR]
+    Script permettant de lier pyFPM et FPMd
 
---- Installation (pacman.py) ---------------------------------------------------
+    ---
 
-    [TODO]  - Récupérer les signaux                                                             [EN COURS]
+    [TODO]  - Afficher les paquets no-build (utilisable avec repoman)...........................[ULTERIEUR]
 
---- Démon (fpmd) ---------------------------------------------------------------
-
-    [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)        [EN COURS]
-    [FIXME] - Une installation faite avec pacman-g2 ne sera pris au compte qu'au redémarrage
-
-    [TODO]  - Ecrire le démon pour qu'il soit utilisable indépendamment de pyFPM                [EN COURS]
-    [TODO]  - Envoyer des signaux lors d'actions spécifiques (mise à jour, ...)                 [EN COURS]
-    [TODO]  - Adapter la libpacman généré par pacman-g2
-    [TODO]  - Relancer le démon après une mise à jour ou une installation/suppression           [EN COURS]
 
 --- Configuration (config.py) --------------------------------------------------
 
+    Script de configuration de pyFPM
+
+    ---
+
     [TODO]  - Réécrire l'interface
     [TODO]  - Option : Afficher des fenêtres d'informations
+    [TODO]  - Option : Gérer liste des dépôts
+    [TODO]  - Option : Envoyer les informations dans un log externe ou dans le pacman-g2.log
+
+
+--- Installation (pacman.py) ---------------------------------------------------
+
+    Script affichant une fenêtre de progression pour les actions de pacman-g2
+
+    ---
+
+    [TODO]  - Interpréter les signaux...........................................................[EN COURS]
+
+
+--- Démon (fpmd) ---------------------------------------------------------------
+
+    Script permettant d'utiliser les actions de pacman-g2 en tant que simple utilisateur
+
+    ---
+
+    [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)........[EN COURS]
+    [FIXME] - Une installation faite avec pacman-g2 ne sera pris au compte qu'au redémarrage
+        Relancer le démon lors de l'ouverture de pyFPM
+
+    [TODO]  - Ecrire le démon pour qu'il soit utilisable indépendamment de pyFPM................[EN COURS]
+    [TODO]  - Envoyer des signaux lors d'actions spécifiques (mise à jour, ...).................[EN COURS]
+    [TODO]  - Adapter la libpacman généré par pacman-g2
+    [TODO]  - Relancer le démon après une mise à jour ou une installation/suppression...........[EN COURS]
+    [TODO]  - Réécriture du démon en C
+
 
 --- libpacman (libpacman.py) ---------------------------------------------------
+
+    Script permettant d'utiliser pacman-g2 avec python 2.7
+
+    ---
 
     [FIXME] - Les paquets non maintenus ne sont pas considérés comme installés (ex: pm-quirk)
 

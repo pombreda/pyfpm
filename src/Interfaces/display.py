@@ -10,6 +10,7 @@
 # Importation des modules
 import os, sys, pango, codecs, urllib, gettext
 
+# Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
 gettext.textdomain('pyfpm')
 _ = gettext.gettext
@@ -31,7 +32,7 @@ Config = config.Config()
 
 class Interface (object):
     """
-    Ensemble des fonctions de la fenêtre principale
+    Fonction concernant l'interface principale
     """
 
     def __init__(self):
@@ -248,7 +249,8 @@ class Interface (object):
             # ------------------------------------------------------------------
 
             self.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-            self.outils.set_style(gtk.TOOLBAR_ICONS)
+            # L'utilisateur à un affichage par défaut de la toolbar
+            #~ self.outils.set_style(gtk.TOOLBAR_ICONS)
 
             self.outils.insert_stock(gtk.STOCK_APPLY, _("Apply changes"), None, self.installWindow, self, 0)
             self.outils.insert_stock(gtk.STOCK_REFRESH, _("Update databases"), None, Package.updateDatabase, self, 2)
@@ -582,12 +584,16 @@ class Interface (object):
 
     def resize (self, *args):
         """
-        Redimensionne la largueur de celluleValeur afin que le texte
-        s'adapte à la fenêtre
+        Redimensionne la largueur de celluleValeur afin que le texte s'adapte à la fenêtre
         """
 
-        self.celluleValeurInformations.set_property("wrap-width", self.fenetre.get_size()[0]/2)
-        self.celluleValeurPaquet.set_property("wrap-width", self.fenetre.get_size()[0]/2)
+        newSize = self.fenetre.get_size()[0] - 450
+        # On impose une taille minimum de 500px
+        if newSize < 500:
+            newSize = 500
+
+        self.celluleValeurInformations.set_property("wrap-width", newSize)
+        self.celluleValeurPaquet.set_property("wrap-width", newSize)
         self.colonnePaquetsNom.set_min_width(self.fenetre.get_size()[0]/2)
         self.colonnePaquets.set_size_request(0, self.fenetre.get_size()[1]/2)
 
@@ -600,7 +606,8 @@ class Interface (object):
 
         try :
             while gtk.events_pending():
-                gtk.main_iteration_do(False)
+                #~ gtk.main_iteration_do(False)
+                gtk.main_iteration()
         except:
             pass
 
@@ -652,12 +659,12 @@ class Interface (object):
         """
 
         paquets = Package.getPackagesList(self.listeSelectionDepots.get_active(), nomGroupe)
-        self.addPackages(paquets)
+        self.addPackages(paquets, nomGroupe)
 
         self.printDebug("DEBUG", str(len(paquets)) + " packages append")
 
 
-    def addPackages (self, paquets, recherche = False):
+    def addPackages (self, paquets, value, recherche = False):
         """
         Ajoute les paquets dans l'interface
         """
@@ -668,7 +675,7 @@ class Interface (object):
 
         listePaquetsInstalles = Package.getInstalledList()
 
-        # Supprime le mode de tri des colonnes
+        # Supprime le mode de tri des colonnes pour accélérer l'affichage
         modeleColonnePaquets = self.colonnePaquets.get_model()
         modeleColonnePaquets.set_default_sort_func(lambda *args: -1)
         modeleColonnePaquets.set_sort_column_id(-1, gtk.SORT_ASCENDING)
@@ -739,7 +746,11 @@ class Interface (object):
         self.colonnePaquets.set_model(modeleColonnePaquets)
         self.colonnePaquets.thaw_child_notify()
         self.refresh()
-        self.updateStatusbar(_("%s packages were found") % str(len(self.listeColonnePaquets)))
+
+        if len(self.listeColonnePaquets) > 1:
+            self.updateStatusbar(_("%(nbr)s packages were found for %(value)s") % {'nbr': str(len(self.listeColonnePaquets)), 'value': value})
+        else:
+            self.updateStatusbar(_("%(nbr)s package was found for %(value)s") % {'nbr': str(len(self.listeColonnePaquets)), 'value': value})
 
 
     def selectPackage (self, selection, modele):
@@ -884,6 +895,7 @@ class Interface (object):
                 listeDepot = Package.getRepoList()
                 journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
                 if os.path.exists(journal) == True:
+                    # Cet encodage pose soucis
                     file = codecs.open(journal, "r", "iso-8859-15")
                     for element in file:
                         if element != "":
@@ -1041,15 +1053,19 @@ class Interface (object):
 
             paquets = Package.searchPackage(objetRechercher)
 
-            self.printDebug("INFO", _("%(nbr)s search package for %(search)s") % {'nbr': str(len(paquets)), 'search': objetRechercher})
-            self.updateStatusbar(_("%(nbr)s search package for %(search)s") % {'nbr': str(len(paquets)), 'search': objetRechercher})
+            if len(paquets) > 1:
+                self.updateStatusbar(_("%(nbr)s packages were found for %(value)s") % {'nbr': str(len(paquets)), 'value': objetRechercher})
+            elif len(paquets) == 1:
+                self.updateStatusbar(_("%(nbr)s package was found for %(value)s") % {'nbr': str(len(paquets)), 'value': objetRechercher})
+            else:
+                self.updateStatusbar(_("No package was found for %s") % objetRechercher)
 
             self.recherche_mode = True
             self.recherche_nom = objetRechercher
 
             if len(paquets) > 0:
                 # Si la liste contient des paquets on lance l'ajout dans l'interface
-                self.addPackages(paquets, recherche = True)
+                self.addPackages(paquets, objetRechercher, recherche = True)
 
             # On efface le critère de recherche
             #~ self.eraseSearch()

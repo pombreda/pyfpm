@@ -57,11 +57,18 @@ class FPMd (dbus.service.Object):
 
 
     @dbus.service.signal(BUSNAME, signature='s')
-    def sendSignal (self, string):
+    def sendSignal (self, value):
         """
-        Send a string
+        Send a value
         """
+        pass
 
+
+    @dbus.service.signal(BUSNAME, signature='u')
+    def sendState (self, value):
+        """
+        Send the state of current action
+        """
         pass
 
 
@@ -301,17 +308,19 @@ class FPMd (dbus.service.Object):
         Update pacman-g2 database
         """
 
+        self.sendState(0)
+        self.sendSignal("mode:update")
+
         for element in db_list:
             if repo_list[db_list.index(element)] != "local":
-                self.sendSignal("update_db_name " + str(db_list.index(element)) + ":" + repo_list[db_list.index(element)])
+                self.sendSignal("value:" + str(db_list.index(element)))
 
                 #~ pourcentage = float(index - 1) / float(len(repo_list) - 1)
 
                 if pacman_db_update (1, element) == -1:
-                    self.sendSignal("cant_update_pacmang2")
-                    #~ pacman_print_error()
+                    self.sendSignal("value:-1")
 
-        return True
+        self.sendState(1)
 
 
     @dbus.service.method (BUSNAME)

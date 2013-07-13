@@ -10,6 +10,7 @@
 # Importation des modules
 import sys, pango, os, gettext
 
+# Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
 gettext.textdomain('pyfpm')
 _ = gettext.gettext

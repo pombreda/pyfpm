@@ -8,36 +8,49 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import os, sys, string, time, gettext
-import dbus
-#~ import dbus.service, dbus.mainloop.glib, gobject
+import os, sys, string, time, gettext, dbus
 
+# Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
 gettext.textdomain('pyfpm')
 _ = gettext.gettext
 
-# Récupération des fonctions de FPMd
-bus = dbus.SystemBus()
-proxy = bus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
-
-fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', 'org.frugalware.fpmd.deamon')
-fpmd_updateDatabase = proxy.get_dbus_method('updateDatabase', 'org.frugalware.fpmd.deamon')
-fpmd_cleanCache = proxy.get_dbus_method('cleanCache', 'org.frugalware.fpmd.deamon')
-fpmd_getRepoList = proxy.get_dbus_method('getRepoList', 'org.frugalware.fpmd.deamon')
-fpmd_searchRepoPackage = proxy.get_dbus_method('searchRepoPackage', 'org.frugalware.fpmd.deamon')
-fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', 'org.frugalware.fpmd.deamon')
-fpmd_searchInstalledPackage = proxy.get_dbus_method('searchInstalledPackage', 'org.frugalware.fpmd.deamon')
-fpmd_getPackagesList = proxy.get_dbus_method('getPackagesList', 'org.frugalware.fpmd.deamon')
-fpmd_getPackageInfo = proxy.get_dbus_method('getPackageInfo', 'org.frugalware.fpmd.deamon')
-fpmd_getSha1sums = proxy.get_dbus_method('getSha1sums', 'org.frugalware.fpmd.deamon')
-fpmd_getPackagePointer = proxy.get_dbus_method('getPackagePointer', 'org.frugalware.fpmd.deamon')
-fpmd_getUpdateList = proxy.get_dbus_method('getUpdateList', 'org.frugalware.fpmd.deamon')
-fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', 'org.frugalware.fpmd.deamon')
-fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', 'org.frugalware.fpmd.deamon')
-fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', 'org.frugalware.fpmd.deamon')
+from Interfaces import pacman
 
 
 class Package (object):
+    """
+    Fonctions concernant la gestion de pacman-g2
+    """
+
+    def __init__(self):
+        """
+        Récupération des fonctions de FPMd
+        """
+
+        # Récupération des fonctions de FPMd
+        packageBus = dbus.SystemBus()
+
+        try:
+            proxy = packageBus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
+        except dbus.DBusException:
+            sys.exit(_("DBus interface is not available"))
+
+        self.fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', 'org.frugalware.fpmd.deamon')
+        self.fpmd_updateDatabase = proxy.get_dbus_method('updateDatabase', 'org.frugalware.fpmd.deamon')
+        self.fpmd_cleanCache = proxy.get_dbus_method('cleanCache', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getRepoList = proxy.get_dbus_method('getRepoList', 'org.frugalware.fpmd.deamon')
+        self.fpmd_searchRepoPackage = proxy.get_dbus_method('searchRepoPackage', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', 'org.frugalware.fpmd.deamon')
+        self.fpmd_searchInstalledPackage = proxy.get_dbus_method('searchInstalledPackage', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getPackagesList = proxy.get_dbus_method('getPackagesList', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getPackageInfo = proxy.get_dbus_method('getPackageInfo', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getSha1sums = proxy.get_dbus_method('getSha1sums', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getPackagePointer = proxy.get_dbus_method('getPackagePointer', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getUpdateList = proxy.get_dbus_method('getUpdateList', 'org.frugalware.fpmd.deamon')
+        self.fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', 'org.frugalware.fpmd.deamon')
+        self.fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', 'org.frugalware.fpmd.deamon')
 
 
     def cleanCache (self, widget, interface):
@@ -49,7 +62,7 @@ class Package (object):
         interface.fenetre.set_sensitive(False)
         interface.refresh()
 
-        fpmd_cleanCache()
+        self.fpmd_cleanCache()
 
         interface.updateStatusbar(_("Clean cache complete"))
         interface.fenetre.set_sensitive(True)
@@ -65,7 +78,11 @@ class Package (object):
         interface.fenetre.set_sensitive(False)
         interface.refresh()
 
-        fpmd_updateDatabase()
+        # TODO
+        # Ce qu'il faut faire c'est lancer la fenêtre de progression
+        # et la fonction de pacman-g2 en même temps
+        pacmanUi = pacman.Pacman(_("Update databases"), self.fpmd_updateDatabase)
+        pacmanUi.mainWindow()
 
         interface.eraseInterface()
         interface.addRepos()
@@ -117,7 +134,7 @@ class Package (object):
         nomPaquet est dedans
         """
 
-        return fpmd_searchInstalledPackage(nomPaquet)
+        return self.fpmd_searchInstalledPackage(nomPaquet)
 
 
     def getRepoList (self):
@@ -125,7 +142,7 @@ class Package (object):
         Recupère la liste des dépôts
         """
 
-        return fpmd_getRepoList()
+        return self.fpmd_getRepoList()
 
 
     def getIndexFromRepo (self):
@@ -151,7 +168,7 @@ class Package (object):
         Récupère la liste des groupes de paquets
         """
 
-        return fpmd_getGroupsList(depot)
+        return self.fpmd_getGroupsList(depot)
 
 
     def getPackagesList (self, depot, nomGroupe):
@@ -159,7 +176,7 @@ class Package (object):
         Récupère la liste des paquets pour un groupe
         """
 
-        return fpmd_getPackagesList(depot, nomGroupe)
+        return self.fpmd_getPackagesList(depot, nomGroupe)
 
 
     def getFileFromPackage (self, nomPaquet):
@@ -167,7 +184,7 @@ class Package (object):
         Récupère la liste des fichiers inclus dans un paquet installé
         """
 
-        return fpmd_getFileFromPackage(nomPaquet)
+        return self.fpmd_getFileFromPackage(nomPaquet)
 
 
     def searchPackage (self, nomPaquet):
@@ -175,14 +192,14 @@ class Package (object):
         Chercher les paquets correspondant à la recherche dans le dépôt sélectionné
         """
 
-        return fpmd_searchRepoPackage(nomPaquet)
+        return self.fpmd_searchRepoPackage(nomPaquet)
 
 
     def getUpdateList (self):
         """
         """
 
-        return fpmd_getUpdateList()
+        return self.fpmd_getUpdateList()
 
 
     def getInstalledList (self):
@@ -190,7 +207,7 @@ class Package (object):
         Recupère la liste des paquets installés
         """
 
-        return fpmd_getInstalledList()
+        return self.fpmd_getInstalledList()
 
 
     def getPackageInfo (self, paquet):
@@ -198,7 +215,7 @@ class Package (object):
         Obtient les informations d'un paquet
         """
 
-        return fpmd_getPackageInfo (paquet)
+        return self.fpmd_getPackageInfo (paquet)
 
 
     def getPackagePointer (self, nomPaquet, repo=0):
@@ -206,7 +223,7 @@ class Package (object):
         Obtient le pointer d'un paquet à partir de son nom
         """
 
-        return fpmd_getPackagePointer (nomPaquet, repo)
+        return self.fpmd_getPackagePointer (nomPaquet, repo)
 
 
     def checkPackageInstalled (self, nomPaquet, versionPaquet):
@@ -214,7 +231,7 @@ class Package (object):
         Vérifie si un paquet est installé
         """
 
-        return fpmd_checkPackageInstalled (nomPaquet, versionPaquet)
+        return self.fpmd_checkPackageInstalled (nomPaquet, versionPaquet)
 
 
     def getSha1sums (self, nomPaquet, repo=1):
@@ -222,7 +239,7 @@ class Package (object):
         Obtient le pointer d'un paquet à partir de son nom
         """
 
-        return fpmd_getSha1sums (nomPaquet, repo)
+        return self.fpmd_getSha1sums (nomPaquet, repo)
 
 
     def splitVersionName (self, paquet):
@@ -254,6 +271,3 @@ class Package (object):
             liste2.append(separateur)
 
         return liste2
-
-
-

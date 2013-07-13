@@ -18,6 +18,7 @@
 # Importation des modules
 import sys, argparse, gettext
 
+# Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
 gettext.textdomain('pyfpm')
 _ = gettext.gettext
@@ -27,7 +28,7 @@ try:
 except ImportError:
     sys.exit(_("pygtk was not found"))
 
-from Interfaces import display, pacman
+from Interfaces import display
 from Functions import config
 
 # ----------------------------------------------------------------------
