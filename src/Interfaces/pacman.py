@@ -28,6 +28,11 @@ try:
 except ImportError:
     sys.exit(_("pygtk was not found"))
 
+from Functions import package
+
+# Initialisation des modules
+Package = package.Package()
+
 # Noms dbus
 BUSNAME = 'org.frugalware.fpmd.deamon'
 OBJPATH = '/org/frugalware/fpmd/deamon/object'
@@ -108,7 +113,7 @@ class Pacman (object):
 
         # Barre de progression générale
         self.progressionInfo.set_size_request(500, 26)
-        self.progressionInfo.set_fraction(0.4)
+        self.progressionInfo.set_fraction(0.0)
 
         # Info
         self.labelInfo.set_use_markup(True)
@@ -135,7 +140,7 @@ class Pacman (object):
         self.fenetre.vbox.pack_start(self.grille, expand=False)
         self.fenetre.show_all()
 
-        self.fpmd_emitSignal(["run", self.mode])
+        Package.emitSignal(["run", self.mode])
 
         self.printDebug("DEBUG", "Lancement de l'interface")
         self.fenetre.run()
@@ -159,6 +164,7 @@ class Pacman (object):
         if self.mode == "update":
             # Lancement de la mise à jour des dépôts
             if chaine[0] == "repo":
+                self.progressionInfo.set_pulse_step(0.5)
                 if chaine[1] == "-1":
                     # Erreur de connexion
                     self.writeEntry(_("Cannot connect to %s") % str(chaine[1]))
@@ -169,7 +175,10 @@ class Pacman (object):
             elif chaine[0] == "action" and chaine[1] == "end":
                 # L'action est terminée
                 self.writeEntry(_("Synchronizing package databases..."), _("Done"))
+                self.progressionInfo.set_fraction(1.0)
                 self.getCloseButton()
+
+        self.progressionInfo.pulse()
 
 
     def getCloseButton (self):

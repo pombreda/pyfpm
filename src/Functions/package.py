@@ -40,11 +40,8 @@ class Package (object):
 
         # Fonction interne a Fpmd
         self.fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', BUSNAME)
+        self.fpmd_resetPacman = proxy.get_dbus_method('resetPacman', BUSNAME)
         self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', BUSNAME)
-
-        # Actions de pacman-g2
-        self.fpmd_updateDatabase = proxy.get_dbus_method('updateDatabase', BUSNAME)
-        self.fpmd_cleanCache = proxy.get_dbus_method('cleanCache', BUSNAME)
 
         # Fonciton de pacman-g2
         self.fpmd_getRepoList = proxy.get_dbus_method('getRepoList', BUSNAME)
@@ -61,20 +58,12 @@ class Package (object):
         self.fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', BUSNAME)
 
 
-    def cleanCache (self):
+    def resetPacman (self):
         """
-        Nettoye le cache de pacman-g2
-        """
-
-        self.fpmd_cleanCache()
-
-
-    def updateDatabase (self):
-        """
-        Met à jour les dépôts de paquets
+        Remet à zéro les informations de pacman-g2
         """
 
-        self.fpmd_updateDatabase()
+        self.fpmd_resetPacman()
 
 
     #~ def runPacman (self, interface, listeInstallationPacman, listeSuppressionPacman):
@@ -231,14 +220,6 @@ class Package (object):
         """
 
         return self.fpmd_emitSignal(texte)
-
-
-    def resetFpmd (self):
-        """
-        Relance le démon
-        """
-
-        return self.fpmd_resetDeamon()
 
 
     def splitVersionName (self, paquet):

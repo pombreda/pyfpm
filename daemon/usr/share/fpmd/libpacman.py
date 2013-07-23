@@ -489,10 +489,12 @@ def pacman_print_error():
   print_debug("pacman_print_error")
   try :
     #old pacman-g2 don't provide pacman_geterror
-    print_console("pacman-g2 : "+pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
-    print_debug("Error code : " +str(pacman.pacman_geterror()))
+    #~ print_console("pacman-g2 : "+pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror())))
+    #~ print_debug("Error code : " +str(pacman.pacman_geterror()))
+    return "(" + str(pacman.pacman_geterror()) + ") " + pointer_to_string(pacman.pacman_strerror(pacman.pacman_geterror()))
   except:
-    print_console("pacman-g2 failed")
+    #~ print_console("pacman-g2 failed")
+    return "pacman-g2 failed"
 
 def pacman_get_pm_error():
   print_debug("pacman_get_pm_error")

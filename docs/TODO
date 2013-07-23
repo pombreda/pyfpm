@@ -7,7 +7,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     ---
 
     [TODO]  - Lancer l'application que si le démon est actif
-    [TODO]  - Installer un paquet fpm via les paramètres (--fpm)................................[ULTERIEUR]
+    [TODO]  - Installer un paquet fpm via les paramètres (--fpm)..........................................[ULTERIEUR]
     [TODO]  - Activer le mode debug via les paramètres (--debug)
 
 
@@ -21,18 +21,19 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
         Adapter libpacman.py
     [FIXME] - Accélérer l'affichage de la liste des paquets
         Utiliser un thread pour remplir la listview
-    [FIXME] - L'ajout de groupe s'effectue 2 fois
+    [FIXME] - L'ajout de groupe s'effectue 2 fois.........................................................[EN COURS]
     [FIXME] - Le clic sur un groupe pendant le chargement d'un autre n'est pas pris en compte
         Bloquer la fonction lors du clic
     [FIXME] - L'encodage des informations n'est pas effectué en utf-8
+    [FIXME] - On ne récupère pas les informations pour un paquet dont une mise à jour est disponible
+        Un reset de fpmd est nécessaire
 
     [TODO]  - Affiche un nom générique pour les groupes
     [TODO]  - Afficher le README.Frugalware d'un paquet installé
-    [TODO]  - Afficher une barre de progression pour les actions spécifiques à pacman-g2........[EN COURS]
-        Le lancement de l'action pacman-g2 nécessite l'utilisation du threading
     [TODO]  - Permettre de sélectionner tout un groupe
-    [TODO]  - Permettre d'ouvrir le lien site web via un clic...................................[ULTERIEUR]
-    [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild..................................[ULTERIEUR]
+    [TODO]  - Permettre d'ouvrir le lien site web via un clic.............................................[ULTERIEUR]
+        Changement sur l'interface nécessaire
+    [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild............................................[ULTERIEUR]
 
 
 --- Paquet (package.py) --------------------------------------------------------
@@ -41,8 +42,8 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 
     ---
 
-    [TODO]  - Afficher les paquets no-build (utilisable avec repoman)...........................[ULTERIEUR]
-    [TODO]  - Utiliser les Regex pour la fonction de split......................................[EN COURS]
+    [TODO]  - Afficher les paquets no-build (utilisable avec repoman).....................................[ULTERIEUR]
+    [TODO]  - Utiliser les Regex pour la fonction de split................................................[EN COURS]
 
 
 --- Configuration (config.py) --------------------------------------------------
@@ -63,7 +64,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 
     ---
 
-    [TODO]  - Interpréter les signaux...........................................................[EN COURS]
+    [TODO]  - Gestion de la barre de progrès..............................................................[EN COURS]
 
 
 --- Démon (fpmd) ---------------------------------------------------------------
@@ -72,14 +73,12 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 
     ---
 
-    [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)........[EN COURS]
+    [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)..................[EN COURS]
     [FIXME] - Une installation faite avec pacman-g2 ne sera pris au compte qu'au redémarrage
         Relancer le démon lors de l'ouverture de pyFPM
 
-    [TODO]  - Ecrire le démon pour qu'il soit utilisable indépendamment de pyFPM................[EN COURS]
-    [TODO]  - Envoyer des signaux lors d'actions spécifiques (mise à jour, ...).................[EN COURS]
     [TODO]  - Adapter la libpacman généré par pacman-g2
-    [TODO]  - Relancer le démon après une mise à jour ou une installation/suppression...........[EN COURS]
+    [TODO]  - Relancer le démon après une mise à jour ou une installation/suppression.....................[EN COURS]
     [TODO]  - Réécriture du démon en C
 
 

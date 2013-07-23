@@ -9,7 +9,6 @@
 
 # Importation des modules
 import os, sys, pango, codecs, urllib, gettext
-from threading import Thread, Event
 
 # Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
@@ -36,7 +35,7 @@ class Interface (object):
     Fonction concernant l'interface principale
     """
 
-    def __init__(self):
+    def __init__(self, devMode = False):
         """
         Initialisation de la fenêtre principale
         """
@@ -53,6 +52,7 @@ class Interface (object):
 
         self.recherche_mode = False
         self.recherche_nom = ""
+        self.developementMode = devMode
 
         # ------------------------------------------------------------------
         #       Fenetre
@@ -169,81 +169,76 @@ class Interface (object):
 
         # FIXME
         # Faut-il garder ce module ?
-        self.labelFrugalbuild = gtk.Label(_("FrugalBuild"))
-        self.listeFrugalbuild = gtk.TextView()
-        self.defilementFrugalbuild = gtk.ScrolledWindow()
+        # Affiche la zone "FrugalBuild" uniquement si l'option est activé
+        if self.developementMode:
+            self.labelFrugalbuild = gtk.Label(_("FrugalBuild"))
+            self.listeFrugalbuild = gtk.TextView()
+            self.defilementFrugalbuild = gtk.ScrolledWindow()
 
 
-    def mainWindow (self, devMode = False):
+    def mainWindow (self):
         """
         Fenêtre principale
         """
-
-        self.developementMode = devMode
-
-        longueur = Config.readConfig("screen", "width")
-        hauteur = Config.readConfig("screen", "height")
 
         # ------------------------------------------------------------------
         #       Fenetre
         # ------------------------------------------------------------------
 
         self.fenetre.set_title(_("Install and Remove packages"))
-        self.fenetre.set_default_size(int(longueur), int(hauteur))
+        self.fenetre.set_default_size(int(Config.readConfig("screen", "width")), int(Config.readConfig("screen", "height")))
         self.fenetre.set_resizable(True)
         self.fenetre.set_position(gtk.WIN_POS_CENTER)
+
+        self.fenetre.connect("destroy", gtk.main_quit)
+        self.fenetre.connect("check-resize", self.resize)
 
         # ------------------------------------------------------------------
         #       Menu
         # ------------------------------------------------------------------
 
-        self.fenetre.connect("destroy", gtk.main_quit)
-        self.fenetre.connect("check-resize", self.resize)
-
+        # Lancement de la transaction (Installation/Suppression)
         self.menu_action_install.set_image(gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU))
         self.menu_action_install.connect("activate", self.installWindow, self)
-
+        # Nettoyage du cache
         self.menu_action_clean.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
         self.menu_action_clean.connect("activate", self.cleanCacheWindow, self)
-
+        # Lancement de la mise à jour des bases de données pacman-g2
         self.menu_action_update.set_image(gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU))
         self.menu_action_update.connect("activate", self.runAction, "update")
-
+        # Affichage des mises à jour disponible
         self.menu_action_check.set_image(gtk.image_new_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU))
-        self.menu_action_check.connect("activate", self.updateWindow)
-
+        self.menu_action_check.connect("activate", self.updateWindow, self)
+        # Fermeture de pyFPM
         self.menu_action_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
         self.menu_action_quit.connect("activate", self.closeWindow)
 
         self.menu.add(self.menu_action)
-
         self.menu_action_list.add(self.menu_action_install)
         self.menu_action_list.add(self.menu_action_clean)
         self.menu_action_list.add(self.menu_action_update)
         self.menu_action_list.add(self.menu_action_check)
         self.menu_action_list.add(self.menu_action_quit)
-
         self.menu_action.set_submenu(self.menu_action_list)
 
+        # Remise à zéro des choix de l'utilisateur
         self.menu_edit_clear_changes.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
         self.menu_edit_clear_changes.connect("activate", self.erasePackage)
-
+        # Affichage des préférences
         self.menu_edit_preference.set_image(gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU))
         self.menu_edit_preference.connect("activate", Preferences.runPreferences, self)
 
         self.menu.add(self.menu_edit)
-
         self.menu_edit_list.add(self.menu_edit_clear_changes)
         self.menu_edit_list.add(self.menu_edit_preference)
-
         self.menu_edit.set_submenu(self.menu_edit_list)
+
+        # Affichage de la boite A propos
         self.menu_help_about.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
         self.menu_help_about.connect("activate", self.aboutWindow)
 
         self.menu.add(self.menu_help)
-
         self.menu_help_list.add(self.menu_help_about)
-
         self.menu_help.set_submenu(self.menu_help_list)
 
         # ------------------------------------------------------------------
@@ -251,12 +246,13 @@ class Interface (object):
         # ------------------------------------------------------------------
 
         self.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-        # L'utilisateur à un affichage par défaut de la toolbar
-        #~ self.outils.set_style(gtk.TOOLBAR_ICONS)
 
+        # Lancement de la transaction (Installation/Suppression)
         self.outils.insert_stock(gtk.STOCK_APPLY, _("Apply changes"), None, self.installWindow, self, 0)
+        # Affichage des mises à jour disponible
         self.outils.insert_stock(gtk.STOCK_REFRESH, _("Update databases"), None, self.runAction, "update", 2)
         self.outils.insert_space(3)
+        # Champs de recherche
         self.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
         self.texteRecherche.connect("activate", self.search, gtk.RESPONSE_OK)
         self.texteRecherche.connect("icon-press", self.eraseSearch)
@@ -264,15 +260,14 @@ class Interface (object):
         self.outils.insert_widget(self.texteRecherche, _("Write your search here"), None, 4)
         self.outils.insert_stock(gtk.STOCK_FIND, _("Search"), None, self.search, None, 5)
         self.outils.insert_space(6)
+        # Affichage des préférences
         self.outils.insert_stock(gtk.STOCK_PREFERENCES, _("Preferences"), None, Preferences.runPreferences, self, 7)
+        # Fermeture de pyFPM
         self.outils.insert_stock(gtk.STOCK_QUIT, _("Quit"), None, self.closeWindow, None, 8)
 
         # ------------------------------------------------------------------
         #       Liste des dépôts
         # ------------------------------------------------------------------
-
-        # Ajout des dépôts
-        self.addRepos()
 
         self.labelSelectionDepots.set_alignment(0.05,0.5)
         self.listeSelectionDepots.connect('changed', self.changeRepo, self)
@@ -281,11 +276,6 @@ class Interface (object):
         # ------------------------------------------------------------------
         #       Colonnes des groupes
         # ------------------------------------------------------------------
-
-        #~ self.listeColonneGroupes.clear()
-
-        # Ajout des groupes en fonction du dépôt initial
-        self.addGroups()
 
         self.colonneGroupes.set_headers_visible(True)
         self.colonneGroupes.set_size_request(180,0)
@@ -428,12 +418,14 @@ class Interface (object):
         self.defilementJournal.add(self.listeJournal)
         self.defilementJournal.set_border_width(4)
 
-        self.listeFrugalbuild.set_editable(False)
-        self.listeFrugalbuild.set_cursor_visible(False)
+        # Affiche la zone "FrugalBuild" uniquement si l'option est activé
+        if self.developementMode:
+            self.listeFrugalbuild.set_editable(False)
+            self.listeFrugalbuild.set_cursor_visible(False)
 
-        self.defilementFrugalbuild.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.defilementFrugalbuild.add(self.listeFrugalbuild)
-        self.defilementFrugalbuild.set_border_width(4)
+            self.defilementFrugalbuild.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+            self.defilementFrugalbuild.add(self.listeFrugalbuild)
+            self.defilementFrugalbuild.set_border_width(4)
 
         self.zoneInformations.set_tab_pos(gtk.POS_LEFT)
         self.zoneInformations.append_page(self.defilementInformations, self.labelInformations)
@@ -479,22 +471,21 @@ class Interface (object):
         self.fenetre.show_all()
         self.refresh()
 
+        # Affichage des mises à jour disponible
         self.getUpdateList()
 
-
-    def runWindow (self):
-        """
-        Affiche l'interface
-        """
+        # Ajout des dépôts
+        self.addRepos()
 
         gtk.main()
 
 
     def closeWindow (self, interface):
         """
-        Termine pyFPM
+        Fermeture de pyFPM
         """
 
+        self.printDebug("INFO", _("Bye bye"))
         gtk.main_quit()
 
 
@@ -503,7 +494,7 @@ class Interface (object):
         Récupérer la liste des mises à jour
         """
 
-        self.printDebug("DEBUG", _("Get the update packages list"))
+        self.printDebug("INFO", _("Get the update packages list"))
 
         if len(self.listeMiseAJourPacman) > 0:
             self.listeMiseAJourPacman = []
@@ -513,18 +504,25 @@ class Interface (object):
         if listePaquetsMiseAJour > 0:
             for element in listePaquetsMiseAJour:
                 self.listeMiseAJourPacman.append(element)
+            self.printDebug("INFO", _("%s update have been found") % str(len(self.listeMiseAJourPacman)))
+        else:
+            self.printDebug("INFO", _("No update available"))
 
-        # Affiche les mises à jour si l'option est activé
         if Config.readConfig("pyfpm", "startupdate") == "true":
             self.updateWindow()
 
 
     def addRepos (self):
         """
-        Récupère les dépots disponible sur le système
+        Ajout des dépots disponible sur le système dans l'interface
         """
 
+        # On remet à jour les informations de pacman-g2
+        #~ Package.resetPacman()
+
+        # On récupère la liste des dépôts
         listeDepot = Package.getRepoList()
+        self.printDebug("DEBUG", _("%s repos have been found") % str(len(listeDepot)))
 
         # Met le dépôt du système en choix principal
         index = Package.getIndexFromRepo()
@@ -576,6 +574,8 @@ class Interface (object):
         self.contenuInformations.clear()
         self.contenuPaquet.clear()
 
+        self.recherche_nom = ""
+
         self.updateStatusbar("")
 
 
@@ -624,7 +624,7 @@ class Interface (object):
 
         self.eraseInterface()
         self.addRepos()
-        #~ interface.addGroups()
+        self.refresh()
 
         self.fenetre.set_sensitive(True)
         self.refresh()
@@ -848,7 +848,7 @@ class Interface (object):
 
         # Affichage du SHA1SUMS du paquet
         if infoPaquet.get("name") in self.listeMiseAJourPacman:
-            self.contenuPaquet.append(None, [_("SHA1SUMS"), Lang.translate("package_update_available")])
+            self.contenuPaquet.append(None, [_("SHA1SUMS"), _("An update is available")])
         else:
             if self.listeSelectionDepots.get_active() != 0:
                 depot = self.listeSelectionDepots.get_active()
@@ -1173,9 +1173,21 @@ class Interface (object):
         about.set_comments(_("A pacman-g2 front-end for Frugalware Linux"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
         about.set_authors(["Gaetan Gourdin (bouleetbil)", "Aurélien Lubert (PacMiam)"])
-        #~ about.set_artists(["Aurélien Lubert (PacMiam)"])
         about.set_translator_credits("fr_FR - Anthony Jorion (Pingax)")
-        about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer et/ou le modifier conformément aux dispositions de la Licence Publique Générale GNU, telle que publiée par la Free Software Foundation.")
+        about.set_license("This program is free software; you can redistribute it and/or " \
+            "modify it under the terms of the GNU General Public Licence as " \
+            "published by the Free Software Foundation; either version 2 of the " \
+            "Licence, or (at your option) any later version.\n" \
+            "\n" \
+            "This program is distributed in the hope that it will be useful, " \
+            "but WITHOUT ANY WARRANTY; without even the implied warranty of " \
+            "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU " \
+            "General Public Licence for more details.\n" \
+            "\n" \
+            "You should have received a copy of the GNU General Public Licence " \
+            "along with this program; if not, write to the Free Software " \
+            "Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, " \
+            "MA  02110-1301  USA")
         about.set_wrap_license(True)
         about.set_website("http://www.frugalware.org")
         about.set_logo(logo)
@@ -1208,10 +1220,7 @@ class Interface (object):
         listeDepot = Package.getRepoList()
 
         # Récupère l'index du dépôt initial
-        if "frugalware" in listeDepot:
-            index = listeDepot.index("frugalware")
-        elif "frugalware-current" in listeDepot:
-            index = listeDepot.index("frugalware-current")
+        index = Package.getIndexFromRepo()
 
         if self.recherche_mode == False:
             # On réaffiche les paquets du groupe sélectionné
@@ -1371,7 +1380,7 @@ class Interface (object):
             self.barreStatus.push(0, _("No change"))
 
 
-    def updateWindow (self, *args):
+    def updateWindow (self, *event):
         """
         Prévient qu'il y a des mises à jour et propose de les installer
         """
@@ -1448,7 +1457,7 @@ class Interface (object):
         self.fenetre.set_sensitive(True)
 
 
-    def cleanCacheWindow (self, *args):
+    def cleanCacheWindow (self, widget, *event):
         """
         Fenêtre demandant la confirmation d'utiliser le nettoyage
         des vieux paquets fpm
@@ -1456,20 +1465,34 @@ class Interface (object):
 
         self.fenetre.set_sensitive(False)
 
-        nettoyage = gtk.Dialog(_("Clear package cache"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
-        texte = gtk.Label(_("Are you sure you want to remove old packages from cache ?"))
+        nettoyage = gtk.Dialog(_("Clear package cache"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_APPLY, gtk.RESPONSE_ACCEPT))
+        nettoyage.set_resizable(False)
+
+        texte = gtk.Label(_("What did you want to do with pacman-g2 cache ?"))
+
+        radioGrille = gtk.VBox()
+        radioOld = gtk.RadioButton(None, _("Remove only old packages from cache"), None)
+        radioAll = gtk.RadioButton(radioOld, _("Remove all packages from cache"), None)
 
         nettoyage.set_border_width(4)
-        nettoyage.vbox.set_spacing(4)
+        nettoyage.vbox.set_spacing(8)
         nettoyage.vbox.pack_start(texte)
+        radioGrille.pack_start(radioOld)
+        radioGrille.pack_start(radioAll)
+        nettoyage.vbox.pack_start(radioGrille)
 
         nettoyage.show_all()
 
         choix = nettoyage.run()
 
-        if choix == gtk.RESPONSE_OK:
+        if choix == gtk.RESPONSE_ACCEPT:
+            if radioOld.get_active():
+                mode = 0
+            elif radioAll.get_active():
+                mode = 1
+
             self.updateStatusbar(_("Clean cache"))
-            Package.cleanCache()
+            Package.emitSignal(["run", "clean", str(mode)])
             self.updateStatusbar(_("Clean cache complete"))
 
             nettoyage.destroy()

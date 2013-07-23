@@ -15,15 +15,26 @@
 # ----------------------------------------------------------------------
 
 # Modules importation
-import os, dbus, dbus.service, dbus.mainloop.glib, gobject, time, datetime
+import os, sys, dbus, dbus.service, dbus.mainloop.glib, gobject, time, datetime
 
 from libpacman import *
 
-# Global var
+# Global dbus var
 BUSNAME = 'org.frugalware.fpmd.deamon'
 OBJPATH = '/org/frugalware/fpmd/deamon/object'
 
+# Log file
 LOGPATH = '/var/log/fpmd.log'
+# Configuration file
+CFG_FILE = "/etc/pacman-g2.conf"
+# Pacman-g2 path
+PM_ROOT = "/"
+PM_DBPATH = "var/lib/pacman-g2"
+PM_CACHEDIR = "var/cache/pacman-g2/pkg"
+PM_LOCK = "/tmp/pacman-g2.lck"
+PM_HOOKSDIR = "etc/pacman-g2/hooks"
+# Name of local repo
+FW_LOCAL = "local"
 
 # Dbus loop
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -62,10 +73,26 @@ class FPMd (dbus.service.Object):
         """
 
         try:
-            pacman_started()
-            pacman_init()
-            pacman_init_database()
-            pacman_register_all_database()
+            if os.path.exists(PM_LOCK):
+                sys.exit("An instance of pacman-g2 is already running.")
+
+            if pacman_initialize(PM_ROOT) == -1:
+                self.writeLog("Can't initialise pacman-g2 - " + str(pacman_print_error()))
+                sys.exit()
+
+            # Set some important pacman-g2 options
+            if pacman_set_option (PM_OPT_LOGMASK, str(-1)) == -1:
+                self.writeLog("Can't set option PM_OPT_LOGMASK - " + str(pacman_print_error()))
+                sys.exit()
+
+            # Get repos
+            repo_list.append(FW_LOCAL)
+            pacman_parse_config()
+
+            for repo in repo_list:
+                db = pacman_db_register(repo)
+                db_list.append(db)
+
             self.writeLog("Fpmd have been run succesfully")
         except:
             self.writeLog("Failed to initialize libpacman")
@@ -79,6 +106,34 @@ class FPMd (dbus.service.Object):
 
         pacman_finally()
         self.writeLog("Fpmd have been closed succesfully")
+
+
+    def resetList (self):
+        """
+        Reset repos and database lists
+        """
+
+        repo_searchlist = []
+        repo_list = []
+        db_list = []
+
+
+    @dbus.service.method (BUSNAME)
+    def resetPacman (self):
+        """
+        Reset pacman-g2 instance to update informations
+        """
+
+        #~ pacman_finally()
+
+        self.resetList()
+        pacman_initialize(PM_ROOT)
+
+        pacman_parse_config()
+
+        for repo in repo_list:
+            db = pacman_db_register(repo)
+            db_list.append(db)
 
 
     @dbus.service.signal(BUSNAME, signature='as')
@@ -105,7 +160,17 @@ class FPMd (dbus.service.Object):
 
         if texte[0] == "run":
             if texte[1] == "update":
+                # User want to update repository database
                 self.updateDatabase()
+            if texte[1] == "clean":
+                if len(texte[2]) > 0:
+                    # We have specify a clean method
+                    # 0 -> old package
+                    # 1 -> all package
+                    self.cleanCache(int(texte[2]))
+                else:
+                    # By default, we erase only old package
+                    self.cleanCache(0)
             else:
                 pass
         else:
@@ -118,9 +183,7 @@ class FPMd (dbus.service.Object):
         Get the package pointer
         """
 
-        pkg = pacman_db_readpkg(db_list[int(repo)], str(pkgName))
-
-        return pkg
+        return pacman_db_readpkg(db_list[int(repo)], str(pkgName))
 
 
     @dbus.service.method (BUSNAME, in_signature='u', out_signature='a{sv}')
@@ -164,9 +227,7 @@ class FPMd (dbus.service.Object):
 
         pkg = pacman_db_readpkg(db_list[int(repo)], str(pkgName))
 
-        sha1sums = str(pacman_pkg_get_info(pkg, PM_PKG_SHA1SUM))
-
-        return sha1sums
+        return str(pacman_pkg_get_info(pkg, PM_PKG_SHA1SUM))
 
 
     @dbus.service.method (BUSNAME, in_signature='s', out_signature='as')
@@ -352,9 +413,9 @@ class FPMd (dbus.service.Object):
 
         for element in db_list:
             # We don't use local repo for update
-            if repo_list[db_list.index(element)] != "local":
+            if repo_list[db_list.index(element)] != FW_LOCAL:
                 # Send the name of the repo
-                self.emitSignal({"repo",str(repo_list[db_list.index(element)])})
+                self.emitSignal({"repo", str(repo_list[db_list.index(element)])})
 
                 # Run update of this repo
                 if pacman_db_update (1, element) == -1:
@@ -362,30 +423,21 @@ class FPMd (dbus.service.Object):
                     self.emitSignal({"repo","-1"})
                     self.writeLog("cannot connect to " + str(repo_list[db_list.index(element)]))
 
-            # Just to have a wait :p
-            time.sleep(0.2)
-
         self.writeLog("Synchronizing package lists")
 
         self.emitSignal({"action","end"})
 
 
-    @dbus.service.method (BUSNAME)
-    def cleanCache (self):
+    @dbus.service.method (BUSNAME, in_signature="u")
+    def cleanCache (self, mode):
         """
         Clean pacman-g2 cache
         """
 
-        self.emitSignal({"action","start"})
-
-        value = pacman_sync_cleancache(0)
-        if not value:
-            self.writeLog("Clean cache")
+        if pacman_sync_cleancache(mode) == -1:
+            self.writeLog("Failed to clean the cache with mode " + str(mode))
         else:
-            self.writeLog("Failed to clean the cache")
-
-        self.emitSignal({"action","end"})
-
+            self.writeLog("Clean cache with mode " + str(mode))
 
 
     @dbus.service.method (BUSNAME, in_signature="su", out_signature="b")
