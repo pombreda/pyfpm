@@ -9,6 +9,7 @@
 
 # Importation des modules
 import os, sys, pango, codecs, urllib, gettext
+from threading import Thread, Event
 
 # Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
@@ -20,7 +21,7 @@ try:
 except ImportError:
     sys.exit(_("pygtk was not found"))
 
-from . import preferences
+from . import preferences, pacman
 from Functions import package, config, files
 
 # Initialisation des modules
@@ -40,6 +41,8 @@ class Interface (object):
         Initialisation de la fenêtre principale
         """
 
+        # TODO
+        # Trouver un moyen plus élégant pour cacher les sous-groupes
         self.listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
 
         self.paquetSelectionne = ""
@@ -164,6 +167,8 @@ class Interface (object):
         self.listeJournal = gtk.TextView()
         self.defilementJournal = gtk.ScrolledWindow()
 
+        # FIXME
+        # Faut-il garder ce module ?
         self.labelFrugalbuild = gtk.Label(_("FrugalBuild"))
         self.listeFrugalbuild = gtk.TextView()
         self.defilementFrugalbuild = gtk.ScrolledWindow()
@@ -179,311 +184,302 @@ class Interface (object):
         longueur = Config.readConfig("screen", "width")
         hauteur = Config.readConfig("screen", "height")
 
-        # Vérifie que la fenêtre n'a pas une taille inférieur à 800x600
-        if int(longueur) >= 800 and int(hauteur) >= 600:
+        # ------------------------------------------------------------------
+        #       Fenetre
+        # ------------------------------------------------------------------
 
-            # ------------------------------------------------------------------
-            #       Fenetre
-            # ------------------------------------------------------------------
+        self.fenetre.set_title(_("Install and Remove packages"))
+        self.fenetre.set_default_size(int(longueur), int(hauteur))
+        self.fenetre.set_resizable(True)
+        self.fenetre.set_position(gtk.WIN_POS_CENTER)
 
-            self.fenetre.set_title(_("Install and Remove packages"))
-            self.fenetre.set_default_size(int(longueur), int(hauteur))
-            self.fenetre.set_resizable(True)
-            self.fenetre.set_position(gtk.WIN_POS_CENTER)
+        # ------------------------------------------------------------------
+        #       Menu
+        # ------------------------------------------------------------------
 
-            # ------------------------------------------------------------------
-            #       Menu
-            # ------------------------------------------------------------------
+        self.fenetre.connect("destroy", gtk.main_quit)
+        self.fenetre.connect("check-resize", self.resize)
 
-            self.fenetre.connect("destroy", gtk.main_quit)
-            self.fenetre.connect("check-resize", self.resize)
+        self.menu_action_install.set_image(gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU))
+        self.menu_action_install.connect("activate", self.installWindow, self)
 
-            self.menu_action_install.set_image(gtk.image_new_from_stock(gtk.STOCK_APPLY, gtk.ICON_SIZE_MENU))
-            self.menu_action_install.connect("activate", self.installWindow, self)
+        self.menu_action_clean.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
+        self.menu_action_clean.connect("activate", self.cleanCacheWindow, self)
 
-            self.menu_action_clean.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
-            self.menu_action_clean.connect("activate", Package.cleanCache, self)
+        self.menu_action_update.set_image(gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU))
+        self.menu_action_update.connect("activate", self.runAction, "update")
 
-            self.menu_action_update.set_image(gtk.image_new_from_stock(gtk.STOCK_REFRESH, gtk.ICON_SIZE_MENU))
-            self.menu_action_update.connect("activate", Package.updateDatabase, self)
+        self.menu_action_check.set_image(gtk.image_new_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU))
+        self.menu_action_check.connect("activate", self.updateWindow)
 
-            self.menu_action_check.set_image(gtk.image_new_from_stock(gtk.STOCK_FIND, gtk.ICON_SIZE_MENU))
-            self.menu_action_check.connect("activate", self.updateWindow)
+        self.menu_action_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
+        self.menu_action_quit.connect("activate", self.closeWindow)
 
-            self.menu_action_quit.set_image(gtk.image_new_from_stock(gtk.STOCK_QUIT, gtk.ICON_SIZE_MENU))
-            self.menu_action_quit.connect("activate", self.closeWindow)
+        self.menu.add(self.menu_action)
 
-            self.menu.add(self.menu_action)
+        self.menu_action_list.add(self.menu_action_install)
+        self.menu_action_list.add(self.menu_action_clean)
+        self.menu_action_list.add(self.menu_action_update)
+        self.menu_action_list.add(self.menu_action_check)
+        self.menu_action_list.add(self.menu_action_quit)
 
-            self.menu_action_list.add(self.menu_action_install)
-            self.menu_action_list.add(self.menu_action_clean)
-            self.menu_action_list.add(self.menu_action_update)
-            self.menu_action_list.add(self.menu_action_check)
-            self.menu_action_list.add(self.menu_action_quit)
+        self.menu_action.set_submenu(self.menu_action_list)
 
-            self.menu_action.set_submenu(self.menu_action_list)
+        self.menu_edit_clear_changes.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
+        self.menu_edit_clear_changes.connect("activate", self.erasePackage)
 
-            self.menu_edit_clear_changes.set_image(gtk.image_new_from_stock(gtk.STOCK_CLEAR, gtk.ICON_SIZE_MENU))
-            self.menu_edit_clear_changes.connect("activate", self.erasePackage)
+        self.menu_edit_preference.set_image(gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU))
+        self.menu_edit_preference.connect("activate", Preferences.runPreferences, self)
 
-            self.menu_edit_preference.set_image(gtk.image_new_from_stock(gtk.STOCK_PREFERENCES, gtk.ICON_SIZE_MENU))
-            self.menu_edit_preference.connect("activate", Preferences.runPreferences, self)
+        self.menu.add(self.menu_edit)
 
-            self.menu.add(self.menu_edit)
+        self.menu_edit_list.add(self.menu_edit_clear_changes)
+        self.menu_edit_list.add(self.menu_edit_preference)
 
-            self.menu_edit_list.add(self.menu_edit_clear_changes)
-            self.menu_edit_list.add(self.menu_edit_preference)
+        self.menu_edit.set_submenu(self.menu_edit_list)
+        self.menu_help_about.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+        self.menu_help_about.connect("activate", self.aboutWindow)
 
-            self.menu_edit.set_submenu(self.menu_edit_list)
-            self.menu_help_about.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
-            self.menu_help_about.connect("activate", self.aboutWindow)
+        self.menu.add(self.menu_help)
+
+        self.menu_help_list.add(self.menu_help_about)
 
-            self.menu.add(self.menu_help)
+        self.menu_help.set_submenu(self.menu_help_list)
+
+        # ------------------------------------------------------------------
+        #       Barre d'outils
+        # ------------------------------------------------------------------
+
+        self.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
+        # L'utilisateur à un affichage par défaut de la toolbar
+        #~ self.outils.set_style(gtk.TOOLBAR_ICONS)
 
-            self.menu_help_list.add(self.menu_help_about)
+        self.outils.insert_stock(gtk.STOCK_APPLY, _("Apply changes"), None, self.installWindow, self, 0)
+        self.outils.insert_stock(gtk.STOCK_REFRESH, _("Update databases"), None, self.runAction, "update", 2)
+        self.outils.insert_space(3)
+        self.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
+        self.texteRecherche.connect("activate", self.search, gtk.RESPONSE_OK)
+        self.texteRecherche.connect("icon-press", self.eraseSearch)
+        self.texteRecherche.grab_focus()
+        self.outils.insert_widget(self.texteRecherche, _("Write your search here"), None, 4)
+        self.outils.insert_stock(gtk.STOCK_FIND, _("Search"), None, self.search, None, 5)
+        self.outils.insert_space(6)
+        self.outils.insert_stock(gtk.STOCK_PREFERENCES, _("Preferences"), None, Preferences.runPreferences, self, 7)
+        self.outils.insert_stock(gtk.STOCK_QUIT, _("Quit"), None, self.closeWindow, None, 8)
 
-            self.menu_help.set_submenu(self.menu_help_list)
+        # ------------------------------------------------------------------
+        #       Liste des dépôts
+        # ------------------------------------------------------------------
 
-            # ------------------------------------------------------------------
-            #       Barre d'outils
-            # ------------------------------------------------------------------
+        # Ajout des dépôts
+        self.addRepos()
 
-            self.outils.set_orientation(gtk.ORIENTATION_HORIZONTAL)
-            # L'utilisateur à un affichage par défaut de la toolbar
-            #~ self.outils.set_style(gtk.TOOLBAR_ICONS)
+        self.labelSelectionDepots.set_alignment(0.05,0.5)
+        self.listeSelectionDepots.connect('changed', self.changeRepo, self)
+        self.grilleSelectionDepots.set_border_width(2)
 
-            self.outils.insert_stock(gtk.STOCK_APPLY, _("Apply changes"), None, self.installWindow, self, 0)
-            self.outils.insert_stock(gtk.STOCK_REFRESH, _("Update databases"), None, Package.updateDatabase, self, 2)
-            self.outils.insert_space(3)
-            self.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
-            self.texteRecherche.connect("activate", self.search, gtk.RESPONSE_OK)
-            self.texteRecherche.connect("icon-press", self.eraseSearch)
-            self.texteRecherche.grab_focus()
-            self.outils.insert_widget(self.texteRecherche, _("Write your search here"), None, 4)
-            self.outils.insert_stock(gtk.STOCK_FIND, _("Search"), None, self.search, None, 5)
-            self.outils.insert_space(6)
-            self.outils.insert_stock(gtk.STOCK_PREFERENCES, _("Preferences"), None, Preferences.runPreferences, self, 7)
-            self.outils.insert_stock(gtk.STOCK_QUIT, _("Quit"), None, self.closeWindow, None, 8)
+        # ------------------------------------------------------------------
+        #       Colonnes des groupes
+        # ------------------------------------------------------------------
 
-            # ------------------------------------------------------------------
-            #       Liste des dépôts
-            # ------------------------------------------------------------------
+        #~ self.listeColonneGroupes.clear()
 
-            # Ajout des dépôts
-            self.addRepos()
+        # Ajout des groupes en fonction du dépôt initial
+        self.addGroups()
+
+        self.colonneGroupes.set_headers_visible(True)
+        self.colonneGroupes.set_size_request(180,0)
+        self.colonneGroupes.set_search_column(0)
+
+        self.colonneGroupesNom.set_sort_column_id(0)
+        self.colonneGroupesNom.pack_start(self.celluleGroupesNom, True)
+        self.colonneGroupesNom.add_attribute(self.celluleGroupesNom, 'text', 0)
+        self.colonneGroupes.append_column(self.colonneGroupesNom)
+
+        self.defilementGroupes.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.defilementGroupes.add(self.colonneGroupes)
+        self.defilementGroupes.set_border_width(2)
+        self.defilementGroupes.set_resize_mode(gtk.RESIZE_PARENT)
+
+        self.selectionGroupe = self.colonneGroupes.get_selection()
+        self.selectionGroupe.connect('changed', self.selectGroup, self.listeColonneGroupes)
+        self.grilleDepotGroupes.set_border_width(4)
+
+        # ------------------------------------------------------------------
+        #       Colonnes des paquets
+        # ------------------------------------------------------------------
+
+        self.listeColonnePaquets.clear()
+        self.listeColonnePaquets.set_sort_column_id(2, gtk.SORT_ASCENDING)
+
+        self.colonnePaquets.set_headers_visible(True)
+        self.colonnePaquets.set_search_column(2)
 
-            self.labelSelectionDepots.set_alignment(0.05,0.5)
-            self.listeSelectionDepots.connect('changed', self.changeRepo, self)
-            self.grilleSelectionDepots.set_border_width(2)
+        self.colonnePaquetsCheckbox.set_sort_column_id(0)
+        self.colonnePaquetsImage.set_sort_column_id(1)
+        self.colonnePaquetsNom.set_min_width(300)
+        self.colonnePaquetsNom.set_sort_column_id(2)
+        self.colonnePaquetsVersionActuelle.set_sort_column_id(3)
+        self.colonnePaquetsVersionDisponible.set_sort_column_id(4)
 
-            # ------------------------------------------------------------------
-            #       Colonnes des groupes
-            # ------------------------------------------------------------------
+        self.cellulePaquetsCheckbox.set_property('active', 1)
+        self.cellulePaquetsCheckbox.set_property('activatable', True)
+        self.cellulePaquetsCheckbox.connect('toggled', self.checkPackage, self.colonnePaquets)
 
-            #~ self.listeColonneGroupes.clear()
+        self.colonnePaquetsCheckbox.pack_start(self.cellulePaquetsCheckbox, True)
+        self.colonnePaquetsCheckbox.add_attribute(self.cellulePaquetsCheckbox, 'active', 0)
+        self.colonnePaquetsImage.pack_start(self.cellulePaquetsImage, False)
+        self.colonnePaquetsImage.add_attribute(self.cellulePaquetsImage, 'stock_id', 1)
+        self.colonnePaquetsNom.pack_start(self.cellulePaquetsNom, True)
+        self.colonnePaquetsNom.add_attribute(self.cellulePaquetsNom, 'text', 2)
+        self.colonnePaquetsVersionActuelle.pack_start(self.cellulePaquetsVersionActuelle, True)
+        self.colonnePaquetsVersionActuelle.add_attribute(self.cellulePaquetsVersionActuelle, 'text', 3)
+        self.colonnePaquetsVersionDisponible.pack_start(self.cellulePaquetsVersionDisponible, True)
+        self.colonnePaquetsVersionDisponible.add_attribute(self.cellulePaquetsVersionDisponible, 'text', 4)
 
-            # Ajout des groupes en fonction du dépôt initial
-            self.addGroups()
-
-            self.colonneGroupes.set_headers_visible(True)
-            self.colonneGroupes.set_size_request(180,0)
-            self.colonneGroupes.set_search_column(0)
-
-            self.colonneGroupesNom.set_sort_column_id(0)
-            self.colonneGroupesNom.pack_start(self.celluleGroupesNom, True)
-            self.colonneGroupesNom.add_attribute(self.celluleGroupesNom, 'text', 0)
-            self.colonneGroupes.append_column(self.colonneGroupesNom)
+        self.colonnePaquets.append_column(self.colonnePaquetsCheckbox)
+        self.colonnePaquets.append_column(self.colonnePaquetsImage)
+        self.colonnePaquets.append_column(self.colonnePaquetsNom)
+        self.colonnePaquets.append_column(self.colonnePaquetsVersionActuelle)
+        self.colonnePaquets.append_column(self.colonnePaquetsVersionDisponible)
 
-            self.defilementGroupes.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementGroupes.add(self.colonneGroupes)
-            self.defilementGroupes.set_border_width(2)
-            self.defilementGroupes.set_resize_mode(gtk.RESIZE_PARENT)
+        self.defilementPaquets.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.defilementPaquets.add(self.colonnePaquets)
+        self.defilementPaquets.set_border_width(4)
 
-            self.selectionGroupe = self.colonneGroupes.get_selection()
-            self.selectionGroupe.connect('changed', self.selectGroup, self.listeColonneGroupes)
-            self.grilleDepotGroupes.set_border_width(4)
+        self.selectionPaquet = self.colonnePaquets.get_selection()
+        self.selectionPaquet.connect('changed', self.selectPackage, self.listeColonnePaquets)
 
-            # ------------------------------------------------------------------
-            #       Colonnes des paquets
-            # ------------------------------------------------------------------
+        #~ self.zonePaquets.add(self.defilementPaquets)
+        #~ self.zonePaquets.set_border_width(4)
 
-            self.listeColonnePaquets.clear()
-            self.listeColonnePaquets.set_sort_column_id(2, gtk.SORT_ASCENDING)
+        # ------------------------------------------------------------------
+        #       Informations sur le paquet
+        # ------------------------------------------------------------------
 
-            self.colonnePaquets.set_headers_visible(True)
-            self.colonnePaquets.set_search_column(2)
+        self.listeInformations.set_headers_visible(False)
+        self.listeInformations.set_hover_selection(False)
 
-            self.colonnePaquetsCheckbox.set_sort_column_id(0)
-            self.colonnePaquetsImage.set_sort_column_id(1)
-            self.colonnePaquetsNom.set_min_width(300)
-            self.colonnePaquetsNom.set_sort_column_id(2)
-            self.colonnePaquetsVersionActuelle.set_sort_column_id(3)
-            self.colonnePaquetsVersionDisponible.set_sort_column_id(4)
+        self.celluleLabelInformations.set_property('weight', pango.WEIGHT_BOLD)
 
-            self.cellulePaquetsCheckbox.set_property('active', 1)
-            self.cellulePaquetsCheckbox.set_property('activatable', True)
-            self.cellulePaquetsCheckbox.connect('toggled', self.checkPackage, self.colonnePaquets)
+        self.colonneLabelInformations.pack_start(self.celluleLabelInformations, True)
+        self.colonneLabelInformations.add_attribute(self.celluleLabelInformations, "text", 0)
+        self.colonneValeurInformations.pack_start(self.celluleValeurInformations, True)
+        self.colonneValeurInformations.add_attribute(self.celluleValeurInformations, "text", 1)
 
-            self.colonnePaquetsCheckbox.pack_start(self.cellulePaquetsCheckbox, True)
-            self.colonnePaquetsCheckbox.add_attribute(self.cellulePaquetsCheckbox, 'active', 0)
-            self.colonnePaquetsImage.pack_start(self.cellulePaquetsImage, False)
-            self.colonnePaquetsImage.add_attribute(self.cellulePaquetsImage, 'stock_id', 1)
-            self.colonnePaquetsNom.pack_start(self.cellulePaquetsNom, True)
-            self.colonnePaquetsNom.add_attribute(self.cellulePaquetsNom, 'text', 2)
-            self.colonnePaquetsVersionActuelle.pack_start(self.cellulePaquetsVersionActuelle, True)
-            self.colonnePaquetsVersionActuelle.add_attribute(self.cellulePaquetsVersionActuelle, 'text', 3)
-            self.colonnePaquetsVersionDisponible.pack_start(self.cellulePaquetsVersionDisponible, True)
-            self.colonnePaquetsVersionDisponible.add_attribute(self.cellulePaquetsVersionDisponible, 'text', 4)
+        self.celluleValeurInformations.set_property('wrap-mode', pango.WRAP_WORD)
+        self.celluleValeurInformations.set_property('editable', True)
 
-            self.colonnePaquets.append_column(self.colonnePaquetsCheckbox)
-            self.colonnePaquets.append_column(self.colonnePaquetsImage)
-            self.colonnePaquets.append_column(self.colonnePaquetsNom)
-            self.colonnePaquets.append_column(self.colonnePaquetsVersionActuelle)
-            self.colonnePaquets.append_column(self.colonnePaquetsVersionDisponible)
+        self.listeInformations.append_column(self.colonneLabelInformations)
+        self.listeInformations.append_column(self.colonneValeurInformations)
+        self.listeInformations.set_model(self.contenuInformations)
+
+        self.defilementInformations.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.defilementInformations.add(self.listeInformations)
+        self.defilementInformations.set_border_width(4)
+
+        self.listePaquet.set_headers_visible(False)
+        self.listePaquet.set_hover_selection(False)
 
-            self.defilementPaquets.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementPaquets.add(self.colonnePaquets)
-            self.defilementPaquets.set_border_width(4)
+        self.celluleLabelPaquet.set_property('weight', pango.WEIGHT_BOLD)
 
-            self.selectionPaquet = self.colonnePaquets.get_selection()
-            self.selectionPaquet.connect('changed', self.selectPackage, self.listeColonnePaquets)
+        self.colonneLabelPaquet.pack_start(self.celluleLabelPaquet, True)
+        self.colonneLabelPaquet.add_attribute(self.celluleLabelPaquet, "text", 0)
+        self.colonneValeurPaquet.pack_start(self.celluleValeurPaquet, True)
+        self.colonneValeurPaquet.add_attribute(self.celluleValeurPaquet, "text", 1)
 
-            #~ self.zonePaquets.add(self.defilementPaquets)
-            #~ self.zonePaquets.set_border_width(4)
+        self.celluleValeurPaquet.set_property('wrap-mode', pango.WRAP_WORD)
+        self.celluleValeurPaquet.set_property('editable', True)
 
-            # ------------------------------------------------------------------
-            #       Informations sur le paquet
-            # ------------------------------------------------------------------
+        self.listePaquet.append_column(self.colonneLabelPaquet)
+        self.listePaquet.append_column(self.colonneValeurPaquet)
+        self.listePaquet.set_model(self.contenuPaquet)
 
-            self.listeInformations.set_headers_visible(False)
-            self.listeInformations.set_hover_selection(False)
+        self.defilementPaquet.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.defilementPaquet.add(self.listePaquet)
+        self.defilementPaquet.set_border_width(4)
 
-            self.celluleLabelInformations.set_property('weight', pango.WEIGHT_BOLD)
+        #~ self.listeFichiers.set_editable(False)
+        #~ self.listeFichiers.set_cursor_visible(False)
 
-            self.colonneLabelInformations.pack_start(self.celluleLabelInformations, True)
-            self.colonneLabelInformations.add_attribute(self.celluleLabelInformations, "text", 0)
-            self.colonneValeurInformations.pack_start(self.celluleValeurInformations, True)
-            self.colonneValeurInformations.add_attribute(self.celluleValeurInformations, "text", 1)
+        #~ self.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        #~ self.defilementFichiers.add(self.listeFichiers)
+        #~ self.defilementFichiers.set_border_width(4)
 
-            self.celluleValeurInformations.set_property('wrap-mode', pango.WRAP_WORD)
-            self.celluleValeurInformations.set_property('editable', True)
+        self.listeFichiers.set_headers_visible(False)
+        self.listeFichiers.set_hover_selection(False)
 
-            self.listeInformations.append_column(self.colonneLabelInformations)
-            self.listeInformations.append_column(self.colonneValeurInformations)
-            self.listeInformations.set_model(self.contenuInformations)
+        self.colonneFichiers.pack_start(self.celluleFichiers, True)
+        self.colonneFichiers.add_attribute(self.celluleFichiers, "text", 0)
 
-            self.defilementInformations.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementInformations.add(self.listeInformations)
-            self.defilementInformations.set_border_width(4)
+        self.celluleFichiers.set_property('editable', False)
 
-            self.listePaquet.set_headers_visible(False)
-            self.listePaquet.set_hover_selection(False)
+        self.listeFichiers.append_column(self.colonneFichiers)
+        self.listeFichiers.set_model(self.contenuFichiers)
 
-            self.celluleLabelPaquet.set_property('weight', pango.WEIGHT_BOLD)
+        self.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.defilementFichiers.add(self.listeFichiers)
+        self.defilementFichiers.set_border_width(4)
 
-            self.colonneLabelPaquet.pack_start(self.celluleLabelPaquet, True)
-            self.colonneLabelPaquet.add_attribute(self.celluleLabelPaquet, "text", 0)
-            self.colonneValeurPaquet.pack_start(self.celluleValeurPaquet, True)
-            self.colonneValeurPaquet.add_attribute(self.celluleValeurPaquet, "text", 1)
+        self.listeJournal.set_editable(False)
+        self.listeJournal.set_cursor_visible(False)
 
-            self.celluleValeurPaquet.set_property('wrap-mode', pango.WRAP_WORD)
-            self.celluleValeurPaquet.set_property('editable', True)
+        self.defilementJournal.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.defilementJournal.add(self.listeJournal)
+        self.defilementJournal.set_border_width(4)
 
-            self.listePaquet.append_column(self.colonneLabelPaquet)
-            self.listePaquet.append_column(self.colonneValeurPaquet)
-            self.listePaquet.set_model(self.contenuPaquet)
+        self.listeFrugalbuild.set_editable(False)
+        self.listeFrugalbuild.set_cursor_visible(False)
 
-            self.defilementPaquet.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementPaquet.add(self.listePaquet)
-            self.defilementPaquet.set_border_width(4)
+        self.defilementFrugalbuild.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.defilementFrugalbuild.add(self.listeFrugalbuild)
+        self.defilementFrugalbuild.set_border_width(4)
 
-            #~ self.listeFichiers.set_editable(False)
-            #~ self.listeFichiers.set_cursor_visible(False)
+        self.zoneInformations.set_tab_pos(gtk.POS_LEFT)
+        self.zoneInformations.append_page(self.defilementInformations, self.labelInformations)
+        self.zoneInformations.append_page(self.defilementPaquet, self.labelPaquet)
+        self.zoneInformations.append_page(self.defilementFichiers, self.labelFichiers)
+        self.zoneInformations.append_page(self.defilementJournal, self.labelJournal)
 
-            #~ self.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            #~ self.defilementFichiers.add(self.listeFichiers)
-            #~ self.defilementFichiers.set_border_width(4)
+        # Affiche la zone "FrugalBuild" uniquement si l'option est activé
+        if self.developementMode:
+            self.zoneInformations.append_page(self.defilementFrugalbuild, self.labelFrugalbuild)
 
-            self.listeFichiers.set_headers_visible(False)
-            self.listeFichiers.set_hover_selection(False)
+        self.zoneInformations.set_border_width(4)
+        self.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
 
-            self.colonneFichiers.pack_start(self.celluleFichiers, True)
-            self.colonneFichiers.add_attribute(self.celluleFichiers, "text", 0)
+        # ------------------------------------------------------------------
+        #       Intégration des widgets
+        # ------------------------------------------------------------------
 
-            self.celluleFichiers.set_property('editable', False)
+        # Liste des dépôts
+        self.grilleSelectionDepots.attach(self.labelSelectionDepots, 0, 1, 0, 1, yoptions=gtk.FILL)
+        self.grilleSelectionDepots.attach(self.listeSelectionDepots, 0, 1, 1, 2, yoptions=gtk.FILL)
+        self.grilleDepotGroupes.attach(self.grilleSelectionDepots, 0, 1, 0, 1, yoptions=gtk.FILL)
 
-            self.listeFichiers.append_column(self.colonneFichiers)
-            self.listeFichiers.set_model(self.contenuFichiers)
+        # Liste des groupes
+        self.grilleDepotGroupes.attach(self.defilementGroupes, 0, 1, 1, 2)
 
-            self.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementFichiers.add(self.listeFichiers)
-            self.defilementFichiers.set_border_width(4)
+        # Liste des paquets
+        self.grilleColonnePaquets.attach(self.grilleDepotGroupes, 0, 1, 0, 1, xoptions=gtk.FILL)
+        self.grilleColonnePaquets.attach(self.grillePaquetsInformations, 1, 2, 0, 1)
 
-            self.listeJournal.set_editable(False)
-            self.listeJournal.set_cursor_visible(False)
+        # Informations des paquets
+        #~ self.grillePaquetsInformations.add1(self.zonePaquets)
+        self.grillePaquetsInformations.add1(self.defilementPaquets)
+        self.grillePaquetsInformations.add2(self.zoneInformations)
 
-            self.defilementJournal.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementJournal.add(self.listeJournal)
-            self.defilementJournal.set_border_width(4)
+        # Grille principale
+        self.grille.attach(self.menu, 0, 1, 0, 1, yoptions=gtk.FILL)
+        self.grille.attach(self.outils, 0, 1, 1, 2, yoptions=gtk.FILL)
+        self.grille.attach(self.grilleColonnePaquets, 0, 1, 2, 3)
+        self.grille.attach(self.barreStatus, 0, 1, 3, 4, yoptions=gtk.FILL)
 
-            self.listeFrugalbuild.set_editable(False)
-            self.listeFrugalbuild.set_cursor_visible(False)
+        self.fenetre.add(self.grille)
+        self.fenetre.show_all()
+        self.refresh()
 
-            self.defilementFrugalbuild.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementFrugalbuild.add(self.listeFrugalbuild)
-            self.defilementFrugalbuild.set_border_width(4)
-
-            self.zoneInformations.set_tab_pos(gtk.POS_LEFT)
-            self.zoneInformations.append_page(self.defilementInformations, self.labelInformations)
-            self.zoneInformations.append_page(self.defilementPaquet, self.labelPaquet)
-            self.zoneInformations.append_page(self.defilementFichiers, self.labelFichiers)
-            self.zoneInformations.append_page(self.defilementJournal, self.labelJournal)
-
-            # Affiche la zone "FrugalBuild" uniquement si l'option est activé
-            if self.developementMode:
-                self.zoneInformations.append_page(self.defilementFrugalbuild, self.labelFrugalbuild)
-
-            self.zoneInformations.set_border_width(4)
-            self.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
-
-            # ------------------------------------------------------------------
-            #       Intégration des widgets
-            # ------------------------------------------------------------------
-
-            # Liste des dépôts
-            self.grilleSelectionDepots.attach(self.labelSelectionDepots, 0, 1, 0, 1, yoptions=gtk.FILL)
-            self.grilleSelectionDepots.attach(self.listeSelectionDepots, 0, 1, 1, 2, yoptions=gtk.FILL)
-            self.grilleDepotGroupes.attach(self.grilleSelectionDepots, 0, 1, 0, 1, yoptions=gtk.FILL)
-
-            # Liste des groupes
-            self.grilleDepotGroupes.attach(self.defilementGroupes, 0, 1, 1, 2)
-
-            # Liste des paquets
-            self.grilleColonnePaquets.attach(self.grilleDepotGroupes, 0, 1, 0, 1, xoptions=gtk.FILL)
-            self.grilleColonnePaquets.attach(self.grillePaquetsInformations, 1, 2, 0, 1)
-
-            # Informations des paquets
-            #~ self.grillePaquetsInformations.add1(self.zonePaquets)
-            self.grillePaquetsInformations.add1(self.defilementPaquets)
-            self.grillePaquetsInformations.add2(self.zoneInformations)
-
-            # Grille principale
-            self.grille.attach(self.menu, 0, 1, 0, 1, yoptions=gtk.FILL)
-            self.grille.attach(self.outils, 0, 1, 1, 2, yoptions=gtk.FILL)
-            self.grille.attach(self.grilleColonnePaquets, 0, 1, 2, 3)
-            self.grille.attach(self.barreStatus, 0, 1, 3, 4, yoptions=gtk.FILL)
-
-            self.fenetre.add(self.grille)
-            self.fenetre.show_all()
-
-            self.getUpdateList()
-        else:
-            try:
-                self.informationWindow(_("Error"), _("Window is under limit size"))
-            except:
-                pass
-
-            sys.exit("[ERROR] - " + _("Window is under limit size"))
+        self.getUpdateList()
 
 
     def runWindow (self):
@@ -556,12 +552,13 @@ class Interface (object):
         self.updateStatusbar(_("Change repository to %s") % str(self.listeSelectionDepots.get_active_text()))
 
 
-    def updateStatusbar (self, texte):
+    def updateStatusbar (self, texte = ""):
         """
         Changer le texte inscrit dans la barre inférieur
         """
 
         self.barreStatus.push(0, str(texte))
+        self.refresh()
 
 
     def eraseInterface (self):
@@ -606,10 +603,33 @@ class Interface (object):
 
         try :
             while gtk.events_pending():
-                #~ gtk.main_iteration_do(False)
                 gtk.main_iteration()
         except:
             pass
+
+
+    def runAction (self, widget, mode, *args):
+        """
+        Lance l'action de mise à jour des base de données pacman-g2
+        """
+
+        if mode == "update":
+            title = _("Update databases")
+
+        self.fenetre.set_sensitive(False)
+        self.updateStatusbar(title)
+
+        pacmanUi = pacman.Pacman(title, mode)
+        pacmanUi.mainWindow()
+
+        self.eraseInterface()
+        self.addRepos()
+        #~ interface.addGroups()
+
+        self.fenetre.set_sensitive(True)
+        self.refresh()
+
+        self.getUpdateList()
 
 
     def addGroups (self):
@@ -669,6 +689,8 @@ class Interface (object):
         Ajoute les paquets dans l'interface
         """
 
+        self.refresh()
+
         objetTrouve = 0
         n = 0
         self.listeColonnePaquets.clear()
@@ -706,8 +728,10 @@ class Interface (object):
                     # Le paquet est dans la liste des paquets à installer
                     image = gtk.STOCK_ADD
                 elif str(nomPaquet) in self.listeMiseAJourPacman:
+                    # Le paquet est dans la liste des mises à jour
                     image = gtk.STOCK_REFRESH
                 elif str(nomPaquet) in listePaquetsInstalles:
+                    # Le paquet est dans une version supérieur à celle du paquet disponible
                     image = gtk.STOCK_REDO
 
                 # On récupère la valeur de la version de mise à jour
@@ -740,7 +764,6 @@ class Interface (object):
             n += 1
             if (n / 100 == 1):
                 self.updateStatusbar(_("Load packages"))
-                self.refresh()
                 n = 0
 
         self.colonnePaquets.set_model(modeleColonnePaquets)
@@ -894,7 +917,7 @@ class Interface (object):
             try:
                 listeDepot = Package.getRepoList()
                 journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
-                if os.path.exists(journal) == True:
+                if os.path.exists(journal):
                     # Cet encodage pose soucis
                     file = codecs.open(journal, "r", "iso-8859-15")
                     for element in file:
@@ -1150,7 +1173,7 @@ class Interface (object):
         about.set_comments(_("A pacman-g2 front-end for Frugalware Linux"))
         about.set_copyright("(C) 2012-2013 Frugalware Developer Team (GPL)")
         about.set_authors(["Gaetan Gourdin (bouleetbil)", "Aurélien Lubert (PacMiam)"])
-        about.set_artists(["Aurélien Lubert (PacMiam)"])
+        #~ about.set_artists(["Aurélien Lubert (PacMiam)"])
         about.set_translator_credits("fr_FR - Anthony Jorion (Pingax)")
         about.set_license("Ce programme est un logiciel libre, vous pouvez le redistribuer et/ou le modifier conformément aux dispositions de la Licence Publique Générale GNU, telle que publiée par la Free Software Foundation.")
         about.set_wrap_license(True)
@@ -1421,5 +1444,38 @@ class Interface (object):
         else:
             # Dans le cas où la liste est vide
             self.barreStatus.push(0, _("No update available"))
+
+        self.fenetre.set_sensitive(True)
+
+
+    def cleanCacheWindow (self, *args):
+        """
+        Fenêtre demandant la confirmation d'utiliser le nettoyage
+        des vieux paquets fpm
+        """
+
+        self.fenetre.set_sensitive(False)
+
+        nettoyage = gtk.Dialog(_("Clear package cache"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL, gtk.STOCK_OK, gtk.RESPONSE_OK))
+        texte = gtk.Label(_("Are you sure you want to remove old packages from cache ?"))
+
+        nettoyage.set_border_width(4)
+        nettoyage.vbox.set_spacing(4)
+        nettoyage.vbox.pack_start(texte)
+
+        nettoyage.show_all()
+
+        choix = nettoyage.run()
+
+        if choix == gtk.RESPONSE_OK:
+            self.updateStatusbar(_("Clean cache"))
+            Package.cleanCache()
+            self.updateStatusbar(_("Clean cache complete"))
+
+            nettoyage.destroy()
+            self.informationWindow(_("Cache cleared"), _("Finished clearing the cache"))
+        else:
+            self.updateStatusbar()
+            nettoyage.destroy()
 
         self.fenetre.set_sensitive(True)

@@ -1,41 +1,41 @@
 
-    FPMd 
-    -------- 
+    FPMd
+    --------
     A pretty useful deamon for pacman-g2
-    
-    
+
+
 --- Auteurs ------------------------------------------------------------
 
     Développement --------------------------------------------------
     Gaetan Gourdin <bouleetbil@frogdev.info>
     Aurélien Lubert <PacMiam@gmx.fr>
-    
+
 
 --- Installation et utilisation ----------------------------------------
 
     En attendant une installation automatisé, il vous faut installer le
     démon à la main.
-    
+
     Premièrement, copié le script `fpmd` dans /usr/bin
-    
+
     # cp fpmd /usr/bin/
-    
+
     Ensuite, copié les scripts nécessaires à l'utilisation de dbus
-    
+
     # cp -R usr/share/fpmd /usr/share/
-    
+
     # cp usr/share/dbus-1/system-services/org.frugalware.fpmd.deamon.service /usr/share/dbus-1/system-services/
-    
+
     # cp etc/dbus-1/system.d/org.frugalware.fpmd.conf /etc/dbus-1/system.d/
 
     Si tout s'est bien passé, le démon doit être opérationnel. Pour le
     vérifier, utilisez la commande suivante :
-    
+
     $ dbus-send --system --dest=org.frugalware.fpmd.deamon --type=method_call --print-reply /org/frugalware/fpmd/deamon/object org.frugalware.fpmd.deamon.closeDeamon
-    
+
     Si cela vous retourne (ou équivalent):
-    
+
     > method return sender=:1.34 -> dest=:1.37 reply_serial=2
-       
+
     Alors le démon fonctionne. Il ne vous reste plus qu'à lancer pyfpm pour
     voir si cela fonctionne.

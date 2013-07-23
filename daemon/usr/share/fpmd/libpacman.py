@@ -510,9 +510,9 @@ def pacman_dep_getinfo(miss,parm):
   print_debug("pacman_dep_getinfo")
   return pacman.pacman_dep_getinfo(miss,parm)
 
-def pacman_sync_cleancache():
+def pacman_sync_cleancache(value=1):
   print_debug("pacman_sync_cleancache")
-  return pacman.pacman_sync_cleancache(1)
+  return pacman.pacman_sync_cleancache(value)
 
 # Info parameters
 (PM_GRP_NAME,

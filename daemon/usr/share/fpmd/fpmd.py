@@ -14,20 +14,44 @@
 #
 # ----------------------------------------------------------------------
 
-# Importation des modules
-import dbus, dbus.service, dbus.mainloop.glib, gobject, time
+# Modules importation
+import os, dbus, dbus.service, dbus.mainloop.glib, gobject, time, datetime
 
 from libpacman import *
 
+# Global var
 BUSNAME = 'org.frugalware.fpmd.deamon'
 OBJPATH = '/org/frugalware/fpmd/deamon/object'
 
+LOGPATH = '/var/log/fpmd.log'
+
+# Dbus loop
+dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+gobject.threads_init()
+dbus.mainloop.glib.threads_init()
+
+
 class FPMd (dbus.service.Object):
+    """
+    FPMd is a daemon for pacman-g2
+    """
+
     def __init__ (self):
-        # Connexion au bus system
+        """
+        FPMd initialization
+        """
+
         connection = dbus.service.BusName(BUSNAME, bus=dbus.SystemBus())
-        # Initalisation de l'objet
         dbus.service.Object.__init__(self, connection, OBJPATH)
+
+        pacmanBus = dbus.SystemBus()
+
+        try:
+            proxy = pacmanBus.get_object(BUSNAME, OBJPATH, introspect=False)
+        except dbus.DBusException:
+            sys.exit("DBus interface is not available")
+
+        pacmanBus.add_signal_receiver(self.listenSignal, dbus_interface=BUSNAME, signal_name='sendSignal')
 
         self.startPacman()
 
@@ -37,14 +61,15 @@ class FPMd (dbus.service.Object):
         Start pacman-g2 instance
         """
 
-        pacman_started()
-
-        self.sendSignal("init_pacman")
-        pacman_init()
-        self.sendSignal("init_db")
-        pacman_init_database()
-        self.sendSignal("register_db")
-        pacman_register_all_database()
+        try:
+            pacman_started()
+            pacman_init()
+            pacman_init_database()
+            pacman_register_all_database()
+            self.writeLog("Fpmd have been run succesfully")
+        except:
+            self.writeLog("Failed to initialize libpacman")
+            self.closeDeamon()
 
 
     def closePacman (self):
@@ -52,11 +77,11 @@ class FPMd (dbus.service.Object):
         End pacman-g2 instance
         """
 
-        self.sendSignal("close_pacman")
         pacman_finally()
+        self.writeLog("Fpmd have been closed succesfully")
 
 
-    @dbus.service.signal(BUSNAME, signature='s')
+    @dbus.service.signal(BUSNAME, signature='as')
     def sendSignal (self, value):
         """
         Send a value
@@ -64,12 +89,27 @@ class FPMd (dbus.service.Object):
         pass
 
 
-    @dbus.service.signal(BUSNAME, signature='u')
-    def sendState (self, value):
+    @dbus.service.method (BUSNAME, in_signature='as')
+    def emitSignal (self, text):
         """
-        Send the state of current action
+        Emit a signal
         """
-        pass
+
+        self.sendSignal(text)
+
+
+    def listenSignal (self, texte):
+        """
+        Listen and apply
+        """
+
+        if texte[0] == "run":
+            if texte[1] == "update":
+                self.updateDatabase()
+            else:
+                pass
+        else:
+            pass
 
 
     @dbus.service.method (BUSNAME, in_signature='su', out_signature='u')
@@ -308,19 +348,26 @@ class FPMd (dbus.service.Object):
         Update pacman-g2 database
         """
 
-        self.sendState(0)
-        self.sendSignal("mode:update")
+        self.emitSignal({"action","start"})
 
         for element in db_list:
+            # We don't use local repo for update
             if repo_list[db_list.index(element)] != "local":
-                self.sendSignal("value:" + str(db_list.index(element)))
+                # Send the name of the repo
+                self.emitSignal({"repo",str(repo_list[db_list.index(element)])})
 
-                #~ pourcentage = float(index - 1) / float(len(repo_list) - 1)
-
+                # Run update of this repo
                 if pacman_db_update (1, element) == -1:
-                    self.sendSignal("value:-1")
+                    # There is an error
+                    self.emitSignal({"repo","-1"})
+                    self.writeLog("cannot connect to " + str(repo_list[db_list.index(element)]))
 
-        self.sendState(1)
+            # Just to have a wait :p
+            time.sleep(0.2)
+
+        self.writeLog("Synchronizing package lists")
+
+        self.emitSignal({"action","end"})
 
 
     @dbus.service.method (BUSNAME)
@@ -329,9 +376,16 @@ class FPMd (dbus.service.Object):
         Clean pacman-g2 cache
         """
 
-        self.sendSignal("clean_cache")
-        pacman_sync_cleancache()
-        self.sendSignal("done")
+        self.emitSignal({"action","start"})
+
+        value = pacman_sync_cleancache(0)
+        if not value:
+            self.writeLog("Clean cache")
+        else:
+            self.writeLog("Failed to clean the cache")
+
+        self.emitSignal({"action","end"})
+
 
 
     @dbus.service.method (BUSNAME, in_signature="su", out_signature="b")
@@ -569,10 +623,27 @@ class FPMd (dbus.service.Object):
             pass
 
 
+    def writeLog (self, text):
+        """
+        Write an entry into log
+        """
+
+        date = datetime.datetime.today().strftime("[%D %H:%M] ")
+
+        if os.path.exists(LOGPATH):
+            file = open(LOGPATH, "a")
+            file.write("\n" + str(date) + str(text))
+            file.close()
+        else:
+            file = open(LOGPATH, "w")
+            file.write(str(date) + "First run of fpmd\n")
+            file.close()
+            self.writeLog(text)
+
+
 if __name__ == '__main__':
-    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-    gobject.threads_init()
-    dbus.mainloop.glib.threads_init()
+
     _fpmd = FPMd()
+
     loop = gobject.MainLoop()
     loop.run()

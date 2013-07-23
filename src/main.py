@@ -55,6 +55,7 @@ def main():
     args = parser.parse_args()
 
     if len(sys.argv) == 1 or args.dev or args.debug:
+
         Config = config.Config()
         Config.checkConfig()
 

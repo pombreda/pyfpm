@@ -15,7 +15,9 @@ gettext.bindtextdomain('pyfpm', 'lang')
 gettext.textdomain('pyfpm')
 _ = gettext.gettext
 
-from Interfaces import pacman
+# Noms dbus
+BUSNAME = 'org.frugalware.fpmd.deamon'
+OBJPATH = '/org/frugalware/fpmd/deamon/object'
 
 
 class Package (object):
@@ -23,7 +25,7 @@ class Package (object):
     Fonctions concernant la gestion de pacman-g2
     """
 
-    def __init__(self):
+    def __init__ (self):
         """
         Récupération des fonctions de FPMd
         """
@@ -32,66 +34,47 @@ class Package (object):
         packageBus = dbus.SystemBus()
 
         try:
-            proxy = packageBus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
+            proxy = packageBus.get_object(BUSNAME, OBJPATH, introspect=False)
         except dbus.DBusException:
             sys.exit(_("DBus interface is not available"))
 
-        self.fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', 'org.frugalware.fpmd.deamon')
-        self.fpmd_updateDatabase = proxy.get_dbus_method('updateDatabase', 'org.frugalware.fpmd.deamon')
-        self.fpmd_cleanCache = proxy.get_dbus_method('cleanCache', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getRepoList = proxy.get_dbus_method('getRepoList', 'org.frugalware.fpmd.deamon')
-        self.fpmd_searchRepoPackage = proxy.get_dbus_method('searchRepoPackage', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', 'org.frugalware.fpmd.deamon')
-        self.fpmd_searchInstalledPackage = proxy.get_dbus_method('searchInstalledPackage', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getPackagesList = proxy.get_dbus_method('getPackagesList', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getPackageInfo = proxy.get_dbus_method('getPackageInfo', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getSha1sums = proxy.get_dbus_method('getSha1sums', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getPackagePointer = proxy.get_dbus_method('getPackagePointer', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getUpdateList = proxy.get_dbus_method('getUpdateList', 'org.frugalware.fpmd.deamon')
-        self.fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', 'org.frugalware.fpmd.deamon')
-        self.fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', 'org.frugalware.fpmd.deamon')
+        # Fonction interne a Fpmd
+        self.fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', BUSNAME)
+        self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', BUSNAME)
+
+        # Actions de pacman-g2
+        self.fpmd_updateDatabase = proxy.get_dbus_method('updateDatabase', BUSNAME)
+        self.fpmd_cleanCache = proxy.get_dbus_method('cleanCache', BUSNAME)
+
+        # Fonciton de pacman-g2
+        self.fpmd_getRepoList = proxy.get_dbus_method('getRepoList', BUSNAME)
+        self.fpmd_searchRepoPackage = proxy.get_dbus_method('searchRepoPackage', BUSNAME)
+        self.fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', BUSNAME)
+        self.fpmd_searchInstalledPackage = proxy.get_dbus_method('searchInstalledPackage', BUSNAME)
+        self.fpmd_getPackagesList = proxy.get_dbus_method('getPackagesList', BUSNAME)
+        self.fpmd_getPackageInfo = proxy.get_dbus_method('getPackageInfo', BUSNAME)
+        self.fpmd_getSha1sums = proxy.get_dbus_method('getSha1sums', BUSNAME)
+        self.fpmd_getPackagePointer = proxy.get_dbus_method('getPackagePointer', BUSNAME)
+        self.fpmd_getUpdateList = proxy.get_dbus_method('getUpdateList', BUSNAME)
+        self.fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', BUSNAME)
+        self.fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', BUSNAME)
+        self.fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', BUSNAME)
 
 
-    def cleanCache (self, widget, interface):
+    def cleanCache (self):
         """
         Nettoye le cache de pacman-g2
         """
 
-        interface.updateStatusbar(_("Clean cache"))
-        interface.fenetre.set_sensitive(False)
-        interface.refresh()
-
         self.fpmd_cleanCache()
 
-        interface.updateStatusbar(_("Clean cache complete"))
-        interface.fenetre.set_sensitive(True)
-        interface.refresh()
 
-
-    def updateDatabase (self, widget, interface):
+    def updateDatabase (self):
         """
         Met à jour les dépôts de paquets
         """
 
-        interface.updateStatusbar(_("Update databases"))
-        interface.fenetre.set_sensitive(False)
-        interface.refresh()
-
-        # TODO
-        # Ce qu'il faut faire c'est lancer la fenêtre de progression
-        # et la fonction de pacman-g2 en même temps
-        pacmanUi = pacman.Pacman(_("Update databases"), self.fpmd_updateDatabase)
-        pacmanUi.mainWindow()
-
-        interface.eraseInterface()
-        interface.addRepos()
-        #~ interface.addGroups()
-
-        interface.fenetre.set_sensitive(True)
-        interface.refresh()
-
-        interface.getUpdateList()
+        self.fpmd_updateDatabase()
 
 
     #~ def runPacman (self, interface, listeInstallationPacman, listeSuppressionPacman):
@@ -218,7 +201,7 @@ class Package (object):
         return self.fpmd_getPackageInfo (paquet)
 
 
-    def getPackagePointer (self, nomPaquet, repo=0):
+    def getPackagePointer (self, nomPaquet, repo = 0):
         """
         Obtient le pointer d'un paquet à partir de son nom
         """
@@ -234,7 +217,7 @@ class Package (object):
         return self.fpmd_checkPackageInstalled (nomPaquet, versionPaquet)
 
 
-    def getSha1sums (self, nomPaquet, repo=1):
+    def getSha1sums (self, nomPaquet, repo = 1):
         """
         Obtient le pointer d'un paquet à partir de son nom
         """
@@ -242,10 +225,29 @@ class Package (object):
         return self.fpmd_getSha1sums (nomPaquet, repo)
 
 
+    def emitSignal (self, texte):
+        """
+        Envoie un signal
+        """
+
+        return self.fpmd_emitSignal(texte)
+
+
+    def resetFpmd (self):
+        """
+        Relance le démon
+        """
+
+        return self.fpmd_resetDeamon()
+
+
     def splitVersionName (self, paquet):
         """
         Permet de récupérer la version et le nom du paquet quand la chaîne est du format "kernel>=3.7"
         """
+
+        # TODO
+        # Utiliser les Regex
 
         liste = paquet.split('>')
 

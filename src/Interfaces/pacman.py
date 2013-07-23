@@ -9,7 +9,7 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import sys, gettext, dbus
+import sys, gettext, dbus, time
 
 # Gestion de la boucle dbus - Merci wicd
 if getattr(dbus, "version", (0, 0, 0)) < (0, 80, 0):
@@ -35,18 +35,25 @@ OBJPATH = '/org/frugalware/fpmd/deamon/object'
 
 class Pacman (object):
 
-    def __init__ (self, titre, fonction):
+    def __init__ (self, titre, mode):
         """
         Initialisation de la fenêtre de progression
         """
 
+        self.printDebug("DEBUG", "Lancement de dbus")
         pacmanBus = dbus.SystemBus()
 
-        # Assignation des signaux
-        pacmanBus.add_signal_receiver(self.signal, dbus_interface=BUSNAME, signal_name='sendSignal')
-        pacmanBus.add_signal_receiver(self.state, dbus_interface=BUSNAME, signal_name='sendState')
+        try:
+            proxy = pacmanBus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
+        except dbus.DBusException:
+            sys.exit(_("DBus interface is not available"))
 
-        self.mode = ""
+        # Fonction interne a Fpmd
+        self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', 'org.frugalware.fpmd.deamon')
+
+        # Assignation des signaux
+        self.printDebug("DEBUG", "Récupération des signaux")
+        pacmanBus.add_signal_receiver(self.signal, dbus_interface=BUSNAME, signal_name='sendSignal')
 
         # ------------------------------------------------------------------
         #       Fenetre
@@ -64,11 +71,11 @@ class Pacman (object):
         self.progressionInfo = gtk.ProgressBar()
         self.labelInfo = gtk.Label("")
         self.boutons = gtk.HButtonBox()
-        self.boutonTmp = gtk.Button(stock=gtk.STOCK_NEW)
+        #~ self.boutonTmp = gtk.Button(stock=gtk.STOCK_NEW)
         self.boutonClose = gtk.Button(stock=gtk.STOCK_CLOSE)
 
         self.titre = titre
-        self.fonction = fonction
+        self.mode = mode
 
 
     def mainWindow (self):
@@ -109,11 +116,11 @@ class Pacman (object):
 
         # Boutons
         self.boutons.set_layout(gtk.BUTTONBOX_END)
-        self.boutons.add(self.boutonTmp)
+        #~ self.boutons.add(self.boutonTmp)
         self.boutons.add(self.boutonClose)
         self.boutonClose.set_sensitive(False)
 
-        self.boutonTmp.connect('clicked', self.runFunction)
+        #~ self.boutonTmp.connect('clicked', self.runFunction)
         self.boutonClose.connect('clicked', self.quitWindow)
 
         self.grille.attach(self.image, 0, 1, 0, 3, yoptions=gtk.FILL)
@@ -128,14 +135,10 @@ class Pacman (object):
         self.fenetre.vbox.pack_start(self.grille, expand=False)
         self.fenetre.show_all()
 
+        self.fpmd_emitSignal(["run", self.mode])
+
+        self.printDebug("DEBUG", "Lancement de l'interface")
         self.fenetre.run()
-
-
-    def runFunction (self, *args):
-        """
-        """
-
-        self.fonction()
 
 
     def quitWindow (self, *args):
@@ -151,36 +154,22 @@ class Pacman (object):
         Récupère le signal émis
         """
 
-        print (chaine)
-        value = chaine.split(':')
-
-        if value[0] == "mode":
-            if value[1] == "update":
-                self.mode = "update"
+        print str(chaine)
 
         if self.mode == "update":
-            if value[0] == "value":
-                if int(value[1]) == -1:
-                    self.writeEntry(_("Error"))
+            # Lancement de la mise à jour des dépôts
+            if chaine[0] == "repo":
+                if chaine[1] == "-1":
+                    # Erreur de connexion
+                    self.writeEntry(_("Cannot connect to %s") % str(chaine[1]))
                     self.getCloseButton()
                 else:
-                    if int(value[1]) != 0:
-                        #~ self.writeEntry(_("Synchronizing package databases..."), str(Package.getRepoList()[int(value[1])]))
-                        self.writeEntry(_("Synchronizing package databases..."), str(int(value[1])))
-            else:
-                pass
-
-
-    def state (self, value):
-        """
-        Coupe la boucle si l'action est terminée
-        """
-
-        print "state:" + str(value)
-
-        if value == 1:
-            self.getCloseButton()
-            self.writeEntry(_("Done"), "")
+                    # Synchronisation du dépôt
+                    self.writeEntry(_("Synchronizing package databases..."), str(chaine[1]))
+            elif chaine[0] == "action" and chaine[1] == "end":
+                # L'action est terminée
+                self.writeEntry(_("Synchronizing package databases..."), _("Done"))
+                self.getCloseButton()
 
 
     def getCloseButton (self):
@@ -197,4 +186,24 @@ class Pacman (object):
         """
 
         self.labelInfo.set_markup_with_mnemonic("<big><b>" + titre + "</b></big>\n" + texte + "")
+
+
+    def printDebug (self, typeErreur, erreur):
+        """
+        Affiche une sortie terminal
+        """
+
+        modeDebug = True
+
+        if typeErreur == "DEBUG":
+            color = "\033[0;32m"
+        elif typeErreur == "ERROR":
+            color = "\033[0;34m"
+        elif typeErreur == "INFO":
+            color = "\033[0;36m"
+        else:
+            color = "\033[0m"
+
+        if modeDebug or typeErreur != "INFO":
+            print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur))
 
