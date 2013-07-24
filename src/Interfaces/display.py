@@ -8,7 +8,7 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import os, sys, pango, codecs, urllib, gettext, re, webbrowser
+import os, sys, pango, codecs, urllib, gettext, re
 
 # Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
@@ -21,7 +21,7 @@ except ImportError:
     sys.exit(_("pygtk was not found"))
 
 from . import preferences, pacman
-from Functions import package, config, files
+from Functions import package, config, files, utils
 
 # Initialisation des modules
 Preferences = preferences.Preferences()
@@ -35,6 +35,10 @@ class Interface (object):
     Fonction concernant l'interface principale
     """
 
+    #---------------------------------------------------------------------------
+    #       Interface
+    #---------------------------------------------------------------------------
+
     def __init__(self, devMode = False):
         """
         Initialisation de la fenêtre principale
@@ -45,14 +49,11 @@ class Interface (object):
         self.listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
 
         self.paquetSelectionne = ""
+        self.versionSelectionne = ""
 
         self.listeInstallationPacman = []
         self.listeSuppressionPacman = []
         self.listeMiseAJourPacman = []
-
-        # Temporaire
-        self.listeChangelog = []
-        self.listeFichiers = []
 
         self.recherche_mode = False
         self.recherche_nom = ""
@@ -381,17 +382,20 @@ class Interface (object):
         self.zoneInformations.set_border_width(4)
         self.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
 
+        self.grilleInformations.set_row_spacings(10)
+
         self.grilleInformationsOutils.set_border_width(4)
 
         self.outilsPaquet.set_layout(gtk.BUTTONBOX_END)
         self.outilsPaquet.pack_start(self.outilsPaquetFichier)
         self.outilsPaquetFichier.set_sensitive(False)
-        self.outilsPaquetFichier.connect("clicked", self.listWindow, _("File"), self.listeFichiers)
         self.outilsPaquet.pack_start(self.outilsPaquetJournal)
         self.outilsPaquetJournal.set_sensitive(False)
-        self.outilsPaquetJournal.connect("clicked", self.listWindow, _("Changelog"), self.listeChangelog)
         self.outilsPaquet.pack_start(self.outilsPaquetFrugalBuild)
         self.outilsPaquetFrugalBuild.set_sensitive(False)
+
+        self.outilsPaquetFichier.connect("clicked", self.fileWindow)
+        self.outilsPaquetJournal.connect("clicked", self.changelogWindow)
 
         # ------------------------------------------------------------------
         #       Intégration des widgets
@@ -411,7 +415,6 @@ class Interface (object):
 
         # Informations des paquets
         #~ self.grillePaquetsInformations.add1(self.zonePaquets)
-        self.grilleInformations.set_row_spacings(10)
         self.grilleInformations.attach(self.labelInformationsNom, 0, 1, 0, 1, yoptions=gtk.FILL)
         self.grilleInformations.attach(self.labelInformationsDescription, 0, 1, 1, 2, yoptions=gtk.FILL)
         self.grilleInformations.attach(self.labelInformationsLien, 0, 1, 2, 3, yoptions=gtk.FILL)
@@ -445,74 +448,17 @@ class Interface (object):
         gtk.main()
 
 
+    #---------------------------------------------------------------------------
+    #       Gestion de l'interface
+    #---------------------------------------------------------------------------
+
     def closeWindow (self, interface):
         """
         Fermeture de pyFPM
         """
 
-        self.printDebug("INFO", _("Bye bye"))
+        utils.printDebug("INFO", _("Bye bye"))
         gtk.main_quit()
-
-
-    def getUpdateList (self):
-        """
-        Récupérer la liste des mises à jour
-        """
-
-        self.printDebug("INFO", _("Get the update packages list"))
-
-        if len(self.listeMiseAJourPacman) > 0:
-            self.listeMiseAJourPacman = []
-
-        listePaquetsMiseAJour = Package.getUpdateList()
-
-        if listePaquetsMiseAJour > 0:
-            for element in listePaquetsMiseAJour:
-                self.listeMiseAJourPacman.append(element)
-            self.printDebug("INFO", _("%s update have been found") % str(len(self.listeMiseAJourPacman)))
-        else:
-            self.printDebug("INFO", _("No update available"))
-
-        if Config.readConfig("pyfpm", "startupdate") == "true":
-            self.updateWindow()
-
-
-    def addRepos (self):
-        """
-        Ajout des dépots disponible sur le système dans l'interface
-        """
-
-        # On remet à jour les informations de pacman-g2
-        #~ Package.resetPacman()
-
-        # On récupère la liste des dépôts
-        listeDepot = Package.getRepoList()
-        self.printDebug("DEBUG", _("%s repos have been found") % str(len(listeDepot)))
-
-        # Met le dépôt du système en choix principal
-        index = Package.getIndexFromRepo()
-
-        # Intègre les dépôts dans la liste
-        for element in listeDepot:
-            if element == "local":
-                element = _("Installed packages")
-
-            self.listeSelectionDepots.append_text(element)
-
-        # Met le dépôt du système en actif
-        self.listeSelectionDepots.set_active(index)
-
-
-    def changeRepo (self, *args):
-        """
-        Permet de changer de dépôt
-        """
-
-        self.listeColonnePaquets.clear()
-        self.listeColonneGroupes.clear()
-        self.addGroups()
-
-        self.updateStatusbar(_("Change repository to %s") % str(self.listeSelectionDepots.get_active_text()))
 
 
     def updateStatusbar (self, texte = ""):
@@ -580,9 +526,13 @@ class Interface (object):
             pass
 
 
+    #---------------------------------------------------------------------------
+    #       Lancement d'une action pacman-g2
+    #---------------------------------------------------------------------------
+
     def runAction (self, widget, mode, *args):
         """
-        Lance l'action de mise à jour des base de données pacman-g2
+        Lance une action pacman-g2
         """
 
         if mode == "update":
@@ -604,6 +554,79 @@ class Interface (object):
         self.getUpdateList()
 
 
+    #---------------------------------------------------------------------------
+    #       Récupération des mises à jour
+    #---------------------------------------------------------------------------
+
+    def getUpdateList (self):
+        """
+        Récupérer la liste des mises à jour
+        """
+
+        utils.printDebug("INFO", _("Get the update packages list"))
+
+        if len(self.listeMiseAJourPacman) > 0:
+            self.listeMiseAJourPacman = []
+
+        listePaquetsMiseAJour = Package.getUpdateList()
+
+        if listePaquetsMiseAJour > 0:
+            for element in listePaquetsMiseAJour:
+                self.listeMiseAJourPacman.append(element)
+            utils.printDebug("INFO", _("%s update have been found") % str(len(self.listeMiseAJourPacman)))
+        else:
+            utils.printDebug("INFO", _("No update available"))
+
+        if Config.readConfig("pyfpm", "startupdate") == "true":
+            self.updateWindow()
+
+
+    #---------------------------------------------------------------------------
+    #       Gestion des dépôts
+    #---------------------------------------------------------------------------
+
+    def addRepos (self):
+        """
+        Ajout des dépots disponible sur le système dans l'interface
+        """
+
+        # On remet à jour les informations de pacman-g2
+        #~ Package.resetPacman()
+
+        # On récupère la liste des dépôts
+        listeDepot = Package.getRepoList()
+        utils.printDebug("DEBUG", _("%s repos have been found") % str(len(listeDepot)))
+
+        # Met le dépôt du système en choix principal
+        index = Package.getIndexFromRepo()
+
+        # Intègre les dépôts dans la liste
+        for element in listeDepot:
+            if element == "local":
+                element = _("Installed packages")
+
+            self.listeSelectionDepots.append_text(element)
+
+        # Met le dépôt du système en actif
+        self.listeSelectionDepots.set_active(index)
+
+
+    def changeRepo (self, *args):
+        """
+        Permet de changer de dépôt
+        """
+
+        self.listeColonnePaquets.clear()
+        self.listeColonneGroupes.clear()
+        self.addGroups()
+
+        self.updateStatusbar(_("Change repository to %s") % str(self.listeSelectionDepots.get_active_text()))
+
+
+    #---------------------------------------------------------------------------
+    #       Récupération des groupes
+    #---------------------------------------------------------------------------
+
     def addGroups (self):
         """
         Ajouter les groupes dans l'interface
@@ -620,7 +643,7 @@ class Interface (object):
             else:
                 self.listeColonneGroupes.append([nom])
 
-        self.printDebug("DEBUG", _("%(nbr)s group(s) append for %(repo)s") % {'nbr':str(len(self.listeColonneGroupes)), 'repo':str(self.listeSelectionDepots.get_active_text())})
+        utils.printDebug("DEBUG", _("%(nbr)s group(s) append for %(repo)s") % {'nbr':str(len(self.listeColonneGroupes)), 'repo':str(self.listeSelectionDepots.get_active_text())})
 
 
     def selectGroup (self, selection, modele):
@@ -645,6 +668,10 @@ class Interface (object):
             return True
 
 
+    #---------------------------------------------------------------------------
+    #       Récupération des paquets
+    #---------------------------------------------------------------------------
+
     def getPackages (self, nomGroupe):
         """
         Obtenir les paquets correspondant au groupe sélectionné
@@ -653,7 +680,7 @@ class Interface (object):
         paquets = Package.getPackagesList(self.listeSelectionDepots.get_active(), nomGroupe)
         self.addPackages(paquets, nomGroupe)
 
-        self.printDebug("DEBUG", _("%(nbr)s package(s) append for %(grp)s") % {'nbr':str(len(paquets)), 'grp':str(nomGroupe)})
+        utils.printDebug("DEBUG", _("%(nbr)s package(s) append for %(grp)s") % {'nbr':str(len(paquets)), 'grp':str(nomGroupe)})
 
 
     def addPackages (self, paquets, value, recherche = False):
@@ -762,23 +789,23 @@ class Interface (object):
         tableau = choix[1]
 
         try :
-            nomPaquet, versionPaquet, versionDiponible = modele.get(tableau, 2, 3, 4)
-            self.getPackageInfo(nomPaquet, versionPaquet, versionDiponible)
+            nomPaquet, versionPaquet, versionDisponible = modele.get(tableau, 2, 3, 4)
+            self.getPackageInfo(nomPaquet, versionPaquet, versionDisponible)
         except :
             return True
 
         return True
 
 
-    def getPackageInfo (self, nomPaquet, versionPaquet, versionDiponible):
+    def getPackageInfo (self, nomPaquet, versionPaquet, versionDisponible):
         """
         Obtient les détails du paquet
         """
 
         # On efface tout et on recommence :D
-        self.labelInformationsNom.set_text("")
-        self.labelInformationsDescription.set_text("")
-        self.labelInformationsLien.set_text("")
+        self.labelInformationsNom.set_markup("")
+        self.labelInformationsDescription.set_markup("")
+        self.labelInformationsLien.set_markup("")
 
         self.outilsPaquetFichier.set_sensitive(False)
         self.outilsPaquetJournal.set_sensitive(False)
@@ -789,8 +816,9 @@ class Interface (object):
 
         if nomPaquet.find("]") != -1:
             # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
-            depotRecherche = self.splitRepo(nomPaquet)[0]
-            nomPaquet = self.splitRepo(nomPaquet)[1]
+            split = utils.splitRepo(nomPaquet)
+            depotRecherche = split[0]
+            nomPaquet = split[1]
             modeRecherche = True
 
         self.updateStatusbar(_("Get informations about %s") % nomPaquet)
@@ -802,7 +830,7 @@ class Interface (object):
 
         # Récupère les informations depuis local si le paquet est installé
         if Package.checkPackageInstalled(nomPaquet, versionPaquet):
-            if len(versionDiponible) == 1:
+            if len(versionDisponible) == 1:
                 # Le paquet est installé
                 depot = 0
                 estInstalle = True
@@ -822,11 +850,11 @@ class Interface (object):
         infoPaquet = Package.getPackageInfo(pointerPaquet)
 
         # Nom et version du paquet
-        self.labelInformationsNom.set_markup_with_mnemonic("<span font='18'><b>" + infoPaquet.get("name") + " - " + infoPaquet.get("version") + "</b></span>")
+        self.labelInformationsNom.set_markup("<span font='18'><b>" + infoPaquet.get("name") + " - " + infoPaquet.get("version") + "</b></span>")
 
         # Description du paquet
         # [TODO] - Améliorer l'affichage
-        self.labelInformationsDescription.set_text(infoPaquet.get("description").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").encode('ascii', 'replace'))
+        self.labelInformationsDescription.set_markup(infoPaquet.get("description").replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").encode('ascii', 'replace'))
 
         # Liste des groupes
         groupes = infoPaquet.get("groups")
@@ -851,7 +879,7 @@ class Interface (object):
         # Affiche des informations supplémentaires si le paquet est installé
         if estInstalle:
             # Lien vers le site du projet
-            self.labelInformationsLien.set_markup_with_mnemonic("<a href='" + str(infoPaquet.get("url")) + "'>" + _("Visit website") + "</a>")
+            self.labelInformationsLien.set_markup("<a href='" + str(infoPaquet.get("url")) + "'>" + _("Visit website") + "</a>")
 
             # Date d'installation
             self.contenuPaquet.append(None, [_("Install date"), str(infoPaquet.get("install_date"))])
@@ -863,6 +891,9 @@ class Interface (object):
             # On passe les boutons en actif puisque ces informations sont accessibles
             self.outilsPaquetFichier.set_sensitive(True)
             self.outilsPaquetJournal.set_sensitive(True)
+
+            self.paquetSelectionne = infoPaquet.get("name")
+            self.versionSelectionne = infoPaquet.get("version")
         else:
             # Taille compressé du paquet
             self.contenuPaquet.append(None, [_("Compress size"), str(format(float(long(infoPaquet.get("compress_size"))/1024)/1024, '.2f')) + " MB"])
@@ -912,34 +943,6 @@ class Interface (object):
                         #~ self.contenuFichiers.append(racine, ['/' + str(chaine[len(chaine - 1)])])
         #~ else:
             #~ self.contenuFichiers.append(None, [_("No info")])
-
-        # Changelog du paquet
-        #~ texte = ""
-        #~ texteBuffer = self.listeJournal.get_buffer()
-
-        #~ if Package.checkPackageInstalled(nomPaquet, versionPaquet):
-        #~ if estInstalle:
-            #~ try:
-                #~ listeDepot = Package.getRepoList()
-                #~ journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
-                #~ if os.path.exists(journal):
-                    #~ # Cet encodage pose soucis
-                    #~ file = codecs.open(journal, "r", "iso-8859-15")
-                    #~ self.listeChangelog = file
-                    #~ for element in file:
-                        #~ if element != "":
-                            #~ texte += "\t" + element
-                    #~ file.close()
-                #~ else:
-                    #~ texte = "\t" + _("No file found")
-            #~ except:
-                #~ pass
-                #~ texte = "\t" + _("Error")
-        #~ else:
-            #~ self.listeChangelog = []
-            #~ texte = "\t" + _("No info")
-
-        #~ texteBuffer.set_text(texte)
 
         # Si le mode développement est actif, le frugalbuild est récupéré
         #~ if self.developementMode:
@@ -1006,6 +1009,10 @@ class Interface (object):
         return resultat
 
 
+    #---------------------------------------------------------------------------
+    #       Choix de l'utilisateur
+    #---------------------------------------------------------------------------
+
     def checkPackage (self, cell_renderer, colonne, liste):
         """
         Permet de gérer les paquets à installer/desinstaller via deux
@@ -1020,10 +1027,10 @@ class Interface (object):
 
         if nomPaquet.find("]") != -1:
             # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
-            nomPaquet = self.splitRepo(nomPaquet)[1]
+            nomPaquet = utils.splitRepo(nomPaquet)[1]
 
-        elementAjouter = self.checkData(self.listeInstallationPacman, nomPaquet)
-        elementEnlever = self.checkData(self.listeSuppressionPacman, nomPaquet)
+        elementAjouter = utils.checkData(self.listeInstallationPacman, nomPaquet)
+        elementEnlever = utils.checkData(self.listeSuppressionPacman, nomPaquet)
 
         listePaquetsInstalles = Package.getInstalledList()
 
@@ -1084,6 +1091,10 @@ class Interface (object):
         self.updateStatusbar(_("Clear changes done"))
 
 
+    #---------------------------------------------------------------------------
+    #       Gestion de la recherche
+    #---------------------------------------------------------------------------
+
     def search (self, *args):
         """
         Affiche l'ensemble des paquets correspondant à la recherche
@@ -1128,80 +1139,15 @@ class Interface (object):
         self.texteRecherche.set_text("")
 
 
-    def checkData (self, liste, donnee):
-        """
-        Vérifie si donnee est dans liste
-        """
-
-        objetTrouve = 0
-
-        for element in liste:
-            if donnee == element:
-                objetTrouve = element
-                break
-
-        return objetTrouve
-
-
-    def checkUser (self):
-        """
-        Verifie quel utilisateur est en train d'utiliser pyFPM
-        """
-
-        if not os.geteuid() == 0:
-            return 0
-
-        return 1
-
-
-    def openURL (self, widget, url):
-        """
-        Ouvre le navigateur et affiche le site du projet
-        """
-
-        webbrowser.open_new_tab(url)
-
-
-    def splitRepo (self, chaine):
-        """
-        Sépare le dépot et le nom du paquet d'une chaine de type :
-        [repo] name
-        """
-
-        pattern = '[\[a-z0-9]]'
-
-        for element in re.findall(pattern, chaine):
-            repo = str(chaine[1 : chaine.find(element) + 1].strip())
-            name = str(chaine[chaine.find(element) + 2 :].strip())
-
-        return [repo, name]
-
-
-    def printDebug (self, typeErreur, erreur):
-        """
-        Affiche une sortie terminal
-        """
-
-        modeDebug = True
-
-        if typeErreur == "DEBUG":
-            color = "\033[0;32m"
-        elif typeErreur == "ERROR":
-            color = "\033[0;34m"
-        elif typeErreur == "INFO":
-            color = "\033[0;36m"
-        else:
-            color = "\033[0m"
-
-        if modeDebug or typeErreur != "INFO":
-            print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur))
-
-
 # ------------------------------------------------------------------------------------------------------------
 #
 #                Fenêtres supplémentaires
 #
 # ------------------------------------------------------------------------------------------------------------
+
+    #---------------------------------------------------------------------------
+    #       Fenêtre à propos
+    #---------------------------------------------------------------------------
 
     def aboutWindow (self, widget, *event):
         """
@@ -1240,6 +1186,10 @@ class Interface (object):
         about.destroy()
 
 
+    #---------------------------------------------------------------------------
+    #       Popup d'information
+    #---------------------------------------------------------------------------
+
     def informationWindow (self, titre, texte):
         """
         Affiche une fenêtre d'information
@@ -1255,31 +1205,98 @@ class Interface (object):
         information.destroy()
 
 
-    def listWindow (self, widget, titre, tableau):
+    #---------------------------------------------------------------------------
+    #       Affichage d'une fenêtre pour les fichiers et le changelog
+    #---------------------------------------------------------------------------
+
+    def fileWindow (self, widget):
         """
-        Affiche le contenu de tableau
+        Affiche les fichiers d'un paquet
         """
 
-        fenetre = gtk.Dialog(titre, None, gtk.DIALOG_MODAL, (gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
-        liste = gtk.TextView()
+        fenetre = gtk.Dialog(_("File"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
+        fenetre.set_size_request(600, 600)
 
-        print str(tableau)
+        tableau = Package.getFileFromPackage(self.paquetSelectionne)
 
-        texte = ""
-        texteBuffer = liste.get_buffer()
+        listeColonne = gtk.TreeStore(str)
+        colonne = gtk.TreeView(listeColonne)
+        colonneFichier = gtk.TreeViewColumn(_("Groups"))
+        celluleFichier = gtk.CellRendererText()
 
+        colonne.set_headers_visible(True)
+        colonne.set_size_request(180,0)
+        colonne.set_search_column(0)
+
+        colonneFichier.set_sort_column_id(0)
+        colonneFichier.pack_start(celluleFichier, True)
+        colonneFichier.add_attribute(celluleFichier, 'text', 0)
+        colonne.append_column(colonneFichier)
+        defilement = gtk.ScrolledWindow()
+
+        defilement.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        defilement.add(colonne)
+        defilement.set_border_width(4)
+
+        racine = listeColonne.append(None, ['/'])
         for element in tableau:
-            texte += str(element) + "\n"
+            listeColonne.append(racine, ['/' + str(element)])
 
-        texteBuffer.set_text(texte)
+        colonne.expand_all()
 
-        fenetre.vbox.pack_start(liste)
+        fenetre.vbox.pack_start(defilement)
 
         fenetre.show_all()
         fenetre.run()
 
         fenetre.destroy()
 
+
+    def changelogWindow (self, widget):
+        """
+        Affiche le changelog d'un paquet
+        """
+
+        fenetre = gtk.Dialog(_("Changelog"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
+        fenetre.set_size_request(600, 600)
+
+        liste = gtk.TextView()
+        defilement = gtk.ScrolledWindow()
+
+        defilement.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        defilement.add(liste)
+        defilement.set_border_width(4)
+
+        texte = ""
+        texteBuffer = liste.get_buffer()
+
+        listeDepot = Package.getRepoList()
+        journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + self.paquetSelectionne + "-" + self.versionSelectionne + "/changelog"
+        if os.path.exists(journal):
+            # Cet encodage pose soucis
+            file = codecs.open(journal, "r", "iso-8859-15")
+            self.listeChangelog = file
+            for element in file:
+                if element != "":
+                    texte += "\t" + element
+            file.close()
+        else:
+            texte = "\t" + _("No file found")
+
+        texteBuffer.set_text(texte)
+
+        fenetre.vbox.pack_start(defilement)
+
+        fenetre.show_all()
+        fenetre.run()
+
+        fenetre.destroy()
+
+
+    #---------------------------------------------------------------------------
+    #       Fenêtre affichant les transactions à effectuer :
+    #       installation/suppression
+    #---------------------------------------------------------------------------
 
     def installWindow (self, widget, *event):
         """
@@ -1458,6 +1475,10 @@ class Interface (object):
             self.barreStatus.push(0, _("No change"))
 
 
+    #---------------------------------------------------------------------------
+    #       Fenêtre affichant les mises à jour disponible
+    #---------------------------------------------------------------------------
+
     def updateWindow (self, *event):
         """
         Prévient qu'il y a des mises à jour et propose de les installer
@@ -1534,6 +1555,11 @@ class Interface (object):
 
         self.fenetre.set_sensitive(True)
 
+
+    #---------------------------------------------------------------------------
+    #       Fenêtre demandant la méthode de nettoyage du cache de
+    #       pacman-g2
+    #---------------------------------------------------------------------------
 
     def cleanCacheWindow (self, widget, *event):
         """

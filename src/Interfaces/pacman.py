@@ -28,7 +28,7 @@ try:
 except ImportError:
     sys.exit(_("pygtk was not found"))
 
-from Functions import package
+from Functions import package, utils
 
 # Initialisation des modules
 Package = package.Package()
@@ -45,7 +45,7 @@ class Pacman (object):
         Initialisation de la fenêtre de progression
         """
 
-        self.printDebug("DEBUG", "Lancement de dbus")
+        utils.printDebug("DEBUG", "Lancement de dbus")
         pacmanBus = dbus.SystemBus()
 
         try:
@@ -57,7 +57,7 @@ class Pacman (object):
         self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', 'org.frugalware.fpmd.deamon')
 
         # Assignation des signaux
-        self.printDebug("DEBUG", "Récupération des signaux")
+        utils.printDebug("DEBUG", "Récupération des signaux")
         pacmanBus.add_signal_receiver(self.signal, dbus_interface=BUSNAME, signal_name='sendSignal')
 
         # ------------------------------------------------------------------
@@ -142,7 +142,7 @@ class Pacman (object):
 
         Package.emitSignal(["run", self.mode])
 
-        self.printDebug("DEBUG", "Lancement de l'interface")
+        utils.printDebug("DEBUG", "Lancement de l'interface")
         self.fenetre.run()
 
 
@@ -159,7 +159,7 @@ class Pacman (object):
         Récupère le signal émis
         """
 
-        print str(chaine)
+        utils.printDebug("DBUS", str(chaine))
 
         if self.mode == "update":
             # Lancement de la mise à jour des dépôts
@@ -193,23 +193,4 @@ class Pacman (object):
 
         self.labelInfo.set_markup_with_mnemonic("<big><b>" + titre + "</b></big>\n" + texte + "")
 
-
-    def printDebug (self, typeErreur, erreur):
-        """
-        Affiche une sortie terminal
-        """
-
-        modeDebug = True
-
-        if typeErreur == "DEBUG":
-            color = "\033[0;32m"
-        elif typeErreur == "ERROR":
-            color = "\033[0;34m"
-        elif typeErreur == "INFO":
-            color = "\033[0;36m"
-        else:
-            color = "\033[0m"
-
-        if modeDebug or typeErreur != "INFO":
-            print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur))
 

@@ -16,7 +16,7 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import sys, argparse, gettext
+import sys, argparse
 
 from Interfaces import display
 from Functions import config

@@ -1,3 +1,3 @@
 # Fonctions diverses
 
-__all__ = ['package', 'files','config','lang','events']
+__all__ = ['package', 'files','config','utils','events']

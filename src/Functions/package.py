@@ -220,37 +220,3 @@ class Package (object):
         """
 
         return self.fpmd_emitSignal(texte)
-
-
-    def splitVersionName (self, paquet):
-        """
-        Permet de récupérer la version et le nom du paquet quand la chaîne est du format "kernel>=3.7"
-        """
-
-        # TODO
-        # Utiliser les Regex
-
-        liste = paquet.split('>')
-
-        liste2 = []
-        for element in liste:
-            tmp =  element.split('=')
-            liste2.extend(tmp)
-        liste = liste2
-
-        liste2 = []
-        for element in liste:
-            tmp =  element.split('<')
-            liste2.extend(tmp)
-        liste = liste2
-
-        liste2 = []
-        for element in liste:
-            if element != "":
-                liste2.append(element)
-
-        if len(liste2) > 1:
-            separateur = paquet[len(liste2[0]):len(paquet) - len(liste2[1])]
-            liste2.append(separateur)
-
-        return liste2

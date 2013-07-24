@@ -27,6 +27,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     [FIXME] - L'encodage des informations n'est pas effectué en utf-8
     [FIXME] - On ne récupère pas les informations pour un paquet dont une mise à jour est disponible
         Un reset de fpmd est nécessaire
+    [FIXME] - Un paquet installé localement n'est pas pris en compte
 
     [TODO]  - Affiche un nom générique pour les groupes
     [TODO]  - Afficher le README.Frugalware d'un paquet installé
