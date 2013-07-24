@@ -34,6 +34,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     [TODO]  - Permettre d'ouvrir le lien site web via un clic.............................................[ULTERIEUR]
         Changement sur l'interface nécessaire
     [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild............................................[ULTERIEUR]
+        Un peu redondant avec repoman ?
 
 
 --- Paquet (package.py) --------------------------------------------------------
@@ -43,6 +44,10 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     ---
 
     [TODO]  - Afficher les paquets no-build (utilisable avec repoman).....................................[ULTERIEUR]
+        Il s'agit d'un clone du dépot. Dés lors, on doit créer un parser de FrugalBuild
+        -> Spécifier le chemin (~/git)
+        -> Adapter le fpmd pour prendre en compte la mise à jour de repoman (case à cocher ?)
+        -> Apadter la recherche pour prendre en compte repoman (dépot à part ?)
     [TODO]  - Utiliser les Regex pour la fonction de split................................................[EN COURS]
 
 

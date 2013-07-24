@@ -8,7 +8,7 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import os, sys, pango, codecs, urllib, gettext
+import os, sys, pango, codecs, urllib, gettext, re, webbrowser
 
 # Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
@@ -64,6 +64,7 @@ class Interface (object):
         self.grilleDepotGroupes = gtk.Table(1,2)
         self.grilleColonnePaquets = gtk.Table(2,1)
         self.grillePaquetsInformations = gtk.VPaned()
+        self.grilleInformationsOutils = gtk.Table(2,1)
 
         self.barreStatus = gtk.Statusbar()
 
@@ -155,25 +156,31 @@ class Interface (object):
         self.contenuPaquet = gtk.TreeStore(str,str)
         self.defilementPaquet = gtk.ScrolledWindow()
 
-        self.labelFichiers = gtk.Label(_("Files"))
+        #~ self.labelFichiers = gtk.Label(_("Files"))
         #~ self.listeFichiers = gtk.TextView()
-        self.listeFichiers = gtk.TreeView()
-        self.colonneFichiers = gtk.TreeViewColumn()
-        self.celluleFichiers = gtk.CellRendererText()
-        self.contenuFichiers = gtk.TreeStore(str)
-        self.defilementFichiers = gtk.ScrolledWindow()
+        #~ self.listeFichiers = gtk.TreeView()
+        #~ self.colonneFichiers = gtk.TreeViewColumn()
+        #~ self.celluleFichiers = gtk.CellRendererText()
+        #~ self.contenuFichiers = gtk.TreeStore(str)
+        #~ self.defilementFichiers = gtk.ScrolledWindow()
 
-        self.labelJournal = gtk.Label(_("Changelog"))
-        self.listeJournal = gtk.TextView()
-        self.defilementJournal = gtk.ScrolledWindow()
+        #~ self.labelJournal = gtk.Label(_("Changelog"))
+        #~ self.listeJournal = gtk.TextView()
+        #~ self.defilementJournal = gtk.ScrolledWindow()
+
+        self.outilsPaquet = gtk.HButtonBox()
+        self.outilsPaquetLien = gtk.Button(_("Visit website"))
+        self.outilsPaquetFichier = gtk.Button(_("See files"))
+        self.outilsPaquetJournal = gtk.Button(_("See Changelog"))
+        self.outilsPaquetFrugalBuild = gtk.Button(_("See FrugalBuild"))
 
         # FIXME
         # Faut-il garder ce module ?
         # Affiche la zone "FrugalBuild" uniquement si l'option est activé
-        if self.developementMode:
-            self.labelFrugalbuild = gtk.Label(_("FrugalBuild"))
-            self.listeFrugalbuild = gtk.TextView()
-            self.defilementFrugalbuild = gtk.ScrolledWindow()
+        #~ if self.developementMode:
+            #~ self.labelFrugalbuild = gtk.Label(_("FrugalBuild"))
+            #~ self.listeFrugalbuild = gtk.TextView()
+            #~ self.defilementFrugalbuild = gtk.ScrolledWindow()
 
 
     def mainWindow (self):
@@ -249,21 +256,24 @@ class Interface (object):
 
         # Lancement de la transaction (Installation/Suppression)
         self.outils.insert_stock(gtk.STOCK_APPLY, _("Apply changes"), None, self.installWindow, self, 0)
+        # Effacer la liste des choix de l'utilisateur
+        self.outils.insert_stock(gtk.STOCK_CLEAR, _("Reset installation list"), None, self.erasePackage, self, 1)
+        self.outils.insert_space(2)
         # Affichage des mises à jour disponible
-        self.outils.insert_stock(gtk.STOCK_REFRESH, _("Update databases"), None, self.runAction, "update", 2)
-        self.outils.insert_space(3)
+        self.outils.insert_stock(gtk.STOCK_REFRESH, _("Update databases"), None, self.runAction, "update", 3)
+        self.outils.insert_space(4)
         # Champs de recherche
         self.texteRecherche.set_icon_from_stock(1, gtk.STOCK_CLEAR)
         self.texteRecherche.connect("activate", self.search, gtk.RESPONSE_OK)
         self.texteRecherche.connect("icon-press", self.eraseSearch)
         self.texteRecherche.grab_focus()
-        self.outils.insert_widget(self.texteRecherche, _("Write your search here"), None, 4)
-        self.outils.insert_stock(gtk.STOCK_FIND, _("Search"), None, self.search, None, 5)
-        self.outils.insert_space(6)
+        self.outils.insert_widget(self.texteRecherche, _("Write your search here"), None, 5)
+        self.outils.insert_stock(gtk.STOCK_FIND, _("Search"), None, self.search, None, 6)
+        self.outils.insert_space(7)
         # Affichage des préférences
-        self.outils.insert_stock(gtk.STOCK_PREFERENCES, _("Preferences"), None, Preferences.runPreferences, self, 7)
+        self.outils.insert_stock(gtk.STOCK_PREFERENCES, _("Preferences"), None, Preferences.runPreferences, self, 8)
         # Fermeture de pyFPM
-        self.outils.insert_stock(gtk.STOCK_QUIT, _("Quit"), None, self.closeWindow, None, 8)
+        self.outils.insert_stock(gtk.STOCK_QUIT, _("Quit"), None, self.closeWindow, None, 9)
 
         # ------------------------------------------------------------------
         #       Liste des dépôts
@@ -396,49 +406,62 @@ class Interface (object):
         #~ self.defilementFichiers.add(self.listeFichiers)
         #~ self.defilementFichiers.set_border_width(4)
 
-        self.listeFichiers.set_headers_visible(False)
-        self.listeFichiers.set_hover_selection(False)
+        #~ self.listeFichiers.set_headers_visible(False)
+        #~ self.listeFichiers.set_hover_selection(False)
 
-        self.colonneFichiers.pack_start(self.celluleFichiers, True)
-        self.colonneFichiers.add_attribute(self.celluleFichiers, "text", 0)
+        #~ self.colonneFichiers.pack_start(self.celluleFichiers, True)
+        #~ self.colonneFichiers.add_attribute(self.celluleFichiers, "text", 0)
 
-        self.celluleFichiers.set_property('editable', False)
+        #~ self.celluleFichiers.set_property('editable', False)
 
-        self.listeFichiers.append_column(self.colonneFichiers)
-        self.listeFichiers.set_model(self.contenuFichiers)
+        #~ self.listeFichiers.append_column(self.colonneFichiers)
+        #~ self.listeFichiers.set_model(self.contenuFichiers)
 
-        self.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.defilementFichiers.add(self.listeFichiers)
-        self.defilementFichiers.set_border_width(4)
+        #~ self.defilementFichiers.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        #~ self.defilementFichiers.add(self.listeFichiers)
+        #~ self.defilementFichiers.set_border_width(4)
 
-        self.listeJournal.set_editable(False)
-        self.listeJournal.set_cursor_visible(False)
+        #~ self.listeJournal.set_editable(False)
+        #~ self.listeJournal.set_cursor_visible(False)
 
-        self.defilementJournal.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.defilementJournal.add(self.listeJournal)
-        self.defilementJournal.set_border_width(4)
+        #~ self.defilementJournal.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        #~ self.defilementJournal.add(self.listeJournal)
+        #~ self.defilementJournal.set_border_width(4)
 
         # Affiche la zone "FrugalBuild" uniquement si l'option est activé
-        if self.developementMode:
-            self.listeFrugalbuild.set_editable(False)
-            self.listeFrugalbuild.set_cursor_visible(False)
+        #~ if self.developementMode:
+            #~ self.listeFrugalbuild.set_editable(False)
+            #~ self.listeFrugalbuild.set_cursor_visible(False)
 
-            self.defilementFrugalbuild.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-            self.defilementFrugalbuild.add(self.listeFrugalbuild)
-            self.defilementFrugalbuild.set_border_width(4)
+            #~ self.defilementFrugalbuild.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+            #~ self.defilementFrugalbuild.add(self.listeFrugalbuild)
+            #~ self.defilementFrugalbuild.set_border_width(4)
 
-        self.zoneInformations.set_tab_pos(gtk.POS_LEFT)
-        self.zoneInformations.append_page(self.defilementInformations, self.labelInformations)
+        self.grilleInformationsOutils.attach(self.defilementInformations, 0, 1, 0, 1)
+        self.grilleInformationsOutils.attach(self.outilsPaquet, 0, 1, 1, 2, yoptions=gtk.FILL)
+
+        #~ self.zoneInformations.set_tab_pos(gtk.POS_LEFT)
+        self.zoneInformations.append_page(self.grilleInformationsOutils, self.labelInformations)
         self.zoneInformations.append_page(self.defilementPaquet, self.labelPaquet)
-        self.zoneInformations.append_page(self.defilementFichiers, self.labelFichiers)
-        self.zoneInformations.append_page(self.defilementJournal, self.labelJournal)
+        #~ self.zoneInformations.append_page(self.defilementFichiers, self.labelFichiers)
+        #~ self.zoneInformations.append_page(self.defilementJournal, self.labelJournal)
 
         # Affiche la zone "FrugalBuild" uniquement si l'option est activé
-        if self.developementMode:
-            self.zoneInformations.append_page(self.defilementFrugalbuild, self.labelFrugalbuild)
+        #~ if self.developementMode:
+            #~ self.zoneInformations.append_page(self.defilementFrugalbuild, self.labelFrugalbuild)
 
         self.zoneInformations.set_border_width(4)
         self.zoneInformations.set_resize_mode(gtk.RESIZE_PARENT)
+
+        self.outilsPaquet.set_layout(gtk.BUTTONBOX_END)
+        self.outilsPaquet.pack_start(self.outilsPaquetLien)
+        self.outilsPaquetLien.set_sensitive(False)
+        self.outilsPaquet.pack_start(self.outilsPaquetFichier)
+        self.outilsPaquetFichier.set_sensitive(False)
+        self.outilsPaquet.pack_start(self.outilsPaquetJournal)
+        self.outilsPaquetJournal.set_sensitive(False)
+        self.outilsPaquet.pack_start(self.outilsPaquetFrugalBuild)
+        self.outilsPaquetFrugalBuild.set_sensitive(False)
 
         # ------------------------------------------------------------------
         #       Intégration des widgets
@@ -576,6 +599,10 @@ class Interface (object):
 
         self.recherche_nom = ""
 
+        self.outilsPaquetLien.set_sensitive(False)
+        self.outilsPaquetFichier.set_sensitive(False)
+        self.outilsPaquetJournal.set_sensitive(False)
+
         self.updateStatusbar("")
 
 
@@ -648,7 +675,7 @@ class Interface (object):
             else:
                 self.listeColonneGroupes.append([nom])
 
-        self.printDebug("DEBUG", str(len(self.listeColonneGroupes)) + " groups append")
+        self.printDebug("DEBUG", _("%(nbr)s group(s) append for %(repo)s") % {'nbr':str(len(self.listeColonneGroupes)), 'repo':str(self.listeSelectionDepots.get_active_text())})
 
 
     def selectGroup (self, selection, modele):
@@ -681,7 +708,7 @@ class Interface (object):
         paquets = Package.getPackagesList(self.listeSelectionDepots.get_active(), nomGroupe)
         self.addPackages(paquets, nomGroupe)
 
-        self.printDebug("DEBUG", str(len(paquets)) + " packages append")
+        self.printDebug("DEBUG", _("%(nbr)s package(s) append for %(grp)s") % {'nbr':str(len(paquets)), 'grp':str(nomGroupe)})
 
 
     def addPackages (self, paquets, value, recherche = False):
@@ -803,14 +830,18 @@ class Interface (object):
         Obtient les détails du paquet
         """
 
+        self.outilsPaquetLien.set_sensitive(False)
+        self.outilsPaquetFichier.set_sensitive(False)
+        self.outilsPaquetJournal.set_sensitive(False)
+
         objetTrouve = 0
         depotRecherche = ""
         modeRecherche = False
 
         if nomPaquet.find("]") != -1:
             # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
-            depotRecherche = nomPaquet[nomPaquet.find("[") + 1:nomPaquet.find("]")].strip()
-            nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
+            depotRecherche = self.splitRepo(nomPaquet)[0]
+            nomPaquet = self.splitRepo(nomPaquet)[1]
             modeRecherche = True
 
         self.updateStatusbar(_("Get informations about %s") % nomPaquet)
@@ -819,7 +850,7 @@ class Interface (object):
 
         self.contenuInformations.clear()
         self.contenuPaquet.clear()
-        self.contenuFichiers.clear()
+        #~ self.contenuFichiers.clear()
 
         # Récupère les informations depuis local si le paquet est installé
         if Package.checkPackageInstalled(nomPaquet, versionPaquet):
@@ -864,6 +895,12 @@ class Interface (object):
             self.contenuPaquet.append(None, [_("Install date"), str(infoPaquet.get("install_date"))])
             self.contenuPaquet.append(None, [_("Size"), str(format(float(long(infoPaquet.get("size"))/1024)/1024, '.2f')) + " MB"])
             self.contenuPaquet.append(None, [_("Packager"), str(infoPaquet.get("packager").encode('ascii', 'replace'))])
+
+            # Comme il s'agit d'un paquet installé, on peut obtenir ces informations
+            self.outilsPaquetLien.set_sensitive(True)
+            self.outilsPaquetLien.connect("clicked", self.openURL, str(infoPaquet.get("url")))
+            self.outilsPaquetFichier.set_sensitive(True)
+            self.outilsPaquetJournal.set_sensitive(True)
         else:
             self.contenuPaquet.append(None, [_("Compress size"), str(format(float(long(infoPaquet.get("compress_size"))/1024)/1024, '.2f')) + " MB"])
             self.contenuPaquet.append(None, [_("Uncompress size"), str(format(float(long(infoPaquet.get("uncompress_size"))/1024)/1024, '.2f')) + " MB"])
@@ -894,44 +931,44 @@ class Interface (object):
             self.contenuPaquet.append(None, [_("Conflits"), ', '.join(conflits)])
 
         # Liste des fichiers inclus dans le paquet
-        if Package.checkPackageInstalled(nomPaquet, versionPaquet):
-            listeFichiers = Package.getFileFromPackage(nomPaquet)
+        #~ if Package.checkPackageInstalled(nomPaquet, versionPaquet):
+            #~ listeFichiers = Package.getFileFromPackage(nomPaquet)
             #~ chemin = []
             #~ racine = self.contenuFichiers.append(None, ['/'])
-            for element in listeFichiers:
-                self.contenuFichiers.append(None, ['/' + str(element)])
+            #~ for element in listeFichiers:
+                #~ self.contenuFichiers.append(None, ['/' + str(element)])
                 #~ chaine = element.split('/')
                 #~ if len(chaine[len(chaine - 1)] == 0):
                     #~ if len(chaine) == 1:
                         # Dossier de niveau 1
                         #~ self.contenuFichiers.append(racine, ['/' + str(chaine[len(chaine - 1)])])
 
-        else:
-            self.contenuFichiers.append(None, [_("No info")])
+        #~ else:
+            #~ self.contenuFichiers.append(None, [_("No info")])
 
         # Changelog du paquet
-        texte = ""
-        texteBuffer = self.listeJournal.get_buffer()
+        #~ texte = ""
+        #~ texteBuffer = self.listeJournal.get_buffer()
 
-        if Package.checkPackageInstalled(nomPaquet, versionPaquet):
-            try:
-                listeDepot = Package.getRepoList()
-                journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
-                if os.path.exists(journal):
-                    # Cet encodage pose soucis
-                    file = codecs.open(journal, "r", "iso-8859-15")
-                    for element in file:
-                        if element != "":
-                            texte += "\t" + element
-                    file.close()
-                else:
-                    texte = "\t" + _("No file found")
-            except:
-                texte = "\t" + _("Error")
-        else:
-            texte = "\t" + _("No info")
+        #~ if Package.checkPackageInstalled(nomPaquet, versionPaquet):
+            #~ try:
+                #~ listeDepot = Package.getRepoList()
+                #~ journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + nomPaquet + "-" + versionPaquet + "/changelog"
+                #~ if os.path.exists(journal):
+                    #~ # Cet encodage pose soucis
+                    #~ file = codecs.open(journal, "r", "iso-8859-15")
+                    #~ for element in file:
+                        #~ if element != "":
+                            #~ texte += "\t" + element
+                    #~ file.close()
+                #~ else:
+                    #~ texte = "\t" + _("No file found")
+            #~ except:
+                #~ texte = "\t" + _("Error")
+        #~ else:
+            #~ texte = "\t" + _("No info")
 
-        texteBuffer.set_text(texte)
+        #~ texteBuffer.set_text(texte)
 
         # Si le mode développement est actif, le frugalbuild est récupéré
         #~ if self.developementMode:
@@ -1006,7 +1043,7 @@ class Interface (object):
 
         if nomPaquet.find("]") != -1:
             # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
-            nomPaquet = nomPaquet[nomPaquet.find("]") + 1:].strip()
+            nomPaquet = self.splitRepo(nomPaquet)[1]
 
         elementAjouter = self.checkData(self.listeInstallationPacman, nomPaquet)
         elementEnlever = self.checkData(self.listeSuppressionPacman, nomPaquet)
@@ -1132,6 +1169,29 @@ class Interface (object):
             return 0
 
         return 1
+
+
+    def openURL (self, widget, url):
+        """
+        Ouvre le navigateur et affiche le site du projet
+        """
+
+        webbrowser.open_new_tab(url)
+
+
+    def splitRepo (self, chaine):
+        """
+        Sépare le dépot et le nom du paquet d'une chaine de type :
+        [repo] name
+        """
+
+        pattern = '[\[a-z0-9]]'
+
+        for element in re.findall(pattern, chaine):
+            repo = str(chaine[1 : chaine.find(element) + 1].strip())
+            name = str(chaine[chaine.find(element) + 2 :].strip())
+
+        return [repo, name]
 
 
     def printDebug (self, typeErreur, erreur):

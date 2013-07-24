@@ -164,7 +164,6 @@ class Pacman (object):
         if self.mode == "update":
             # Lancement de la mise à jour des dépôts
             if chaine[0] == "repo":
-                self.progressionInfo.set_pulse_step(0.5)
                 if chaine[1] == "-1":
                     # Erreur de connexion
                     self.writeEntry(_("Cannot connect to %s") % str(chaine[1]))
@@ -177,8 +176,6 @@ class Pacman (object):
                 self.writeEntry(_("Synchronizing package databases..."), _("Done"))
                 self.progressionInfo.set_fraction(1.0)
                 self.getCloseButton()
-
-        self.progressionInfo.pulse()
 
 
     def getCloseButton (self):
