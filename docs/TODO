@@ -18,22 +18,16 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     ---
 
     [FIXME] - Utiliser les dépôts externes lors des mises à jour
-        Adapter libpacman.py
     [FIXME] - Accélérer l'affichage de la liste des paquets
-        Utiliser un thread pour remplir la listview
-    [FIXME] - L'ajout de groupe s'effectue 2 fois.........................................................[EN COURS]
+        Utiliser un thread pour remplir la listview ?
+    [FIXME] - L'ajout de groupe s'effectue 2 fois
     [FIXME] - Le clic sur un groupe pendant le chargement d'un autre n'est pas pris en compte
         Bloquer la fonction lors du clic
     [FIXME] - L'encodage des informations n'est pas effectué en utf-8
-    [FIXME] - On ne récupère pas les informations pour un paquet dont une mise à jour est disponible
-        Un reset de fpmd est nécessaire
-    [FIXME] - Un paquet installé localement n'est pas pris en compte
 
     [TODO]  - Affiche un nom générique pour les groupes (Munto)
     [TODO]  - Afficher le README.Frugalware d'un paquet installé
     [TODO]  - Permettre de sélectionner tout un groupe
-    [TODO]  - Permettre d'ouvrir le lien site web via un clic.............................................[ULTERIEUR]
-        Changement sur l'interface nécessaire
     [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild............................................[ULTERIEUR]
         Un peu redondant avec repoman ?
     [TODO]  - Afficher les permissions d'un fichier dans l'explorateur (hermier)
@@ -50,7 +44,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
         -> Spécifier le chemin (~/git)
         -> Adapter le fpmd pour prendre en compte la mise à jour de repoman (case à cocher ?)
         -> Apadter la recherche pour prendre en compte repoman (dépot à part ?)
-    [TODO]  - Utiliser les Regex pour la fonction de split................................................[EN COURS]
 
 
 --- Configuration (config.py) --------------------------------------------------
@@ -81,11 +74,9 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     ---
 
     [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)..................[EN COURS]
-    [FIXME] - Une installation faite avec pacman-g2 ne sera pris au compte qu'au redémarrage
-        Relancer le démon lors de l'ouverture de pyFPM
+    [FIXME] - Empêcher pacman-g2 de se lancer en parallèle avec pyfpm
 
     [TODO]  - Adapter la libpacman généré par pacman-g2
-    [TODO]  - Relancer le démon après une mise à jour ou une installation/suppression.....................[EN COURS]
     [TODO]  - Réécriture du démon en C
 
 

@@ -45,6 +45,10 @@ class Interface (object):
         Initialisation de la fenêtre principale
         """
 
+        # Il est nécessaire de reconstruire la base de données de pacman-g2 à
+        # chaque redémarrage de pyFPM pour afficher les bonnes informations
+        Package.resetPacman()
+
         # TODO
         # Trouver un moyen plus élégant pour cacher les sous-groupes
         self.listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
@@ -546,6 +550,7 @@ class Interface (object):
         pacmanUi.mainWindow()
 
         self.eraseInterface()
+        Package.resetPacman()
         self.addRepos()
         self.refresh()
 
@@ -730,6 +735,7 @@ class Interface (object):
                 elif str(nomPaquet) in self.listeMiseAJourPacman:
                     # Le paquet est dans la liste des mises à jour
                     image = gtk.STOCK_REFRESH
+                    objetTrouve = 0
                 elif str(nomPaquet) in listePaquetsInstalles:
                     # Le paquet est dans une version supérieur à celle du paquet disponible
                     image = gtk.STOCK_REDO
@@ -811,6 +817,8 @@ class Interface (object):
         self.labelInformationsDescription.set_markup("")
         self.labelInformationsLien.set_markup("")
 
+        self.iconePaquet.clear()
+
         self.outilsPaquetFichier.set_sensitive(False)
         self.outilsPaquetJournal.set_sensitive(False)
 
@@ -837,11 +845,30 @@ class Interface (object):
             if len(versionDisponible) == 1:
                 # Le paquet est installé
                 depot = 0
+
+                # On garde en mémoire que le paquet est installé
                 estInstalle = True
             else:
                 # Une mise à jour est disponible
-                depot = Package.getRepoList().index(depotRecherche)
+                if not modeRecherche:
+                    # Ce n'est pas une recherche donc on se base sur le
+                    # dépôt local
+                    depot = 0
+
+                    # On garde en mémoire que le paquet est installé
+                    estInstalle = True
+                else:
+                    # On récupère le dépôt du paquet
+                    depot = Package.getRepoList().index(depotRecherche)
+                    if depot == Package.getIndexFromRepo():
+                        # Le dépot est celui de Frugalware donc on prend
+                        # le local
+                        depot = 0
+
+                        # On garde en mémoire que le paquet est installé
+                        estInstalle = True
         else:
+            # Le paquet n'est pas installé
             if not modeRecherche:
                 # Il ne s'agit pas d'une recherche
                 depot = int(self.listeSelectionDepots.get_active())
@@ -869,7 +896,7 @@ class Interface (object):
         if infoPaquet.get("name") in self.listeMiseAJourPacman:
             # Le SHA1SUMS n'est pas dispo puisqu'une version plus récente est diponible
             # Cas possible que lors de l'utilisation de frugalware-current
-            self.contenuPaquet.append(None, [_("SHA1SUMS"), _("An update is available")])
+            self.contenuPaquet.append(None, [_("SHA1SUMS"), _("An update is available (%s)") % str(versionDisponible)])
         else:
             if self.listeSelectionDepots.get_active() != 0:
                 # On récupère le dépôt actif
@@ -996,7 +1023,6 @@ class Interface (object):
             localFile.close()
             return True
         else:
-            utils.printDebug("ERROR" ,"No screenshot found")
             return False
 
         #~ utils.printDebug("DEBUG", "End of download screenshot for " + str(nomPaquet))
@@ -1067,27 +1093,40 @@ class Interface (object):
 
         listePaquetsInstalles = Package.getInstalledList()
 
+        # Le paquet en question à été décoché
         if modele[colonne][0] == 0:
-            # Le paquet en question à été décoché
+
+            # Le paquet n'a pas de mise à jour
             if len(modele[colonne][4]) == 1:
+                # Le paquet en question est installé
                 if Package.checkPackageInstalled(nomPaquet, modele[colonne][3]):
-                    # Le paquet en question est installé
+                    # Le paquet est mis dans la liste des paquets à supprimer
                     if elementEnlever == 0:
-                        # Le paquet est mis dans la liste des paquets à supprimer
                         self.listeSuppressionPacman.append(nomPaquet)
                         modele[colonne][1] = gtk.STOCK_REMOVE
+
                 else:
+                    # Le paquet est enlevé de la liste des paquets à installer
                     if elementAjouter != 0:
-                        # Le paquet est enlevé de la liste des paquets à installer
                         self.listeInstallationPacman.remove(elementAjouter)
                         modele[colonne][1] = " "
+
+            # Le paquet à une mise à jour
             else:
-                # Le paquet est une mise à jour
+                # Le paquet est enlevé de la liste des paquets à installer
                 if elementAjouter != 0:
-                    # Le paquet est enlevé de la liste des paquets à installer
                     self.listeInstallationPacman.remove(elementAjouter)
-                    modele[colonne][1] = " "
+                    # Le paquet est dans la liste des paquets à installer
+                    if str(nomPaquet) in self.listeInstallationPacman:
+                        modele[colonne][1] = gtk.STOCK_ADD
+                    # Le paquet est dans la liste des mises à jour
+                    elif str(nomPaquet) in self.listeMiseAJourPacman:
+                        modele[colonne][1] = gtk.STOCK_REFRESH
+                    # Le paquet est dans une version supérieur à celle du paquet disponible
+                    elif str(nomPaquet) in listePaquetsInstalles:
+                        modele[colonne][1] = gtk.STOCK_REDO
         else:
+
             # Le paquet en question à été coché
             if Package.checkPackageInstalled(nomPaquet, modele[colonne][3]):
                 # Le paquet en question est installé
