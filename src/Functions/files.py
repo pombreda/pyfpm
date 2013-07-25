@@ -15,12 +15,12 @@ class File (object):
     """
     Ensemble de fonction permettant de gérer les fichiers
     """
-    
+
     def fichier (self, chemin):
         """
         Vérifie l'existance d'un fichier
         """
-        
+
         return os.path.exists(chemin)
 
 
@@ -28,20 +28,20 @@ class File (object):
         """
         Vérifie l'encodage en utf-8 d'un fichier
         """
-        
+
         if fichier(chemin) == True:
             try:
                 chemin = unicode(chemin, 'UTF-8', 'strict')
                 return True
             except UnicodeDecodeError:
-                return False 
+                return False
 
 
-    def verifierErreurUrl (self, nomUrl):
+    def checkUrlError (self, nomUrl):
         """
         Vérifie l'existence d'erreur 404
         """
-        
+
         req = Request(nomUrl)
         try:
             response = urlopen(req)
@@ -57,12 +57,12 @@ class File (object):
         """
         Permet d'éviter de récupérer à nouveau le fichier si celui-ci existe
         """
-        
+
         trouve = False
-        
+
         if self.fichier('/tmp/frugalbuild'):
             fichierLocal = open('/tmp/frugalbuild', 'w')
-            
+
             print fichierLocal
             for element in fichierLocal.read():
                 ligne = element.split('=')
@@ -70,6 +70,6 @@ class File (object):
                     trouve = True
 
             fichierLocal.close()
-        
+
         return trouve
-    
+

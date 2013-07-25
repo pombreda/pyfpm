@@ -418,10 +418,14 @@ class FPMd (dbus.service.Object):
                 self.emitSignal({"repo", str(repo_list[db_list.index(element)])})
 
                 # Run update of this repo
-                if pacman_db_update (1, element) == -1:
+                ret = pacman_db_update (1, element)
+                if ret == -1:
                     # There is an error
-                    self.emitSignal({"repo","-1"})
-                    self.writeLog("cannot connect to " + str(repo_list[db_list.index(element)]))
+                    self.emitSignal({"repo", str(repo_list[db_list.index(element)]) , "failed"})
+                    self.writeLog("failed to update " + str(repo_list[db_list.index(element)]))
+                elif ret == 1:
+                    # Up-to-date
+                    self.emitSignal({"repo", str(repo_list[db_list.index(element)]) , "uptodate"})
 
         self.writeLog("Synchronizing package lists")
 

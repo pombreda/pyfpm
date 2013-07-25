@@ -9,6 +9,7 @@
 
 # Importation des modules
 import os, sys, pango, codecs, urllib, gettext, re
+from threading import Thread
 
 # Récupération de la traduction
 gettext.bindtextdomain('pyfpm', 'lang')
@@ -802,6 +803,9 @@ class Interface (object):
         Obtient les détails du paquet
         """
 
+        #~ t = Thread(target=self.downloadScreenshot, args=(nomPaquet,))
+        #~ t.start()
+
         # On efface tout et on recommence :D
         self.labelInformationsNom.set_markup("")
         self.labelInformationsDescription.set_markup("")
@@ -879,7 +883,7 @@ class Interface (object):
         # Affiche des informations supplémentaires si le paquet est installé
         if estInstalle:
             # Lien vers le site du projet
-            self.labelInformationsLien.set_markup("<a href='" + str(infoPaquet.get("url")) + "'>" + _("Visit website") + "</a>")
+            self.labelInformationsLien.set_markup("<a href='" + str(infoPaquet.get("url")) + "' title='" + str(infoPaquet.get("url")) + "'>" + _("Visit website") + "</a>")
 
             # Date d'installation
             self.contenuPaquet.append(None, [_("Install date"), str(infoPaquet.get("install_date"))])
@@ -962,11 +966,40 @@ class Interface (object):
 
             #~ texteBuffer.set_text(texte)
 
-        path = "/usr/share/icons/Frugalware/apps/96/" + infoPaquet.get("name") + ".png"
-        if File.fichier(path):
-            self.iconePaquet.set_from_file(path)
+        if self.downloadScreenshot(infoPaquet.get("name")):
+            self.iconePaquet.set_from_file("/tmp/picture")
         else:
             self.iconePaquet.clear()
+
+        #~ path = "/usr/share/icons/Frugalware/apps/96/" + infoPaquet.get("name") + ".png"
+        #~ if File.fichier(path):
+            #~ self.iconePaquet.set_from_file(path)
+        #~ else:
+            #~ self.iconePaquet.clear()
+
+
+    def downloadScreenshot (self, nomPaquet):
+        """
+        Récupère une screenshot depuis le site http://screenshots.ubuntu.com/
+        """
+
+        url = "http://screenshots.ubuntu.com/thumbnail/" + str(nomPaquet)
+
+        #~ utils.printDebug("DEBUG", "Run download screenshot for " + str(nomPaquet))
+        if File.checkUrlError(url) == 1:
+            # Le site est accessible
+            webFile = urllib.urlopen(url)
+            localFile = open("/tmp/picture", 'w')
+            localFile.write(webFile.read())
+            utils.printDebug("DEBUG", str(nomPaquet) + " screenshot is saved")
+            webFile.close()
+            localFile.close()
+            return True
+        else:
+            utils.printDebug("ERROR" ,"No screenshot found")
+            return False
+
+        #~ utils.printDebug("DEBUG", "End of download screenshot for " + str(nomPaquet))
 
 
     def getFrugalBuild (self, nomPaquet, listeGroupes):
@@ -1209,22 +1242,28 @@ class Interface (object):
     #       Affichage d'une fenêtre pour les fichiers et le changelog
     #---------------------------------------------------------------------------
 
+    def showTooltip(self, selection, modele, tooltip):
+        tooltip.set_text("test")
+
+
     def fileWindow (self, widget):
         """
         Affiche les fichiers d'un paquet
         """
 
-        fenetre = gtk.Dialog(_("File"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
+        fenetre = gtk.Dialog(_("Files"), None, gtk.DIALOG_MODAL, (gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
         fenetre.set_size_request(600, 600)
 
         tableau = Package.getFileFromPackage(self.paquetSelectionne)
+        tooltip = gtk.Tooltip()
 
         listeColonne = gtk.TreeStore(str)
         colonne = gtk.TreeView(listeColonne)
-        colonneFichier = gtk.TreeViewColumn(_("Groups"))
+        colonne.set_has_tooltip(True)
+        colonneFichier = gtk.TreeViewColumn(_("Files"))
         celluleFichier = gtk.CellRendererText()
 
-        colonne.set_headers_visible(True)
+        colonne.set_headers_visible(False)
         colonne.set_size_request(180,0)
         colonne.set_search_column(0)
 
@@ -1238,9 +1277,42 @@ class Interface (object):
         defilement.add(colonne)
         defilement.set_border_width(4)
 
+        selection = colonne.get_selection()
+        selection.connect("changed", self.showTooltip, listeColonne, tooltip)
+        #~ tooltips.set_tip(colonne, 'TOOLTIP TEXT')
+
+        # Affichage des fichiers sous forme d'arbre
+        path = []
+        # On défini la racine
         racine = listeColonne.append(None, ['/'])
+
         for element in tableau:
-            listeColonne.append(racine, ['/' + str(element)])
+            # On va analyser la chaine en la divisant
+            chaine = element.split('/')
+            if len(chaine[-1]) == 0:
+                # Cas d'un dossier
+                if len(chaine) == 2:
+                    # Dossier de niveau 1
+                    path.append([str(element), listeColonne.append(racine, [str(element)])])
+                else:
+                    # Autre dossier
+                    found = racine
+                    for index in path:
+                        if str(element[0:len(element) - len(chaine[-2]) - 1]) == index[0]:
+                            # Le dossier parent existe
+                            found = index[1]
+                            break
+
+                    path.append([str(element), listeColonne.append(found, [str(chaine[-2]) + '/'])])
+            else:
+                # Cas d'un fichier
+                found = racine
+                for index in path:
+                    if element[0:len(element) - len(chaine[-1])] == index[0]:
+                        # Le dossier parent existe
+                        found = index[1]
+
+                listeColonne.append(found, [str(chaine[-1])])
 
         colonne.expand_all()
 

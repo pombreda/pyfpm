@@ -164,13 +164,17 @@ class Pacman (object):
         if self.mode == "update":
             # Lancement de la mise à jour des dépôts
             if chaine[0] == "repo":
-                if chaine[1] == "-1":
-                    # Erreur de connexion
-                    self.writeEntry(_("Cannot connect to %s") % str(chaine[1]))
-                    self.getCloseButton()
+                if len(chaine) > 2:
+                    if chaine[2] == "failed":
+                        # Erreur de connexion
+                        self.writeEntry(_("Cannot connect to %s") % str(chaine[1]))
+                    elif chaine[2] == "uptodate":
+                        # Le dépôt est déjà à jour
+                        self.writeEntry(_("%s is up-to-date") % str(chaine[1]))
                 else:
                     # Synchronisation du dépôt
-                    self.writeEntry(_("Synchronizing package databases..."), str(chaine[1]))
+                    self.writeEntry(_("Synchronizing package databases..."), str(chaine[1]) + "...")
+
             elif chaine[0] == "action" and chaine[1] == "end":
                 # L'action est terminée
                 self.writeEntry(_("Synchronizing package databases..."), _("Done"))

@@ -29,13 +29,14 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
         Un reset de fpmd est nécessaire
     [FIXME] - Un paquet installé localement n'est pas pris en compte
 
-    [TODO]  - Affiche un nom générique pour les groupes
+    [TODO]  - Affiche un nom générique pour les groupes (Munto)
     [TODO]  - Afficher le README.Frugalware d'un paquet installé
     [TODO]  - Permettre de sélectionner tout un groupe
     [TODO]  - Permettre d'ouvrir le lien site web via un clic.............................................[ULTERIEUR]
         Changement sur l'interface nécessaire
     [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild............................................[ULTERIEUR]
         Un peu redondant avec repoman ?
+    [TODO]  - Afficher les permissions d'un fichier dans l'explorateur (hermier)
 
 
 --- Paquet (package.py) --------------------------------------------------------
