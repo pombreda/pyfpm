@@ -3,7 +3,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 --- pyfpm (main.py) ------------------------------------------------------------
 
     Script de lancement de pyFPM
-
     ---
 
     [TODO]  - Lancer l'application que si le démon est actif
@@ -14,7 +13,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 --- Affichage (display.py) -----------------------------------------------------
 
     Script de gestion de l'interface de pyFPM
-
     ---
 
     [FIXME] - Utiliser les dépôts externes lors des mises à jour
@@ -36,7 +34,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 --- Paquet (package.py) --------------------------------------------------------
 
     Script permettant de lier pyFPM et FPMd
-
     ---
 
     [TODO]  - Afficher les paquets no-build (utilisable avec repoman).....................................[ULTERIEUR]
@@ -49,7 +46,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 --- Configuration (config.py) --------------------------------------------------
 
     Script de configuration de pyFPM
-
     ---
 
     [TODO]  - Réécrire l'interface
@@ -61,7 +57,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 --- Installation (pacman.py) ---------------------------------------------------
 
     Script affichant une fenêtre de progression pour les actions de pacman-g2
-
     ---
 
     [TODO]  - Gestion de la barre de progrès..............................................................[EN COURS]
@@ -70,7 +65,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 --- Démon (fpmd) ---------------------------------------------------------------
 
     Script permettant d'utiliser les actions de pacman-g2 en tant que simple utilisateur
-
     ---
 
     [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)..................[EN COURS]
@@ -83,7 +77,6 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 --- libpacman (libpacman.py) ---------------------------------------------------
 
     Script permettant d'utiliser pacman-g2 avec python 2.7
-
     ---
 
     [FIXME] - Les paquets non maintenus ne sont pas considérés comme installés (ex: pm-quirk)

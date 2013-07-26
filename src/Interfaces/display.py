@@ -1609,7 +1609,7 @@ class Interface (object):
 
             if len(listeTmp) > 0:
                 # Si la liste n'est pas vide
-                miseajour = gtk.Dialog(_("Update system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_ADD, gtk.RESPONSE_ACCEPT, gtk.STOCK_OK, gtk.RESPONSE_OK))
+                miseajour = gtk.Dialog(_("Update system"), None, gtk.DIALOG_MODAL, (gtk.STOCK_ADD, gtk.RESPONSE_ACCEPT, gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL))
 
                 texteInfo = gtk.Label(_("Update available"))
                 listeInfo = gtk.TreeStore(str)

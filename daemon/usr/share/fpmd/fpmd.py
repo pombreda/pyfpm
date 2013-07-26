@@ -131,6 +131,7 @@ class FPMd (dbus.service.Object):
 
         pacman_parse_config()
 
+        db_list = []
         for repo in repo_list:
             db = pacman_db_register(repo)
             db_list.append(db)
@@ -287,6 +288,15 @@ class FPMd (dbus.service.Object):
         return repo_list
 
 
+    @dbus.service.method (BUSNAME)
+    def getDBList (self):
+        """
+        Get the repository list
+        """
+
+        return db_list
+
+
     @dbus.service.method (BUSNAME, in_signature='u', out_signature='as')
     def getGroupsList (self, repo):
         """
@@ -426,6 +436,8 @@ class FPMd (dbus.service.Object):
                 elif ret == 1:
                     # Up-to-date
                     self.emitSignal({"repo", str(repo_list[db_list.index(element)]) , "uptodate"})
+                else:
+                    pass
 
         self.writeLog("Synchronizing package lists")
 
