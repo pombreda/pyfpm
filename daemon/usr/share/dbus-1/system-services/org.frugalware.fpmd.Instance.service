@@ -1,4 +1,4 @@
 [D-BUS Service]
-Name=org.frugalware.fpmd.deamon
+Name=org.frugalware.fpmd.Instance
 Exec=/usr/bin/fpmd
 User=root

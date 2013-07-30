@@ -462,6 +462,10 @@ class Interface (object):
         Fermeture de pyFPM
         """
 
+        # Supprime le fichier de capture d'écran
+        if os.path.exists("/tmp/picture"):
+            os.remove("/tmp/picture")
+
         utils.printDebug("INFO", _("Bye bye"))
         gtk.main_quit()
 
@@ -511,9 +515,9 @@ class Interface (object):
         if newSize < 500:
             newSize = 500
 
-        #~ self.celluleValeurInformations.set_property("wrap-width", newSize)
-        #~ self.celluleValeurPaquet.set_property("wrap-width", newSize)
         self.labelInformationsDescription.set_size_request(newSize, -1)
+
+        self.celluleValeurPaquet.set_property("wrap-width", newSize)
         self.colonnePaquetsNom.set_min_width(self.fenetre.get_size()[0]/2)
         self.colonnePaquets.set_size_request(0, self.fenetre.get_size()[1]/2)
 
@@ -649,7 +653,7 @@ class Interface (object):
             else:
                 self.listeColonneGroupes.append([nom])
 
-        utils.printDebug("DEBUG", _("%(nbr)s group(s) append for %(repo)s") % {'nbr':str(len(self.listeColonneGroupes)), 'repo':str(self.listeSelectionDepots.get_active_text())})
+        utils.printDebug("DEBUG", _("%(nbr)s group(s) append for %(repo)s") % {'nbr':str(len(self.listeColonneGroupes)), 'repo':"\033[0;32m" + str(self.listeSelectionDepots.get_active_text())})
 
 
     def selectGroup (self, selection, modele):
@@ -686,7 +690,7 @@ class Interface (object):
         paquets = Package.getPackagesList(self.listeSelectionDepots.get_active(), nomGroupe)
         self.addPackages(paquets, nomGroupe)
 
-        utils.printDebug("DEBUG", _("%(nbr)s package(s) append for %(grp)s") % {'nbr':str(len(paquets)), 'grp':str(nomGroupe)})
+        utils.printDebug("DEBUG", _("%(nbr)s package(s) append for %(grp)s") % {'nbr':str(len(paquets)), 'grp':"\033[0;32m" + str(nomGroupe)})
 
 
     def addPackages (self, paquets, value, recherche = False):
@@ -956,53 +960,11 @@ class Interface (object):
         if len(conflits) > 0:
             self.contenuPaquet.append(None, [_("Conflits"), ', '.join(conflits)])
 
-        # Liste des fichiers inclus dans le paquet
-        #~ if Package.checkPackageInstalled(nomPaquet, versionPaquet):
-        #~ if estInstalle:
-            #~ self.listeFichiers = Package.getFileFromPackage(nomPaquet)
-        #~ else:
-            #~ self.listeFichiers = []
-
-            #~ chemin = []
-            #~ racine = self.contenuFichiers.append(None, ['/'])
-            #~ for element in listeFichiers:
-                #~ self.contenuFichiers.append(None, ['/' + str(element)])
-                #~ chaine = element.split('/')
-                #~ if len(chaine[len(chaine - 1)] == 0):
-                    #~ if len(chaine) == 1:
-                        # Dossier de niveau 1
-                        #~ self.contenuFichiers.append(racine, ['/' + str(chaine[len(chaine - 1)])])
-        #~ else:
-            #~ self.contenuFichiers.append(None, [_("No info")])
-
-        # Si le mode développement est actif, le frugalbuild est récupéré
-        #~ if self.developementMode:
-            #~ texte = ""
-            #~ texteBuffer = self.listeFrugalbuild.get_buffer()
-
-            #~ try:
-                #~ if self.getFrugalBuild(nomPaquet, infoPaquet.get("groups")):
-                    #~ if os.path.exists("/tmp/frugalbuild") == True:
-                        #~ file = codecs.open("/tmp/frugalbuild", "r", "utf-8")
-                        #~ for element in file:
-                            #~ if element != "":
-                                #~ texte += " " + element
-                        #~ file.close()
-            #~ except:
-                #~ texte = " " + _("No file found")
-
-            #~ texteBuffer.set_text(texte)
-
+        # Récupération de la capture d'écran
         if self.downloadScreenshot(infoPaquet.get("name")):
             self.iconePaquet.set_from_file("/tmp/picture")
         else:
             self.iconePaquet.clear()
-
-        #~ path = "/usr/share/icons/Frugalware/apps/96/" + infoPaquet.get("name") + ".png"
-        #~ if File.fichier(path):
-            #~ self.iconePaquet.set_from_file(path)
-        #~ else:
-            #~ self.iconePaquet.clear()
 
 
     def downloadScreenshot (self, nomPaquet):
@@ -1012,7 +974,6 @@ class Interface (object):
 
         url = "http://screenshots.ubuntu.com/thumbnail/" + str(nomPaquet)
 
-        #~ utils.printDebug("DEBUG", "Run download screenshot for " + str(nomPaquet))
         if File.checkUrlError(url) == 1:
             # Le site est accessible
             webFile = urllib.urlopen(url)
@@ -1024,48 +985,6 @@ class Interface (object):
             return True
         else:
             return False
-
-        #~ utils.printDebug("DEBUG", "End of download screenshot for " + str(nomPaquet))
-
-
-    def getFrugalBuild (self, nomPaquet, listeGroupes):
-        """
-        Récupère le FrugalBuild via le git de Frugalware
-        """
-
-        listeDepot = Package.getRepoList()
-
-        if "frugalware" in listeDepot:
-            index = "frugalware-stable"
-        elif "frugalware-current" in listeDepot:
-            index = "frugalware-current"
-
-        listeGroupesProhibes = ['-extensions','adesklets-desklets','amsn-plugins','avidemux-plugin-cli','avidemux-plugin-gtk','avidemux-plugin-qt','chroot-core','core','cinnamon-desktop','devel-core','directfb-drivers','e17-apps','e17-misc','fatrat-plugins','firefox-extensions','geda-suite','gift-plugins','gnome-minimal','hk_classes-drivers','jdictionary-plugins','kde-apps','kde-build','kde-core','kde-doc','kde-docs','kde-minimal','kde-runtime','lxde-desktop','lxde-extra','pantheon-desktop','misc-fonts','phonon-backend','pidgin-plugins','qt4-libs','sawfish-scripts','seamonkey-addons','thunderbird-extensions','tuxcmd-plugins','wmaker-dockapps','xfce4-core','xfce4-goodies','xorg-apps','xorg-core','xorg-data','xorg-doc','xorg-drivers','xorg-fonts','xorg-libs','xorg-proto','xorg-util']
-
-        for element in listeGroupes:
-            if not element in listeGroupesProhibes:
-                nomGroupe = element
-                break
-
-        #~ url = "http://www7.frugalware.org/pub/frugalware/" + index + "/source/" + nomGroupe + "/" + nomPaquet + "/FrugalBuild"
-
-        #~ try:
-            #~ if File.verifierErreurUrl(url) == 1:
-                #~ fichierFB = urllib.urlopen(url)
-                #~ fichierLocal = open("/tmp/frugalbuild", 'w')
-                #~ fichierLocal.write(fichierFB.read())
-                #~ fichierFB.close()
-                #~ fichierLocal.close()
-                #~ Event.printDebug("DEBUG", _("Download complete") + " " + url)
-                #~ resultat = True
-            #~ else:
-                #~ Event.printDebug("ERROR", _("Download failed with 404 error") + " " + url)
-        #~ except:
-            #~ Event.printDebug("ERROR", _("Download failed") + " " + url)
-            #~ resultat = False
-            #~ pass
-
-        return resultat
 
 
     #---------------------------------------------------------------------------
@@ -1084,13 +1003,16 @@ class Interface (object):
 
         nomPaquet = modele[colonne][2]
 
+        # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
         if nomPaquet.find("]") != -1:
-            # Dans le cas d'une recherche, il est nécessaire d'enlever le préfixe [<nom_dépôt>]
             nomPaquet = utils.splitRepo(nomPaquet)[1]
 
+        # On vérifie si le paquet en question est dans la liste des paquets à enlever
+        # ou à installer
         elementAjouter = utils.checkData(self.listeInstallationPacman, nomPaquet)
         elementEnlever = utils.checkData(self.listeSuppressionPacman, nomPaquet)
 
+        # On récupère la liste des paquets installés
         listePaquetsInstalles = Package.getInstalledList()
 
         # Le paquet en question à été décoché
@@ -1281,8 +1203,8 @@ class Interface (object):
     #       Affichage d'une fenêtre pour les fichiers et le changelog
     #---------------------------------------------------------------------------
 
-    def showTooltip(self, selection, modele, tooltip):
-        tooltip.set_text("test")
+    #~ def showTooltip(self, selection, modele, tooltip):
+        #~ tooltip.set_text("test")
 
 
     def fileWindow (self, widget):
@@ -1294,7 +1216,7 @@ class Interface (object):
         fenetre.set_size_request(600, 600)
 
         tableau = Package.getFileFromPackage(self.paquetSelectionne)
-        tooltip = gtk.Tooltip()
+        #~ tooltip = gtk.Tooltip()
 
         listeColonne = gtk.TreeStore(str)
         colonne = gtk.TreeView(listeColonne)
@@ -1316,8 +1238,8 @@ class Interface (object):
         defilement.add(colonne)
         defilement.set_border_width(4)
 
-        selection = colonne.get_selection()
-        selection.connect("changed", self.showTooltip, listeColonne, tooltip)
+        #~ selection = colonne.get_selection()
+        #~ selection.connect("changed", self.showTooltip, listeColonne, tooltip)
         #~ tooltips.set_tip(colonne, 'TOOLTIP TEXT')
 
         # Affichage des fichiers sous forme d'arbre
@@ -1384,7 +1306,6 @@ class Interface (object):
         listeDepot = Package.getRepoList()
         journal = "/var/lib/pacman-g2/" + listeDepot[0] + "/" + self.paquetSelectionne + "-" + self.versionSelectionne + "/changelog"
         if os.path.exists(journal):
-            # Cet encodage pose soucis
             file = codecs.open(journal, "r", "iso-8859-15")
             self.listeChangelog = file
             for element in file:
@@ -1392,7 +1313,7 @@ class Interface (object):
                     texte += "\t" + element
             file.close()
         else:
-            texte = "\t" + _("No file found")
+            texte = "\n\t" + _("No file found. This package must have been installed from a file.")
 
         texteBuffer.set_text(texte)
 
@@ -1414,9 +1335,10 @@ class Interface (object):
         Affiche les modifications à effectuer sur les paquets
         """
 
+        # On récupère la liste des dépôts
         listeDepot = Package.getRepoList()
 
-        # Récupère l'index du dépôt initial
+        # On récupère l'index du dépôt initial
         index = Package.getIndexFromRepo()
 
         if self.recherche_mode == False:

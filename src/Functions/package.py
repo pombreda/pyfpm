@@ -16,8 +16,8 @@ gettext.textdomain('pyfpm')
 _ = gettext.gettext
 
 # Noms dbus
-BUSNAME = 'org.frugalware.fpmd.deamon'
-OBJPATH = '/org/frugalware/fpmd/deamon/object'
+BUSNAME = 'org.frugalware.fpmd.Instance'
+OBJPATH = '/org/frugalware/fpmd/Instance/object'
 
 
 class Package (object):
@@ -39,7 +39,6 @@ class Package (object):
             sys.exit(_("DBus interface is not available"))
 
         # Fonction interne a Fpmd
-        self.fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', BUSNAME)
         self.fpmd_resetPacman = proxy.get_dbus_method('resetPacman', BUSNAME)
         self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', BUSNAME)
 

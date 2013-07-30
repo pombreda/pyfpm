@@ -19,9 +19,12 @@ import os, sys, dbus, dbus.service, dbus.mainloop.glib, gobject, time, datetime
 
 from libpacman import *
 
-# Global dbus var
-BUSNAME = 'org.frugalware.fpmd.deamon'
-OBJPATH = '/org/frugalware/fpmd/deamon/object'
+BUSNAME = 'org.frugalware.fpmd.Instance'
+OBJPATH = '/org/frugalware/fpmd/Instance/object'
+# Only simple pacman-g2 actions (search, getInfo, ...)
+BUSNAME_INSTANCE = 'org.frugalware.fpmd.Instance'
+# Actions like update, install or remove packages
+BUSNAME_ACTIONS = 'org.frugalware.fpmd.Actions'
 
 # Log file
 LOGPATH = '/var/log/fpmd.log'
@@ -29,10 +32,10 @@ LOGPATH = '/var/log/fpmd.log'
 CFG_FILE = "/etc/pacman-g2.conf"
 # Pacman-g2 path
 PM_ROOT = "/"
-PM_DBPATH = "var/lib/pacman-g2"
-PM_CACHEDIR = "var/cache/pacman-g2/pkg"
+PM_DBPATH = "/var/lib/pacman-g2"
+PM_CACHEDIR = "/var/cache/pacman-g2/pkg"
+PM_HOOKSDIR = "/etc/pacman-g2/hooks"
 PM_LOCK = "/tmp/pacman-g2.lck"
-PM_HOOKSDIR = "etc/pacman-g2/hooks"
 # Name of local repo
 FW_LOCAL = "local"
 
@@ -60,9 +63,10 @@ class FPMd (dbus.service.Object):
         try:
             proxy = pacmanBus.get_object(BUSNAME, OBJPATH, introspect=False)
         except dbus.DBusException:
+            self.writeLog("DBus interface is not available")
             sys.exit("DBus interface is not available")
 
-        pacmanBus.add_signal_receiver(self.listenSignal, dbus_interface=BUSNAME, signal_name='sendSignal')
+        pacmanBus.add_signal_receiver(self.listenSignal, dbus_interface=BUSNAME_INSTANCE, signal_name='sendSignal')
 
         self.startPacman()
 
@@ -77,7 +81,7 @@ class FPMd (dbus.service.Object):
                 sys.exit("An instance of pacman-g2 is already running.")
 
             if pacman_initialize(PM_ROOT) == -1:
-                self.writeLog("Can't initialise pacman-g2 - " + str(pacman_print_error()))
+                self.writeLog("Failed to initialize libpacman - " + str(pacman_print_error()))
                 sys.exit()
 
             # Set some important pacman-g2 options
@@ -118,7 +122,7 @@ class FPMd (dbus.service.Object):
         db_list = []
 
 
-    @dbus.service.method (BUSNAME)
+    @dbus.service.method (BUSNAME_INSTANCE)
     def resetPacman (self):
         """
         Reset pacman-g2 instance to update informations
@@ -137,7 +141,7 @@ class FPMd (dbus.service.Object):
             db_list.append(db)
 
 
-    @dbus.service.signal(BUSNAME, signature='as')
+    @dbus.service.signal(BUSNAME_INSTANCE, signature='as')
     def sendSignal (self, value):
         """
         Send a value
@@ -145,7 +149,7 @@ class FPMd (dbus.service.Object):
         pass
 
 
-    @dbus.service.method (BUSNAME, in_signature='as')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='as')
     def emitSignal (self, text):
         """
         Emit a signal
@@ -178,7 +182,7 @@ class FPMd (dbus.service.Object):
             pass
 
 
-    @dbus.service.method (BUSNAME, in_signature='su', out_signature='u')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='su', out_signature='u')
     def getPackagePointer (self, pkgName, repo):
         """
         Get the package pointer
@@ -187,7 +191,7 @@ class FPMd (dbus.service.Object):
         return pacman_db_readpkg(db_list[int(repo)], str(pkgName))
 
 
-    @dbus.service.method (BUSNAME, in_signature='u', out_signature='a{sv}')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='u', out_signature='a{sv}')
     def getPackageInfo (self, pkg):
         """
         Get some informations about the package
@@ -220,7 +224,7 @@ class FPMd (dbus.service.Object):
         return pkgDict
 
 
-    @dbus.service.method (BUSNAME, in_signature='su', out_signature='s')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='su', out_signature='s')
     def getSha1sums (self, pkgName, repo):
         """
         Get the correct SHA1SUMS from frugalware/repos
@@ -231,7 +235,7 @@ class FPMd (dbus.service.Object):
         return str(pacman_pkg_get_info(pkg, PM_PKG_SHA1SUM))
 
 
-    @dbus.service.method (BUSNAME, in_signature='s', out_signature='as')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='s', out_signature='as')
     def getFileFromPackage (self, pkgName):
         """
         Get the files list of the package
@@ -270,7 +274,7 @@ class FPMd (dbus.service.Object):
             return ""
 
 
-    @dbus.service.method (BUSNAME, in_signature='ss', out_signature='b')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='ss', out_signature='b')
     def checkPackageInstalled (self, pkgName, pkgVersion):
         """
         Check if a package is installed or not
@@ -279,7 +283,7 @@ class FPMd (dbus.service.Object):
         return pacman_package_intalled(str(pkgName), str(pkgVersion))
 
 
-    @dbus.service.method (BUSNAME)
+    @dbus.service.method (BUSNAME_INSTANCE)
     def getRepoList (self):
         """
         Get the repository list
@@ -288,7 +292,7 @@ class FPMd (dbus.service.Object):
         return repo_list
 
 
-    @dbus.service.method (BUSNAME)
+    @dbus.service.method (BUSNAME_INSTANCE)
     def getDBList (self):
         """
         Get the repository list
@@ -297,7 +301,7 @@ class FPMd (dbus.service.Object):
         return db_list
 
 
-    @dbus.service.method (BUSNAME, in_signature='u', out_signature='as')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='u', out_signature='as')
     def getGroupsList (self, repo):
         """
         Get the groups list from a repository
@@ -318,7 +322,7 @@ class FPMd (dbus.service.Object):
         return groupsList
 
 
-    @dbus.service.method (BUSNAME, in_signature='us', out_signature='au')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='us', out_signature='au')
     def getPackagesList (self, repo, groupName):
         """
         Get the packages list from a group and a repository
@@ -340,7 +344,7 @@ class FPMd (dbus.service.Object):
         return packagesList
 
 
-    @dbus.service.method (BUSNAME, in_signature='s', out_signature='a(si)')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='s', out_signature='a(si)')
     def searchRepoPackage (self, pkgName):
         """
         Search the pkgName into the repository
@@ -364,7 +368,7 @@ class FPMd (dbus.service.Object):
         return foundPkgList
 
 
-    @dbus.service.method (BUSNAME, in_signature='s')
+    @dbus.service.method (BUSNAME_INSTANCE, in_signature='s')
     def searchInstalledPackage (self, pkgName):
         """
         Get the list of installed packages for a specific
@@ -388,7 +392,7 @@ class FPMd (dbus.service.Object):
         return foundPkgList
 
 
-    @dbus.service.method (BUSNAME, out_signature="as")
+    @dbus.service.method (BUSNAME_INSTANCE, out_signature="as")
     def getUpdateList (self):
         """
         Get the list of packages to update
@@ -404,7 +408,7 @@ class FPMd (dbus.service.Object):
         return stringList
 
 
-    @dbus.service.method (BUSNAME, out_signature="as")
+    @dbus.service.method (BUSNAME_INSTANCE, out_signature="as")
     def getInstalledList (self):
         """
         Get the list of installed packages
@@ -413,7 +417,7 @@ class FPMd (dbus.service.Object):
         return pacman_package_installed()
 
 
-    @dbus.service.method (BUSNAME)
+    @dbus.service.method (BUSNAME_ACTIONS)
     def updateDatabase (self):
         """
         Update pacman-g2 database
@@ -444,7 +448,7 @@ class FPMd (dbus.service.Object):
         self.emitSignal({"action","end"})
 
 
-    @dbus.service.method (BUSNAME, in_signature="u")
+    @dbus.service.method (BUSNAME_ACTIONS, in_signature="u")
     def cleanCache (self, mode):
         """
         Clean pacman-g2 cache
@@ -456,7 +460,7 @@ class FPMd (dbus.service.Object):
             self.writeLog("Clean cache with mode " + str(mode))
 
 
-    @dbus.service.method (BUSNAME, in_signature="su", out_signature="b")
+    @dbus.service.method (BUSNAME_ACTIONS, in_signature="su", out_signature="b")
     def removePackage (self, pkgName, removeDeps = 0):
         """
         Remove a package
@@ -526,8 +530,8 @@ class FPMd (dbus.service.Object):
         return True
 
 
-    @dbus.service.method (BUSNAME)
-    def closeDeamon (self):
+    @dbus.service.method (BUSNAME_INSTANCE)
+    def closeDaemon (self):
         """
         Close FPMd
         """
@@ -540,47 +544,54 @@ class FPMd (dbus.service.Object):
         """
         """
 
-        index = 1
-        pourcent = 0
-        event = 0
-        compte = 0
+        event = None
+        package = None
+        percent = 0
+        count = 0
 
         texte = ""
 
         for arg in args:
             if index == 1 and arg != None:
                 event = arg
+            elif index == 2 and arg != None:
+                package = arg
             elif index == 3 and arg != None:
-                pourcent = arg
+                percent = arg
             elif index == 4 and arg != None:
-                compte = arg
+                count = arg
             else:
                 pass
 
-            index += 1
+        if package == None:
+            return
+        if percent < 0 or percent > 100:
+            return
 
         if event == PM_TRANS_PROGRESS_ADD_START:
-            if compte > 1:
-                self.sendSignal("Installing packages...")
+            if count > 1:
+                self.emitSignal({"progress","Installing packages..."})
             else:
-                self.sendSignal("Installing package...")
+                self.emitSignal({"progress","Installing package..."})
         elif event == PM_TRANS_PROGRESS_UPGRADE_START:
-            if compte > 1:
-                self.sendSignal("Upgrading packages...")
+            if count > 1:
+                self.emitSignal({"progress","Upgrading packages..."})
             else:
-                self.sendSignal("Upgrading package...")
+                self.emitSignal({"progress","Upgrading package..."})
         elif event == PM_TRANS_PROGRESS_REMOVE_START:
-            if compte > 1:
-                self.sendSignal("Removing packages...")
+            if count > 1:
+                self.emitSignal({"progress","Removing packages..."})
             else:
-                self.sendSignal("Removing package...")
+                self.emitSignal({"progress","Removing package..."})
         elif event == PM_TRANS_PROGRESS_CONFLICTS_START:
-            if compte > 1:
-                self.sendSignal("Checking packages for file conflicts...")
+            if count > 1:
+                self.emitSignal({"progress","Checking packages for file conflicts..."})
             else:
-                self.sendSignal("Checking package for file conflicts...")
+                self.emitSignal({"progress","Checking package for file conflicts..."})
         else:
             pass
+
+        self.emitSignal({"percent",str(percent)})
 
 
     def transConv (self, *args):
@@ -619,74 +630,65 @@ class FPMd (dbus.service.Object):
         Affiche l'evenement en cours
         """
 
-        try:
-            index = 1
+        index = 1
 
-            event = None
-            data1 = None
-            data2 = None
+        event = None
+        data1 = None
+        data2 = None
 
-            for arg in args:
-                if index == 1 and arg != None:
-                    event = arg
-                elif index == 2 and arg != None:
-                    data1 = arg
-                elif index == 3 and arg != None:
-                    data2=arg
-                else:
-                    pass
+        for arg in args:
+            if index == 1 and arg != None:
+                event = arg
+            elif index == 2 and arg != None:
+                data1 = arg
+            elif index == 3 and arg != None:
+                data2 = arg
+            else:
+                pass
 
-                index += 1
-        except :
-            pass
+            index += 1
 
-        if event != PM_TRANS_EVT_RETRIEVE_START and event != PM_TRANS_EVT_RESOLVEDEPS_START and event != PM_TRANS_EVT_RESOLVEDEPS_DONE:
-            telechargement = False
+        if data1 == None:
+            return
 
-        texte = ""
-        progres = 0.0
+        #~ if event != PM_TRANS_EVT_RETRIEVE_START and event != PM_TRANS_EVT_RESOLVEDEPS_START and event != PM_TRANS_EVT_RESOLVEDEPS_DONE:
+            #~ telechargement = False
 
         if event == PM_TRANS_EVT_CHECKDEPS_START:
-            self.sendSignal("checking_dependencies")
-            progres = 1.0
+            self.sendSignal("Checking dependencies")
         elif event == PM_TRANS_EVT_FILECONFLICTS_START:
-            self.sendSignal("checking_file_conflicts")
-            progres = 1.0
+            self.sendSignal("Checking for file conflicts")
         elif event == PM_TRANS_EVT_RESOLVEDEPS_START:
-            self.sendSignal("resolving_dependencies")
+            self.sendSignal("Resolving dependencies")
         elif event == PM_TRANS_EVT_INTERCONFLICTS_START:
-            self.sendSignal("looking_interconflicts")
-            progres = 1.0
+            self.sendSignal("looking for inter-conflicts")
         elif event == PM_TRANS_EVT_INTERCONFLICTS_DONE:
-            self.sendSignal("looking_interconflicts_done")
+            self.sendSignal("Looking for inter-conflicts done")
         elif event == PM_TRANS_EVT_ADD_START:
-            self.sendSignal("installing")
-            progres = 1.0
+            self.sendSignal("Installing")
         elif event == PM_TRANS_EVT_ADD_DONE:
-            self.sendSignal("installing_done")
+            self.sendSignal("Installing done")
         elif event == PM_TRANS_EVT_UPGRADE_START:
-            self.sendSignal("upgrading")
-            progres = 1.0
+            self.sendSignal("Upgrading")
         elif event == PM_TRANS_EVT_UPGRADE_DONE:
-            self.sendSignal("upgrading_done")
+            self.sendSignal("Upgrading done")
         elif event == PM_TRANS_EVT_REMOVE_START:
-            self.sendSignal("removing")
+            self.sendSignal("Removing")
         elif event == PM_TRANS_EVT_REMOVE_DONE:
-            self.sendSignal("removing_done")
+            self.sendSignal("Removing done")
         elif event == PM_TRANS_EVT_INTEGRITY_START:
-            self.sendSignal("checking_integrity")
+            self.sendSignal("Checking integrity")
         elif event == PM_TRANS_EVT_INTEGRITY_DONE:
-            self.sendSignal("checking_integrity_done")
+            self.sendSignal("Checking integrity done")
         elif event == PM_TRANS_EVT_SCRIPTLET_INFO:
             self.sendSignal(pointer_to_string(data1))
         elif event == PM_TRANS_EVT_SCRIPTLET_START:
-            self.sendSignal(str_data1)
+            self.sendSignal(pointer_to_string(data1))
         elif event == PM_TRANS_EVT_SCRIPTLET_DONE:
-            self.sendSignal("scriptlet_done")
+            self.sendSignal("Scriptlet done")
         elif event == PM_TRANS_EVT_RETRIEVE_START:
-            self.sendSignal("retrieving_packages")
-            progres = 1.0
-            telechargement = True
+            self.sendSignal("Retrieving packages")
+            #~ telechargement = True
         else :
             pass
 

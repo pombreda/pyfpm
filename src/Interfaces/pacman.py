@@ -34,8 +34,8 @@ from Functions import package, utils
 Package = package.Package()
 
 # Noms dbus
-BUSNAME = 'org.frugalware.fpmd.deamon'
-OBJPATH = '/org/frugalware/fpmd/deamon/object'
+BUSNAME = 'org.frugalware.fpmd.Instance'
+OBJPATH = '/org/frugalware/fpmd/Instance/object'
 
 
 class Pacman (object):
@@ -49,7 +49,7 @@ class Pacman (object):
         pacmanBus = dbus.SystemBus()
 
         try:
-            proxy = pacmanBus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
+            proxy = pacmanBus.get_object(BUSNAME, OBJPATH, introspect=False)
         except dbus.DBusException:
             sys.exit(_("DBus interface is not available"))
 
