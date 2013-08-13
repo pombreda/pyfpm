@@ -470,9 +470,9 @@ class Interface (object):
         gtk.main_quit()
 
 
-    def updateStatusbar (self, texte = ""):
+    def updateStatusbar (self, texte=""):
         """
-        Changer le texte inscrit dans la barre inférieur
+        Changer le texte de la barre de status
         """
 
         self.barreStatus.push(0, str(texte))
@@ -481,7 +481,7 @@ class Interface (object):
 
     def eraseInterface (self):
         """
-        Efface l'ensemble de l'interface
+        Remet à zéro les données de l'interface
         """
 
         modele = self.listeSelectionDepots.get_model()
@@ -507,7 +507,8 @@ class Interface (object):
 
     def resize (self, *args):
         """
-        Redimensionne la largueur de celluleValeur afin que le texte s'adapte à la fenêtre
+        Redimensionne la largueur de celluleValeur afin que le texte s'adapte
+        à la fenêtre
         """
 
         newSize = self.fenetre.get_size()[0] - 450
@@ -554,7 +555,7 @@ class Interface (object):
         pacmanUi.mainWindow()
 
         self.eraseInterface()
-        Package.resetPacman()
+        #~ Package.resetPacman()
         self.addRepos()
         self.refresh()
 
@@ -977,12 +978,17 @@ class Interface (object):
         if File.checkUrlError(url) == 1:
             # Le site est accessible
             webFile = urllib.urlopen(url)
+
             localFile = open("/tmp/picture", 'w')
             localFile.write(webFile.read())
+
             utils.printDebug("DEBUG", str(nomPaquet) + " screenshot is saved")
+
             webFile.close()
             localFile.close()
+
             return True
+
         else:
             return False
 
@@ -1145,7 +1151,7 @@ class Interface (object):
 
     def aboutWindow (self, widget, *event):
         """
-        Affiche la fenêtre A propos commune à toutes les applications
+        Affiche la fenêtre A propos
         """
 
         about = gtk.AboutDialog()
@@ -1184,7 +1190,7 @@ class Interface (object):
     #       Popup d'information
     #---------------------------------------------------------------------------
 
-    def informationWindow (self, titre, texte):
+    def informationWindow (self, titre="", texte=""):
         """
         Affiche une fenêtre d'information
         """

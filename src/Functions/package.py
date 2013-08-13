@@ -42,7 +42,7 @@ class Package (object):
         self.fpmd_resetPacman = proxy.get_dbus_method('resetPacman', BUSNAME)
         self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', BUSNAME)
 
-        # Fonciton de pacman-g2
+        # Fonction de pacman-g2
         self.fpmd_getRepoList = proxy.get_dbus_method('getRepoList', BUSNAME)
         self.fpmd_searchRepoPackage = proxy.get_dbus_method('searchRepoPackage', BUSNAME)
         self.fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', BUSNAME)

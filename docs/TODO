@@ -5,7 +5,8 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     Script de lancement de pyFPM
     ---
 
-    [TODO]  - Lancer l'application que si le démon est actif
+    [FIXME] - Lancer l'application que si le démon est actif
+
     [TODO]  - Installer un paquet fpm via les paramètres (--fpm)..........................................[ULTERIEUR]
     [TODO]  - Activer le mode debug via les paramètres (--debug)
         -> Affiche les sorties DEBUG
@@ -90,7 +91,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     [FIXME] - Empêcher pacman-g2 de se lancer en parallèle avec pyfpm
         -> Utiliser le /tmp/pacman-g2.lck
 
-    [TODO]  - Implanter l'installation et la supression de paquet
+    [TODO]  - Implanter l'installation et la supression de paquet..........................................[EN COURS]
     [TODO]  - Modification des dépôts
     [TODO]  - Réécriture du démon en C
         -> Surtout pour la consommation mémoire de FPMd

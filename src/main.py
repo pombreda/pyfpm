@@ -41,19 +41,19 @@ def main():
         parserGrpPkg = parser.add_argument_group('package')
         parserGrpPkg.add_argument('--fpm', action='store', metavar='FILE', help="install or update a package with fpm file [TODO]")
 
-        parserGrpDev = parser.add_argument_group('development')
-        parserGrpDev.add_argument('--dev', action='store_true', help="use pyFPM with development mode [TODO]")
+        parserGrpDev = parser.add_argument_group('system')
+        parserGrpDev.add_argument('--show-system', action='store_true', help="show system informations [TODO]")
 
         args = parser.parse_args()
 
-    if len(sys.argv) == 1 or args.dev or args.debug:
+    if len(sys.argv) == 1 or args.debug:
 
         # On vérifie la configuration de pyFPM
         Config = config.Config()
         Config.checkConfig()
 
         # On lance l'interface
-        Interface = display.Interface(args.dev)
+        Interface = display.Interface()
         Interface.mainWindow()
 
 

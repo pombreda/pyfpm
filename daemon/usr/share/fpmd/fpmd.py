@@ -15,7 +15,7 @@
 # ----------------------------------------------------------------------
 
 # Modules importation
-import os, sys, dbus, dbus.service, dbus.mainloop.glib, gobject, time, datetime
+import os, sys, dbus, dbus.service, dbus.mainloop.glib, gobject, time, datetime, ctypes
 
 from libpacman import *
 
@@ -43,6 +43,8 @@ FW_LOCAL = "local"
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 gobject.threads_init()
 dbus.mainloop.glib.threads_init()
+
+loop = gobject.MainLoop()
 
 
 class FPMd (dbus.service.Object):
@@ -100,7 +102,7 @@ class FPMd (dbus.service.Object):
             self.writeLog("Fpmd have been run succesfully")
         except:
             self.writeLog("Failed to initialize libpacman")
-            self.closeDeamon()
+            self.closeDaemon()
 
 
     def closePacman (self):
@@ -110,6 +112,16 @@ class FPMd (dbus.service.Object):
 
         pacman_finally()
         self.writeLog("Fpmd have been closed succesfully")
+
+
+    @dbus.service.method (BUSNAME_INSTANCE)
+    def closeDaemon (self):
+        """
+        Close FPMd
+        """
+
+        self.closePacman()
+        loop.quit()
 
 
     def resetList (self):
@@ -130,9 +142,10 @@ class FPMd (dbus.service.Object):
 
         #~ pacman_finally()
 
-        self.resetList()
-        pacman_initialize(PM_ROOT)
+        repo_searchlist = []
+        repo_list = []
 
+        pacman_initialize(PM_ROOT)
         pacman_parse_config()
 
         db_list = []
@@ -140,8 +153,10 @@ class FPMd (dbus.service.Object):
             db = pacman_db_register(repo)
             db_list.append(db)
 
+        self.writeLog("Fpmd have been reset succesfully")
 
-    @dbus.service.signal(BUSNAME_INSTANCE, signature='as')
+
+    @dbus.service.signal (BUSNAME_INSTANCE, signature='as')
     def sendSignal (self, value):
         """
         Send a value
@@ -152,7 +167,8 @@ class FPMd (dbus.service.Object):
     @dbus.service.method (BUSNAME_INSTANCE, in_signature='as')
     def emitSignal (self, text):
         """
-        Emit a signal
+        Emit a signal, very usefull when you doesn't want to
+        use signal in your function
         """
 
         self.sendSignal(text)
@@ -219,6 +235,7 @@ class FPMd (dbus.service.Object):
             pkgDict2 = {"compress_size" : str(pacman_pkg_getinfo(pkg, PM_PKG_SIZE)), \
                         "uncompress_size" : str(pacman_pkg_getinfo(pkg, PM_PKG_USIZE)) }
 
+        # Add pkgDict2 into pkgDict
         pkgDict.update(pkgDict2)
 
         return pkgDict
@@ -259,6 +276,7 @@ class FPMd (dbus.service.Object):
         """
 
         content = []
+
         listInfo = pacman_pkg_getinfo(pkg, typeInfo)
 
         while listInfo != 0:
@@ -423,7 +441,7 @@ class FPMd (dbus.service.Object):
         Update pacman-g2 database
         """
 
-        self.emitSignal({"action","start"})
+        self.emitSignal({"action", "start"})
 
         for element in db_list:
             # We don't use local repo for update
@@ -445,7 +463,9 @@ class FPMd (dbus.service.Object):
 
         self.writeLog("Synchronizing package lists")
 
-        self.emitSignal({"action","end"})
+        self.emitSignal({"action", "end"})
+
+        self.resetPacman()
 
 
     @dbus.service.method (BUSNAME_ACTIONS, in_signature="u")
@@ -458,6 +478,106 @@ class FPMd (dbus.service.Object):
             self.writeLog("Failed to clean the cache with mode " + str(mode))
         else:
             self.writeLog("Clean cache with mode " + str(mode))
+
+
+    @dbus.service.method (BUSNAME_ACTIONS, in_signature="us")
+    def installPackage(self, downloadOnly, pkgList):
+        """
+        Install a packages list or download them only
+        """
+
+        self.emitSignal({"action","start"})
+
+        #FIXME
+        #pacman_set_option (PM_OPT_DLCB, globals()["fpm_progress_update"]())
+
+        for repo in repo_list:
+            pacman_set_option(PM_OPT_DLFNM, repo)
+
+        if downloadOnly == 1:
+            flags = PM_TRANS_FLAG_DOWNLOADONLY
+        else:
+            flags = PM_TRANS_FLAG_NOCONFLICTS
+
+        if pacman_trans_init(PM_TRANS_TYPE_SYNC, flags, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.transConv), pacman_trans_cb_progress(self.progressInstall)) == -1:
+            self.writeLog("Pacman_trans_init failed - " + str(pacman_get_error()))
+            if pacman_trans_release() == -1:
+                self.writeLog("Can't release transaction - " + str(pacman_get_error()))
+
+            self.emitSignal({"action", "end"})
+            return
+
+        #~ for pkg in pkgList:
+            #~ if pacman_trans_addtarget(pkg) == -1:
+                #~ self.writeLog("Can't add " + str(pkg) + " - " + str(pacman_get_error()))
+                #~ if pacman_trans_release() == -1:
+                    #~ self.writeLog("Can't release transaction - " + str(pacman_get_error()))
+                #~ return
+        if pacman_trans_addtarget(str(pkgList)) == -1:
+            self.writeLog("Can't add " + str(pkgList) + " - " + str(pacman_get_error()))
+            if pacman_trans_release() == -1:
+                self.writeLog("Can't release transaction - " + str(pacman_get_error()))
+
+            self.emitSignal({"action", "end"})
+            return
+
+        data = PM_LIST()
+
+        if pacman_trans_prepare(data) == -1:
+            self.writeLog("Pacman_trans_prepare failed - " + str(pacman_get_error()))
+            if pacman_trans_release() == -1:
+                self.writeLog("Can't release transaction - " + str(pacman_get_error()))
+
+            self.emitSignal({"action", "end"})
+            return
+
+        if pacman_trans_commit(data) == -1:
+            if pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_FILE_CONFLICTS):
+                text = "Conflicting Files\n"
+
+                index = pacman_list_first(data)
+                while index != 0:
+                    cnf = pacman_list_getdata(index)
+                    reason = pacman_conflict_getinfo(cnf,PM_CONFLICT_TYPE)
+
+                    if reason == PM_CONFLICT_TYPE_FILE:
+                        text = text + "Package : " + pointer_to_string(pacman_conflict_getinfo(cnf, PM_CONFLICT_TARGET)) + " already provide :\n"
+                        text = text + pointer_to_string(pacman_conflict_getinfo(cnf, PM_CONFLICT_FILE)) + "\n"
+                    index = pacman_list_next(index)
+
+                self.emitSignal({"install", text})
+
+            elif pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_PKG_CORRUPTED):
+                """
+                # TODO : find package corrupted
+                i=pacman_list_first(data)
+                while i != 0:
+                    packages=pacman_list_getdata(i)
+                    i=pacman_list_next(i)
+                """
+                self.emitSignal({"install", "Corrupted package(s)"})
+
+            elif pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_RETRIEVE):
+                self.emitSignal({"install", "Couldn't download package"})
+
+            else:
+                self.writeLog("Pacman_trans_commit failed - " + str(pacman_get_error()))
+
+            if pacman_trans_release() == -1:
+                self.writeLog("Can't release transaction - " + str(pacman_get_error()))
+
+            self.emitSignal({"action", "end"})
+            return
+
+        if pacman_trans_release() == -1:
+            self.writeLog("Can't release transaction - " + str(pacman_get_error()))
+
+        if downloadOnly == 0:
+            self.writeLog(str(pkgList) + " have been installed successfully.")
+
+        self.emitSignal({"action", "end"})
+
+        self.resetPacman()
 
 
     @dbus.service.method (BUSNAME_ACTIONS, in_signature="su", out_signature="b")
@@ -530,38 +650,11 @@ class FPMd (dbus.service.Object):
         return True
 
 
-    @dbus.service.method (BUSNAME_INSTANCE)
-    def closeDaemon (self):
+    @staticmethod
+    def progressInstall (event, package, percent, count, remaining):
         """
-        Close FPMd
+        Progress of package transaction
         """
-
-        self.closePacman()
-        loop.quit()
-
-
-    def progressInstall (self, *args):
-        """
-        """
-
-        event = None
-        package = None
-        percent = 0
-        count = 0
-
-        texte = ""
-
-        for arg in args:
-            if index == 1 and arg != None:
-                event = arg
-            elif index == 2 and arg != None:
-                package = arg
-            elif index == 3 and arg != None:
-                percent = arg
-            elif index == 4 and arg != None:
-                count = arg
-            else:
-                pass
 
         if package == None:
             return
@@ -570,127 +663,97 @@ class FPMd (dbus.service.Object):
 
         if event == PM_TRANS_PROGRESS_ADD_START:
             if count > 1:
-                self.emitSignal({"progress","Installing packages..."})
+                emitSignal({"progress", "Installing packages..."})
             else:
-                self.emitSignal({"progress","Installing package..."})
+                emitSignal({"progress", "Installing package..."})
         elif event == PM_TRANS_PROGRESS_UPGRADE_START:
             if count > 1:
-                self.emitSignal({"progress","Upgrading packages..."})
+                emitSignal({"progress", "Upgrading packages..."})
             else:
-                self.emitSignal({"progress","Upgrading package..."})
+                emitSignal({"progress", "Upgrading package..."})
         elif event == PM_TRANS_PROGRESS_REMOVE_START:
             if count > 1:
-                self.emitSignal({"progress","Removing packages..."})
+                emitSignal({"progress", "Removing packages..."})
             else:
-                self.emitSignal({"progress","Removing package..."})
+                emitSignal({"progress", "Removing package..."})
         elif event == PM_TRANS_PROGRESS_CONFLICTS_START:
             if count > 1:
-                self.emitSignal({"progress","Checking packages for file conflicts..."})
+                emitSignal({"progress", "Checking packages for file conflicts..."})
             else:
-                self.emitSignal({"progress","Checking package for file conflicts..."})
+                emitSignal({"progress", "Checking package for file conflicts..."})
         else:
             pass
 
         self.emitSignal({"percent",str(percent)})
 
 
-    def transConv (self, *args):
+    @staticmethod
+    def transConv (event, data1, data2, data3, response):
         """
-        """
-
-        index = 1
-
-        for arg in args:
-            if index == 1:
-                event = arg
-                self.sendSignal("Evenement : " + str(event))
-            elif index == 2:
-                pkg = arg
-            elif index == 5:
-                INTP = ctypes.POINTER(ctypes.c_int)
-                reponse = ctypes.cast(arg, INTP)
-            else:
-                self.sendSignal("We must work on it -_-")
-
-            index += 1
-
-        #~ if event == PM_TRANS_CONV_LOCAL_UPTODATE:
-            #~ if terminalQuestion (pointer_to_string(pacman_pkg_getinfo(pkg, PM_PKG_NAME))+" local version is up to date. Upgrade anyway? [Y/n]" ) == 1:
-            #~ reponse[0] = 1
-        #~ if event==PM_TRANS_CONV_LOCAL_NEWER:
-            #~ if terminalQuestion (pointer_to_string(pacman_pkg_getinfo(pkg, PM_PKG_NAME))+" local version is newer. Upgrade anyway? [Y/n]" ) == 1:
-            #~ reponse[0] = 1
-        #~ if event==PM_TRANS_CONV_CORRUPTED_PKG:
-            #~ if terminalQuestion ("Archive is corrupted. Do you want to delete it?") == 1:
-            #~ reponse[0] = 1
-
-
-    def progressEvent(self, *args):
-        """
-        Affiche l'evenement en cours
+        Requests from pacman-g2
         """
 
-        index = 1
+        # TODO:
+        # Faire en sorte d'envoyer un signal et d'attendre la réponse
+        # de l'utilisateur
+        if event == PM_TRANS_CONV_LOCAL_UPTODATE:
+            writeLog(str(pacman_pkg_getinfo(data1, PM_PKG_NAME)) + " local version is up to date.")
+            response[0] = 0
+        if event==PM_TRANS_CONV_LOCAL_NEWER:
+            writeLog(str(pacman_pkg_getinfo(data1, PM_PKG_NAME)) + " local version is newer.")
+            response[0] = 0
+        if event==PM_TRANS_CONV_CORRUPTED_PKG:
+            writeLog("Archive is corrupted")
+            response[0] = 1
 
-        event = None
-        data1 = None
-        data2 = None
+        return
 
-        for arg in args:
-            if index == 1 and arg != None:
-                event = arg
-            elif index == 2 and arg != None:
-                data1 = arg
-            elif index == 3 and arg != None:
-                data2 = arg
-            else:
-                pass
 
-            index += 1
+    @staticmethod
+    def progressEvent(event, data1, data2):
+        """
+        Get actual event
+        """
 
         if data1 == None:
             return
 
-        #~ if event != PM_TRANS_EVT_RETRIEVE_START and event != PM_TRANS_EVT_RESOLVEDEPS_START and event != PM_TRANS_EVT_RESOLVEDEPS_DONE:
-            #~ telechargement = False
-
         if event == PM_TRANS_EVT_CHECKDEPS_START:
-            self.sendSignal("Checking dependencies")
+            emitSignal({"event", "Checking dependencies"})
         elif event == PM_TRANS_EVT_FILECONFLICTS_START:
-            self.sendSignal("Checking for file conflicts")
+            emitSignal({"event", "Checking for file conflicts"})
         elif event == PM_TRANS_EVT_RESOLVEDEPS_START:
-            self.sendSignal("Resolving dependencies")
+            emitSignal({"event", "Resolving dependencies"})
         elif event == PM_TRANS_EVT_INTERCONFLICTS_START:
-            self.sendSignal("looking for inter-conflicts")
+            emitSignal({"event", "looking for inter-conflicts"})
         elif event == PM_TRANS_EVT_INTERCONFLICTS_DONE:
-            self.sendSignal("Looking for inter-conflicts done")
+            emitSignal({"event", "Looking for inter-conflicts done"})
         elif event == PM_TRANS_EVT_ADD_START:
-            self.sendSignal("Installing")
+            emitSignal({"event", "Installing"})
         elif event == PM_TRANS_EVT_ADD_DONE:
-            self.sendSignal("Installing done")
+            emitSignal({"event", "Installing done"})
         elif event == PM_TRANS_EVT_UPGRADE_START:
-            self.sendSignal("Upgrading")
+            emitSignal({"event", "Upgrading"})
         elif event == PM_TRANS_EVT_UPGRADE_DONE:
-            self.sendSignal("Upgrading done")
+            emitSignal({"event", "Upgrading done"})
         elif event == PM_TRANS_EVT_REMOVE_START:
-            self.sendSignal("Removing")
+            emitSignal({"event", "Removing"})
         elif event == PM_TRANS_EVT_REMOVE_DONE:
-            self.sendSignal("Removing done")
+            emitSignal({"event", "Removing done"})
         elif event == PM_TRANS_EVT_INTEGRITY_START:
-            self.sendSignal("Checking integrity")
+            emitSignal({"event", "Checking integrity"})
         elif event == PM_TRANS_EVT_INTEGRITY_DONE:
-            self.sendSignal("Checking integrity done")
+            emitSignal({"event", "Checking integrity done"})
         elif event == PM_TRANS_EVT_SCRIPTLET_INFO:
-            self.sendSignal(pointer_to_string(data1))
+            emitSignal({"event", pointer_to_string(data1)})
         elif event == PM_TRANS_EVT_SCRIPTLET_START:
-            self.sendSignal(pointer_to_string(data1))
+            emitSignal({"event", pointer_to_string(data1)})
         elif event == PM_TRANS_EVT_SCRIPTLET_DONE:
-            self.sendSignal("Scriptlet done")
+            emitSignal({"event", "Scriptlet done"})
         elif event == PM_TRANS_EVT_RETRIEVE_START:
-            self.sendSignal("Retrieving packages")
-            #~ telechargement = True
-        else :
-            pass
+            emitSignal({"event", "Retrieving packages"})
+        else:
+            return
 
 
     def writeLog (self, text):
@@ -715,5 +778,4 @@ if __name__ == '__main__':
 
     _fpmd = FPMd()
 
-    loop = gobject.MainLoop()
     loop.run()
