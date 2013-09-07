@@ -24,7 +24,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
         -> Problème avec le combobox des dépôts qui force un rechargement
     [FIXME] - Le clic sur un groupe pendant le chargement d'un autre n'est pas pris en compte
     [FIXME] - L'encodage des informations n'est pas effectué en utf-8 (changelog)
-    [FIXME] - Utiliser un thread pour le téléchargement des screenshots
+    [FIXME] - Utiliser un thread pour le téléchargement des screenshots...................................[ULTERIEUR]
         -> Pourquoi tant de haine T-T
 
     [TODO]  - Affiche un nom générique pour les groupes (Munto)
@@ -54,9 +54,9 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
 
     [TODO]  - Afficher les paquets no-build (utilisable avec repoman).....................................[ULTERIEUR]
         -> Créer un parser de FrugalBuild
-        -> Spécifier le chemin (~/git)
+        -> Spécifier le chemin (Defaut : ~/.current)
         -> Adapter le fpmd pour prendre en compte la mise à jour de repoman (case à cocher ?)
-        -> Apadter la recherche pour prendre en compte repoman (dépot à part ?)
+        -> Adapter la recherche pour prendre en compte repoman (dépot à part ?)
 
 
 --- Configuration (config.py) --------------------------------------------------
@@ -68,6 +68,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
         -> Afficher des fenêtres d'informations sinon elles s'affichent dans la barre de status
         -> Gérer la liste des dépôts
         -> Envoyer les informations dans un log externe ou dans le pacman-g2.log
+    [TODO]  - Permettre de vider le cache
 
 
 --- Installation (pacman.py) ---------------------------------------------------

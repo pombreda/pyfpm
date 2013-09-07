@@ -55,6 +55,7 @@ class Package (object):
         self.fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', BUSNAME)
         self.fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', BUSNAME)
         self.fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', BUSNAME)
+        self.fpmd_getActionInformations = proxy.get_dbus_method('getActionInformations', BUSNAME)
 
 
     def resetPacman (self):
@@ -97,6 +98,14 @@ class Package (object):
             #~ self.initPacman()
             #~ self.printDebug("DEBUG", "Installation de paquets")
             #~ self.installPackage(interface, listeInstallation)
+
+
+    def getActionInformations (self):
+        """
+        Récupère les informations sur l'action en cours
+        """
+
+        return self.fpmd_getActionInformations()
 
 
     def getInstalledPackage (self, nomPaquet):

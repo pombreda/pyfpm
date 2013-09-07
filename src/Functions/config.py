@@ -38,7 +38,7 @@ class Config (object):
 
         if File.fichier(config_path + "pyfpmrc") == False:
             # Configuration par défaut
-            dico = {"lang" : "en_US", "developmentmode" : "false", "startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600"}
+            dico = {"startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600"}
             self.writeConfig(dico)
 
 
@@ -70,8 +70,6 @@ class Config (object):
             configuration.add_section("pyfpm")
             configuration.add_section("screen")
 
-            configuration.set("pyfpm", "lang", dico.get("lang", "en_US"))
-            configuration.set("pyfpm", "developmentmode", dico.get("developmentmode", "true"))
             configuration.set("pyfpm", "startupdate", dico.get("startupdate", "true"))
             configuration.set("pyfpm", "useprohibategroups", dico.get("useprohibategroups", "false"))
 
