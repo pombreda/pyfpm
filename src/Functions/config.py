@@ -19,7 +19,9 @@ from . import files
 File = files.File()
 
 # Variables globales
-config_path = os.path.expanduser('~') + "/.config/pyfpm/"
+configFile = os.path.expanduser('~') + "/.config/pyfpm/pyfpmrc"
+defaultValue = {"startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600"}
+
 
 class Config (object):
     """
@@ -36,10 +38,9 @@ class Config (object):
             # Le fichier de configuration doit être créé
             os.mkdir(config_path, 0744)
 
-        if File.fichier(config_path + "pyfpmrc") == False:
+        if File.fichier(configFile) == False:
             # Configuration par défaut
-            dico = {"startupdate" : "true", "useprohibategroups" : "false", "width" : "800", "height" : "600"}
-            self.writeConfig(dico)
+            self.writeConfig(defaultValue)
 
 
     def readConfig (self, section, option):
@@ -47,10 +48,10 @@ class Config (object):
         Récupère la valeur correspondant dans le fichier de configuration
         suivant la section choisie
         """
-        if File.fichier(config_path + "pyfpmrc") == True:
+        if File.fichier(configFile) == True:
             try:
                 configuration = SafeConfigParser()
-                configuration.read(config_path + "pyfpmrc")
+                configuration.read(configFile)
 
                 return configuration.get(section, option)
             except:
@@ -76,7 +77,7 @@ class Config (object):
             configuration.set("screen", "width", dico.get("width", "800"))
             configuration.set("screen", "height", dico.get("height", "600"))
 
-            configuration.write(open(config_path + "pyfpmrc" , "w"))
+            configuration.write(open(configFile, "w"))
 
         except:
             return False

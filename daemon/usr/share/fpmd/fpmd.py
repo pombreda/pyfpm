@@ -61,6 +61,7 @@ class Log (object):
 
     def __init__ (self, path):
         """
+        Initialize the log object
         """
 
         self.path = path
@@ -68,6 +69,7 @@ class Log (object):
 
     def write (self, text, date=True):
         """
+        Write into log
         """
 
         print str(text)
@@ -138,7 +140,6 @@ class FPMd (dbus.service.Object):
                 db = pacman_db_register(repo)
                 db_list.append(db)
 
-            self.log.write("Fpmd have been run succesfully")
         except:
             self.log.write("Failed to initialize libpacman")
             self.closeDaemon()
@@ -150,7 +151,6 @@ class FPMd (dbus.service.Object):
         """
 
         pacman_finally()
-        self.log.write("Fpmd have been closed succesfully")
 
 
     @dbus.service.method (BUSNAME_INSTANCE)
@@ -178,8 +178,6 @@ class FPMd (dbus.service.Object):
         """
         Reset pacman-g2 instance to update informations
         """
-
-        #~ pacman_finally()
 
         repo_searchlist = []
         repo_list = []
@@ -223,8 +221,7 @@ class FPMd (dbus.service.Object):
             if texte[1] == "clean":
                 if len(texte[2]) > 0:
                     # We have specify a clean method
-                    # 0 -> old package
-                    # 1 -> all package
+                    # 0: old package, 1: all package
                     self.cleanCache(int(texte[2]))
                 else:
                     # By default, we erase only old package
@@ -487,31 +484,21 @@ class FPMd (dbus.service.Object):
         Update pacman-g2 database
         """
 
-        informations['state'] = True
-        informations['action'] = "update"
-
         for element in db_list:
             # We don't use local repo for update
             if repo_list[db_list.index(element)] != FW_LOCAL:
-                # Send the name of the repo
-                informations['data'] = str(repo_list[db_list.index(element)])
-
                 # Run update of this repo
                 ret = pacman_db_update (1, element)
                 if ret == -1:
                     # There is an error
-                    informations['data'] = str(repo_list[db_list.index(element)])
                     self.log.write("failed to update " + str(repo_list[db_list.index(element)]))
                 elif ret == 1:
                     # Up-to-date
-                    informations['data'] = str(repo_list[db_list.index(element)])
+                    self.log.write(str(repo_list[db_list.index(element)]) + " is up-to-date")
                 else:
                     pass
 
         self.log.write("Synchronizing package lists")
-
-        informations['state'] = False
-
         self.resetPacman()
 
 
@@ -533,8 +520,6 @@ class FPMd (dbus.service.Object):
         Install a packages list or download them only
         """
 
-        self.emitSignal({"action","start"})
-
         #FIXME
         #pacman_set_option (PM_OPT_DLCB, globals()["fpm_progress_update"]())
 
@@ -547,31 +532,29 @@ class FPMd (dbus.service.Object):
             flags = PM_TRANS_FLAG_NOCONFLICTS
 
         if pacman_trans_init(PM_TRANS_TYPE_SYNC, flags, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.transConv), pacman_trans_cb_progress(self.progressInstall)) == -1:
-            self.log.write("Pacman_trans_init failed - " + str(pacman_get_error()))
+            self.log.write("failed to init transaction - " + str(pacman_get_error()))
             if pacman_trans_release() == -1:
-                self.log.write("Can't release transaction - " + str(pacman_get_error()))
+                self.log.write("failed to release transaction - " + str(pacman_get_error()))
 
-            self.emitSignal({"action", "end"})
             return
 
         for pkg in pkgList:
             if pacman_trans_addtarget(str(pkg)) == -1:
-                self.log.write("Can't add " + str(pkg) + " - " + str(pacman_get_error()))
+                self.log.write("failed to add " + str(pkg) + " - " + str(pacman_get_error()))
 
                 if pacman_trans_release() == -1:
-                    self.log.write("Can't release transaction - " + str(pacman_get_error()))
+                    self.log.write("failed to release transaction - " + str(pacman_get_error()))
 
-                self.emitSignal({"action", "end"})
                 return
 
         data = PM_LIST()
 
         if pacman_trans_prepare(data) == -1:
-            self.log.write("Pacman_trans_prepare failed - " + str(pacman_get_error()))
-            if pacman_trans_release() == -1:
-                self.log.write("Can't release transaction - " + str(pacman_get_error()))
+            self.log.write("failed to prepare transaction - " + str(pacman_get_error()))
 
-            self.emitSignal({"action", "end"})
+            if pacman_trans_release() == -1:
+                self.log.write("failed to release transaction - " + str(pacman_get_error()))
+
             return
 
         if pacman_trans_commit(data) == -1:
@@ -584,42 +567,32 @@ class FPMd (dbus.service.Object):
                     reason = pacman_conflict_getinfo(cnf,PM_CONFLICT_TYPE)
 
                     if reason == PM_CONFLICT_TYPE_FILE:
-                        text = text + "Package : " + pointer_to_string(pacman_conflict_getinfo(cnf, PM_CONFLICT_TARGET)) + " already provide :\n"
-                        text = text + pointer_to_string(pacman_conflict_getinfo(cnf, PM_CONFLICT_FILE)) + "\n"
+                        text += "Package : " + pointer_to_string(pacman_conflict_getinfo(cnf, PM_CONFLICT_TARGET)) + " already provide :\n"
+                        text += pointer_to_string(pacman_conflict_getinfo(cnf, PM_CONFLICT_FILE)) + "\n"
+
                     index = pacman_list_next(index)
 
-                self.emitSignal({"install", text})
-
             elif pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_PKG_CORRUPTED):
-                """
                 # TODO : find package corrupted
-                i=pacman_list_first(data)
-                while i != 0:
-                    packages=pacman_list_getdata(i)
-                    i=pacman_list_next(i)
-                """
-                self.emitSignal({"install", "Corrupted package(s)"})
+                self.log.write("Corrupted package(s)")
 
             elif pacman_get_pm_error() == pacman_c_long_to_int(PM_ERR_RETRIEVE):
-                self.emitSignal({"install", "Couldn't download package"})
+                self.log.write("Couldn't download package")
 
             else:
-                self.log.write("Pacman_trans_commit failed - " + str(pacman_get_error()))
+                self.log.write("failed to commit transaction - " + str(pacman_get_error()))
 
             if pacman_trans_release() == -1:
-                self.log.write("Can't release transaction - " + str(pacman_get_error()))
+                self.log.write("failed to release transaction - " + str(pacman_get_error()))
 
-            self.emitSignal({"action", "end"})
             return
 
         if pacman_trans_release() == -1:
-            self.log.write("Can't release transaction - " + str(pacman_get_error()))
+            self.log.write("failed to release transaction - " + str(pacman_get_error()))
 
         if downloadOnly == 0:
             for pkg in pkgList:
-                self.log.write(str(pkg) + " have been installed successfully.")
-
-        self.emitSignal({"action", "end"})
+                self.log.write(str(pkg) + " have been installed")
 
         self.resetPacman()
 
@@ -634,26 +607,22 @@ class FPMd (dbus.service.Object):
 
         # Check if package is installed
         if not pkgName in self.searchInstalledPackage(str(pkgName)):
-            # This package is already installed
-            self.log.write("searchInstalledPackage with " + str(pkgName) + " failed - " + str(pacman_get_error()))
-
+            # This package isn't installed so we stop current action
             return
 
         # Use a specific flag
-        pm_trans_flag = PM_TRANS_FLAG_NOCONFLICTS
+        flags = PM_TRANS_FLAG_NOCONFLICTS
         if removeDeps == 1:
-            pm_trans_flag = PM_TRANS_FLAG_CASCADE
+            flags = PM_TRANS_FLAG_CASCADE
 
         # Step 1 : Create a new transaction
-        if pacman_trans_init(PM_TRANS_TYPE_REMOVE, pm_trans_flag, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.transConv), pacman_trans_cb_progress(self.progressInstall)) == -1:
-            self.log.write("pacman_trans_init failed - " + str(pacman_get_error()))
-
-            self.emitSignal({"action", "end"})
+        if pacman_trans_init(PM_TRANS_TYPE_REMOVE, flags, pacman_trans_cb_event(self.progressEvent), pacman_trans_cb_conv(self.transConv), pacman_trans_cb_progress(self.progressInstall)) == -1:
+            self.log.write("failed to init transaction - " + str(pacman_get_error()))
             return
 
         # Add target to it
         if pacman_trans_addtarget(str(pkgName)) == -1:
-            self.log.write("add_target failed - " + str(pacman_get_error()))
+            self.log.write("failed to add target - " + str(pacman_get_error()))
 
             pacman_trans_release()
             return
@@ -666,22 +635,13 @@ class FPMd (dbus.service.Object):
                 index = pacman_list_first(data)
 
                 while index != 0:
-                    paquet = pacman_list_getdata(index)
-                    nom = pointer_to_string(pacman_dep_getinfo(paquet, PM_DEP_NAME))
-                    liste.append(nom)
+                    pkg = pacman_list_getdata(index)
+                    name = pointer_to_string(pacman_dep_getinfo(pkg, PM_DEP_NAME))
+                    liste.append(name)
                     index = pacman_list_next(index)
 
-                #~ reponse = self.fenetreQuestion("DEBUG", element + " est requis par : " + str(liste) + "\nSouhaitez-vous continuer ?")
-                #~ if reponse == False:
-                    #~ pacman_trans_release()
-                    #~ return False
-
-                self.sendSignal("pacman_trans_release")
                 pacman_trans_release()
-
-                self.sendSignal("pacman_remove_pkg")
                 pacman_remove_pkg(pkgName, 1)
-
                 return
 
             else:
@@ -689,18 +649,20 @@ class FPMd (dbus.service.Object):
                 return
 
         else:
-            self.log.write("pacman_trans_prepare failed - " + str(pacman_get_error()))
+            self.log.write("failed to prepare transaction - " + str(pacman_get_error()))
 
         # Step 3 : Actually perform the removal
         if pacman_trans_commit(data) == -1:
-            self.log.write("pacman_trans_commit failed - " + str(pacman_get_error()))
+            self.log.write("failed to commit transaction - " + str(pacman_get_error()))
 
             pacman_trans_release()
             return
 
         # Step 4 : Release transaction resources
-        pacman_trans_release()
-        self.log.write(str(pkgName) + " have been removed successfully.")
+        if pacman_trans_release() == -1:
+            self.log.write("failed to realease transaction for " + str(pkgName) + " - " + str(pacman_get_error()))
+        else:
+            self.log.write(str(pkgName) + " have been removed")
 
         return
 
