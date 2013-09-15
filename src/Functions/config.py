@@ -34,9 +34,9 @@ class Config (object):
         Créer le fichier de configuration si inexistant
         """
 
-        if File.fichier(config_path) == False:
+        if File.fichier(configFile) == False:
             # Le fichier de configuration doit être créé
-            os.mkdir(config_path, 0744)
+            os.mkdir(configFile, 0744)
 
         if File.fichier(configFile) == False:
             # Configuration par défaut
