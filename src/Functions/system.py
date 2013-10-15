@@ -7,10 +7,14 @@
 #
 # ----------------------------------------------------------------------
 
-import platform, os, subprocess, re, package
+import platform, os, subprocess, re, package, ConfigParser
 from datetime import timedelta
+import files
 
 Package = package.Package()
+Config = ConfigParser.ConfigParser()
+File = files.File()
+gtk3_settings = os.path.expanduser('~') + "/.config/gtk-3.0/settings.ini"
 
 sysinfos = {}
 
@@ -29,6 +33,12 @@ command = "cat /proc/cpuinfo"
 all_info = subprocess.check_output(command, shell=True).strip()
 for line in all_info.split("\n"):
 	if "model name" in line:
-		sysinfos["proc"] = re.sub(".*model name.*:", "", line, 1)
+		sysinfos["proc"] = re.sub(".*model name.*:", " ", line, 1)
 
 sysinfos["nb_pkgs"] = len(Package.getInstalledList())
+
+if File.fichier(gtk3_settings) == True:
+    Config.read(gtk3_settings)
+    sysinfos["gtk-theme-name"] = Config.get('Settings', 'gtk-theme-name')
+    sysinfos["gtk-icon-theme"] = Config.get('Settings', 'gtk-icon-theme-name')
+    sysinfos["gtk-font-name"] = Config.get('Settings', 'gtk-font-name')

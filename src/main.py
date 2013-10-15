@@ -21,6 +21,11 @@ import sys, argparse, dbus
 from Interfaces import display
 from Functions import config
 
+# noms DBus
+
+BUSNAME = 'org.frugalware.fpmd.Instance'
+OBJPATH = '/org/frugalware/fpmd/Instance/object'
+
 # ----------------------------------------------------------------------
 #   Main
 # ----------------------------------------------------------------------
@@ -45,14 +50,14 @@ def main():
         parserGrpDev.add_argument('--show-system', action='store_true', help="show system informations [TODO]")
 
         args = parser.parse_args()
-
+    
     pacmanBus = dbus.SystemBus()
 
     try:
         proxy = pacmanBus.get_object(BUSNAME, OBJPATH, introspect=False)
     except dbus.DBusException:
         sys.exit(_("DBUS interface is not available."))
-
+    
     if len(sys.argv) == 1 or args.debug:
 
         # On vérifie la configuration de pyFPM

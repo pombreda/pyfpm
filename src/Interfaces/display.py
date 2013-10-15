@@ -21,11 +21,12 @@ try:
 except ImportError:
     sys.exit(_("pygtk was not found"))
 
-from . import preferences, pacman
+from . import preferences, pacman, system
 from Functions import package, config, files, utils
 
 # Initialisation des modules
 Preferences = preferences.Preferences()
+System = system.Systeme()
 Package = package.Package()
 File = files.File()
 Config = config.Config()
@@ -102,6 +103,7 @@ class Interface (object):
         self.menu_help = gtk.MenuItem(label=_("Help"))
         self.menu_help_list = gtk.Menu()
         self.menu_help_about = gtk.ImageMenuItem(_("About"))
+        self.menu_help_informations = gtk.ImageMenuItem(_("System informations"))
 
         # ------------------------------------------------------------------
         #       Barre d'outils
@@ -234,9 +236,14 @@ class Interface (object):
         # Affichage de la boite A propos
         self.menu_help_about.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
         self.menu_help_about.connect("activate", self.aboutWindow)
+        
+        # Affichage de la boîte d'informations système
+        self.menu_help_informations.set_image(gtk.image_new_from_stock(gtk.STOCK_ABOUT, gtk.ICON_SIZE_MENU))
+        self.menu_help_informations.connect("activate", System.runSysteme, self)
 
         self.menu.add(self.menu_help)
         self.menu_help_list.add(self.menu_help_about)
+        self.menu_help_list.add(self.menu_help_informations)
         self.menu_help.set_submenu(self.menu_help_list)
 
         # ------------------------------------------------------------------
