@@ -19,7 +19,7 @@
 import sys, argparse, dbus
 
 from Interfaces import display
-from Functions import config
+from Functions import config, system
 
 # noms DBus
 
@@ -57,6 +57,13 @@ def main():
         proxy = pacmanBus.get_object(BUSNAME, OBJPATH, introspect=False)
     except dbus.DBusException:
         sys.exit(_("DBUS interface is not available."))
+       
+    if args.show_system:
+		print ("----\033[1m %s \033[0m----" % system.sysinfos['user'])
+		print ("Kernel version :\033[1m %s \033[0m" % system.sysinfos['kernel'])
+		print ("Processor model :\033[1m %s \033[0m" % ' '.join(system.sysinfos['proc'].split()))
+		print ("Number of installed packages :\033[1m %s \033[0m" % system.sysinfos['nb_pkgs'])
+		print ("Uptime :\033[1m %s \033[0m" % system.sysinfos['uptime'])
     
     if len(sys.argv) == 1 or args.debug:
 
