@@ -1,0 +1,360 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-07-24 10:30+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/Functions/package.py:39 src/Interfaces/pacman.py:54
+msgid "DBus interface is not available"
+msgstr ""
+
+#: src/Interfaces/display.py:21 src/Interfaces/pacman.py:29
+msgid "pygtk was not found"
+msgstr ""
+
+#: src/Interfaces/display.py:76
+msgid "Action"
+msgstr ""
+
+#: src/Interfaces/display.py:78 src/Interfaces/display.py:257
+msgid "Apply changes"
+msgstr ""
+
+#: src/Interfaces/display.py:79 src/Interfaces/display.py:1541
+msgid "Clean cache"
+msgstr ""
+
+#: src/Interfaces/display.py:80 src/Interfaces/display.py:262
+#: src/Interfaces/display.py:641
+msgid "Update databases"
+msgstr ""
+
+#: src/Interfaces/display.py:81
+msgid "Check update"
+msgstr ""
+
+#: src/Interfaces/display.py:82 src/Interfaces/display.py:275
+msgid "Quit"
+msgstr ""
+
+#: src/Interfaces/display.py:83
+msgid "Edit"
+msgstr ""
+
+#: src/Interfaces/display.py:85
+msgid "Reset installation list"
+msgstr ""
+
+#: src/Interfaces/display.py:86 src/Interfaces/display.py:273
+#: src/Interfaces/preferences.py:39
+msgid "Preferences"
+msgstr ""
+
+#: src/Interfaces/display.py:87
+msgid "Help"
+msgstr ""
+
+#: src/Interfaces/display.py:89
+msgid "About"
+msgstr ""
+
+#: src/Interfaces/display.py:102
+msgid "Select a group"
+msgstr ""
+
+#: src/Interfaces/display.py:112 src/Interfaces/display.py:875
+msgid "Groups"
+msgstr ""
+
+#: src/Interfaces/display.py:127
+msgid "Package name"
+msgstr ""
+
+#: src/Interfaces/display.py:129
+msgid "Actual version"
+msgstr ""
+
+#: src/Interfaces/display.py:131
+msgid "Available version"
+msgstr ""
+
+#: src/Interfaces/display.py:141
+msgid "Informations"
+msgstr ""
+
+#: src/Interfaces/display.py:150
+msgid "Package"
+msgstr ""
+
+#: src/Interfaces/display.py:172
+msgid "Visit website"
+msgstr ""
+
+#: src/Interfaces/display.py:173
+msgid "See files"
+msgstr ""
+
+#: src/Interfaces/display.py:174
+msgid "See Changelog"
+msgstr ""
+
+#: src/Interfaces/display.py:194
+msgid "Install and Remove packages"
+msgstr ""
+
+#: src/Interfaces/display.py:259
+msgid "Reset changes"
+msgstr ""
+
+#: src/Interfaces/display.py:269
+msgid "Write your search here"
+msgstr ""
+
+#: src/Interfaces/display.py:270
+msgid "Search"
+msgstr ""
+
+#: src/Interfaces/display.py:508
+msgid "Bye bye"
+msgstr ""
+
+#: src/Interfaces/display.py:517
+msgid "Get the update packages list"
+msgstr ""
+
+#: src/Interfaces/display.py:527
+#, python-format
+msgid "%s update have been found"
+msgstr ""
+
+#: src/Interfaces/display.py:529 src/Interfaces/display.py:1499
+#: src/Interfaces/display.py:1502
+msgid "No update available"
+msgstr ""
+
+#: src/Interfaces/display.py:545
+#, python-format
+msgid "%s repos have been found"
+msgstr ""
+
+#: src/Interfaces/display.py:553
+msgid "Installed packages"
+msgstr ""
+
+#: src/Interfaces/display.py:570
+#, python-format
+msgid "Change repository to %s"
+msgstr ""
+
+#: src/Interfaces/display.py:675
+#, python-format
+msgid "%(nbr)s group(s) append for %(repo)s"
+msgstr ""
+
+#: src/Interfaces/display.py:708
+#, python-format
+msgid "%(nbr)s package(s) append for %(grp)s"
+msgstr ""
+
+#: src/Interfaces/display.py:790
+msgid "Load packages"
+msgstr ""
+
+#: src/Interfaces/display.py:798 src/Interfaces/display.py:1112
+#, python-format
+msgid "%(nbr)s packages were found for %(value)s"
+msgstr ""
+
+#: src/Interfaces/display.py:800 src/Interfaces/display.py:1114
+#, python-format
+msgid "%(nbr)s package was found for %(value)s"
+msgstr ""
+
+#: src/Interfaces/display.py:844
+#, python-format
+msgid "Get informations about %s"
+msgstr ""
+
+#: src/Interfaces/display.py:866
+msgid "Name"
+msgstr ""
+
+#: src/Interfaces/display.py:867
+msgid "Version"
+msgstr ""
+
+#: src/Interfaces/display.py:870
+msgid "Description"
+msgstr ""
+
+#: src/Interfaces/display.py:879 src/Interfaces/display.py:886
+msgid "SHA1SUMS"
+msgstr ""
+
+#: src/Interfaces/display.py:879
+msgid "An update is available"
+msgstr ""
+
+#: src/Interfaces/display.py:890
+msgid "url"
+msgstr ""
+
+#: src/Interfaces/display.py:892
+msgid "Install date"
+msgstr ""
+
+#: src/Interfaces/display.py:893
+msgid "Size"
+msgstr ""
+
+#: src/Interfaces/display.py:894
+msgid "Packager"
+msgstr ""
+
+#: src/Interfaces/display.py:900
+msgid "Compress size"
+msgstr ""
+
+#: src/Interfaces/display.py:901
+msgid "Uncompress size"
+msgstr ""
+
+#: src/Interfaces/display.py:906
+msgid "Depends"
+msgstr ""
+
+#: src/Interfaces/display.py:911
+msgid "Provides"
+msgstr ""
+
+#: src/Interfaces/display.py:916
+msgid "Replaces"
+msgstr ""
+
+#: src/Interfaces/display.py:921
+msgid "Required_by"
+msgstr ""
+
+#: src/Interfaces/display.py:926
+msgid "Conflits"
+msgstr ""
+
+#: src/Interfaces/display.py:1096
+msgid "Clear changes done"
+msgstr ""
+
+#: src/Interfaces/display.py:1116
+#, python-format
+msgid "No package was found for %s"
+msgstr ""
+
+#: src/Interfaces/display.py:1220
+msgid "A pacman-g2 front-end for Frugalware Linux"
+msgstr ""
+
+#: src/Interfaces/display.py:1286
+msgid "pyFPM"
+msgstr ""
+
+#: src/Interfaces/display.py:1287
+msgid "Changements to do"
+msgstr ""
+
+#: src/Interfaces/display.py:1290
+msgid "To install packages"
+msgstr ""
+
+#: src/Interfaces/display.py:1299 src/Interfaces/display.py:1312
+msgid "Skip check dependances"
+msgstr ""
+
+#: src/Interfaces/display.py:1300
+msgid "Download only"
+msgstr ""
+
+#: src/Interfaces/display.py:1303
+msgid "To remove packages"
+msgstr ""
+
+#: src/Interfaces/display.py:1396 src/Interfaces/display.py:1413
+#, python-format
+msgid "Total size : %s MB"
+msgstr ""
+
+#: src/Interfaces/display.py:1427
+msgid "No change"
+msgstr ""
+
+#: src/Interfaces/display.py:1449
+msgid "Update system"
+msgstr ""
+
+#: src/Interfaces/display.py:1451
+msgid "Update available"
+msgstr ""
+
+#: src/Interfaces/display.py:1515
+msgid "Clear package cache"
+msgstr ""
+
+#: src/Interfaces/display.py:1518
+msgid "What did you want to do with pacman-g2 cache ?"
+msgstr ""
+
+#: src/Interfaces/display.py:1521
+msgid "Remove only old packages from cache"
+msgstr ""
+
+#: src/Interfaces/display.py:1522
+msgid "Remove all packages from cache"
+msgstr ""
+
+#: src/Interfaces/display.py:1543
+msgid "Clean cache complete"
+msgstr ""
+
+#: src/Interfaces/display.py:1546
+msgid "Cache cleared"
+msgstr ""
+
+#: src/Interfaces/display.py:1546
+msgid "Finished clearing the cache"
+msgstr ""
+
+#: src/Interfaces/pacman.py:169
+#, python-format
+msgid "Cannot connect to %s"
+msgstr ""
+
+#: src/Interfaces/pacman.py:173 src/Interfaces/pacman.py:176
+msgid "Synchronizing package databases..."
+msgstr ""
+
+#: src/Interfaces/pacman.py:176
+msgid "Done"
+msgstr ""
+
+#: src/Interfaces/preferences.py:43
+msgid "General"
+msgstr ""
+
+#: src/Interfaces/preferences.py:45
+msgid "Show update list when pyfpm start"
+msgstr ""
+
+#: src/Interfaces/preferences.py:46
+msgid "Use 'prohibate' groups"
+msgstr ""

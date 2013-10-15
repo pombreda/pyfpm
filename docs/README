@@ -1,0 +1,50 @@
+
+    pyFPM
+    --------
+    Une interface graphique pour pacman-g2
+
+
+--- Auteurs ------------------------------------------------------------
+
+    Développement --------------------------------------------------
+    Gaetan Gourdin <bouleetbil@frogdev.info>
+    Aurélien Lubert <PacMiam@gmx.fr>
+
+    Traduction ----------------------------------------------------------
+    Anthony Jorion <pingax@frugalware.org>
+
+
+--- Présentation ------------------------------------------------------
+
+    pyFPM est une interface graphique pour le gestionnaire de paquet
+    pacman-g2 de la distribution Frugalware. Il a pour but de faciliter
+    la recherche de paquets et de simplifier leur installation pour les
+    néophytes en la matière.
+
+
+--- Installation et utilisation ----------------------------------------
+
+    Dépendances requises par pyFPM :
+
+        - python 2.7
+        - pyGTK 2.24.0
+        - pango
+        - dbus-python
+
+
+    Récupération de pyfpm :
+
+        $ git clone git://git.tuxfamily.org/gitroot/blogapac/pyfpm.git
+
+
+    Installation de fpmd :
+
+        L'installation est décrite dans le fichier README situé dans le
+        dossier deamon de pyfpm.
+
+
+    Utilisation de pyfpm (nécessite que fpmd soit lancé) :
+
+        $ cd /pyfpm/
+        $ chmod +x pyfpm
+        $ ./pyfpm

@@ -1,0 +1,114 @@
+Meilleur lissibilité en mode txt2tags et avec une police mono
+
+--- pyfpm (main.py) ------------------------------------------------------------
+
+    Script de lancement de pyFPM
+    ---
+
+    [FIXME] - Lancer l'application que si le démon est actif
+
+    [TODO]  - Installer un paquet fpm via les paramètres (--fpm)..........................................[ULTERIEUR]
+    [TODO]  - Activer le mode debug via les paramètres (--debug)
+        -> Affiche les sorties DEBUG
+    [TODO]  - Afficher les informations système via les paramètres (--show-system)
+
+
+--- Affichage (display.py) -----------------------------------------------------
+
+    Script de gestion de l'interface de pyFPM
+    ---
+
+    [FIXME] - Utiliser les dépôts externes lors des mises à jour
+    [FIXME] - Accélérer l'affichage de la liste des paquets
+    [FIXME] - L'ajout de groupe s'effectue 2 fois
+        -> Problème avec le combobox des dépôts qui force un rechargement
+    [FIXME] - Le clic sur un groupe pendant le chargement d'un autre n'est pas pris en compte
+    [FIXME] - L'encodage des informations n'est pas effectué en utf-8 (changelog)
+    [FIXME] - Utiliser un thread pour le téléchargement des screenshots...................................[ULTERIEUR]
+        -> Pourquoi tant de haine T-T
+
+    [TODO]  - Affiche un nom générique pour les groupes (Munto)
+        -> Permet à l'utilisateur lambda de s'y retrouver (applications = apps + apps-extra)
+    [TODO]  - Afficher le README.Frugalware d'un paquet installé
+    [TODO]  - Permettre de sélectionner tout un groupe
+        -> Si on veut installer un groupe entier (pacman -Sg gnome)
+    [TODO]  - Utiliser un dépôt git cloné pour les FrugalBuild............................................[ULTERIEUR]
+        -> Cela permettrait de récupérer plus d'informations (url par ex) et d'afficher les FrugalBuild
+    [TODO]  - Afficher les permissions d'un fichier dans l'explorateur (hermier)
+    [TODO]  - Implanter un système permettant de détecter la carte graphique (skydevil)
+        -> Permet ainsi de basculer du pilote libre au propriétaire et vice et versa
+    [TODO]  - Utiliser un splash au démarrage de pyFPM
+        -> Permet de "cacher" le premier démarrage de pyFPM et FPMd
+    [TODO]  - Afficher le log de fpmd dans une fenêtre
+        -> Reprendre le principe de gFPM concernant l'affichage des logs
+    [TODO]  - Permettre de modifier les dépôts
+    [TODO]  - Afficher les informations du système (principe de screenfetch mais graphique)
+        -> On peut l'utiliser via la ligne de commande (pyfpm --show-system)
+        -> Les informations doivent être claires et utiles
+
+
+--- Paquet (package.py) --------------------------------------------------------
+
+    Script permettant de lier pyFPM et FPMd
+    ---
+
+    [TODO]  - Afficher les paquets no-build (utilisable avec repoman).....................................[ULTERIEUR]
+        -> Créer un parser de FrugalBuild
+        -> Spécifier le chemin (Defaut : ~/.current)
+        -> Adapter le fpmd pour prendre en compte la mise à jour de repoman (case à cocher ?)
+        -> Adapter la recherche pour prendre en compte repoman (dépot à part ?)
+
+
+--- Configuration (config.py) --------------------------------------------------
+
+    Script de configuration de pyFPM
+    ---
+
+    [TODO]  - Réécrire l'interface
+        -> Afficher des fenêtres d'informations sinon elles s'affichent dans la barre de status
+        -> Gérer la liste des dépôts
+        -> Envoyer les informations dans un log externe ou dans le pacman-g2.log
+    [TODO]  - Permettre de vider le cache
+
+
+--- Installation (pacman.py) ---------------------------------------------------
+
+    Script affichant une fenêtre de progression pour les actions de pacman-g2
+    ---
+
+    [TODO]  - Gestion de la barre de progrès..............................................................[EN COURS]
+        -> Installation
+        -> Suppression
+        -> Mise à jour des DB (manque la gestion de la barre)
+
+
+--- Démon (fpmd) ---------------------------------------------------------------
+
+    Script permettant d'utiliser les actions de pacman-g2 en tant que simple utilisateur
+    ---
+
+    [FIXME] - L'encodage de la description n'est pas effectué correctement (ex: trojita)..................[EN COURS]
+        -> Il faut utiliser UTF8 au lieu de ISO-8859-1
+    [FIXME] - Empêcher pacman-g2 de se lancer en parallèle avec pyfpm
+        -> Utiliser le /tmp/pacman-g2.lck
+
+    [TODO]  - Implanter l'installation et la supression de paquet..........................................[EN COURS]
+    [TODO]  - Modification des dépôts
+    [TODO]  - Réécriture du démon en C
+        -> Surtout pour la consommation mémoire de FPMd
+    [TODO]  - Adapter la libpacman généré par pacman-g2 avec swig
+        -> Permet de toujours obtenir la dernière version de libpacman
+
+
+--- libpacman (libpacman.py) ---------------------------------------------------
+
+    Script permettant d'utiliser pacman-g2 avec python 2.7
+    ---
+
+    [FIXME] - Les paquets non maintenus ne sont pas considérés comme installés (ex: pm-quirk)
+
+    (Provient du TODO de bouleetbil)
+    [TODO]  - Créer une fonction unique pour celles de pacman-g2
+    [TODO]  - Créer une classe pacman-g2
+    [TODO]  - Vérifier les paquets ignorés avec pacman_set_option(PM_OPT_IGNOREPKG, pkg)
+    [TODO]  - Ajouter pacman_set_option(PM_OPT_DLCB, (long)progress_update)
