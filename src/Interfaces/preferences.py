@@ -24,6 +24,7 @@ from Functions import config, files
 
 # Initialisation des modules
 Config = config.Config()
+File = files.File()
 
 
 class Preferences (object):
@@ -44,7 +45,11 @@ class Preferences (object):
         grilleGeneral = gtk.Table(1,2)
         self.miseajourDemarrage = gtk.CheckButton(_("Show update list when pyfpm start"))
         self.afficherGroupes = gtk.CheckButton(_("Use 'prohibate' groups"))
-        #~ self.modeDeveloppement = gtk.CheckButton(_("Development mode*"))
+
+        cache = gtk.Label(_("Cache"))
+        grilleCache = gtk.Table(1,2)
+        self.cachesize = gtk.Label(_("Currently, the cache size is %s MB") % str(format(File.getFolderSize(os.path.expanduser('~') + "/.local/share/pyfpm/"), '.2f')))
+        self.resetCache = gtk.Button(stock=gtk.STOCK_CLOSE, label=_("Clean cache folder"))
 
         fenetre.set_has_separator(False)
         fenetre.set_default_response(gtk.RESPONSE_OK)
@@ -55,9 +60,12 @@ class Preferences (object):
 
         grilleGeneral.attach(self.miseajourDemarrage, 0, 1, 0, 1)
         grilleGeneral.attach(self.afficherGroupes, 0, 1, 1, 2)
-        #~ grilleGeneralCocher.attach(self.modeDeveloppement, 0, 1,2, 3)
         grilleGeneral.set_border_width(4)
         onglets.append_page(grilleGeneral, general)
+        grilleCache.attach(self.cachesize, 0, 1, 0, 1)
+        grilleCache.attach(self.resetCache, 0, 1, 1, 2)
+        grilleCache.set_border_width(4)
+        onglets.append_page(grilleCache, cache)
 
         self.fillCheckbox()
 

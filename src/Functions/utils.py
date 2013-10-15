@@ -28,7 +28,7 @@ def printDebug (typeErreur, erreur):
         color = "\033[0m"
 
     if modeDebug or typeErreur != "INFO":
-        print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur))
+        print (str(color) + "[" + typeErreur + "]\t\033[0m" + str(erreur) + "\033[0m")
 
 
 def splitRepo (chaine):

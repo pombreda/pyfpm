@@ -9,7 +9,7 @@
 # ----------------------------------------------------------------------
 
 # Importation des modules
-import sys, gettext, dbus, time
+import sys, gettext, dbus, time, gobject
 
 # Gestion de la boucle dbus - Merci wicd
 if getattr(dbus, "version", (0, 0, 0)) < (0, 80, 0):
@@ -34,8 +34,8 @@ from Functions import package, utils
 Package = package.Package()
 
 # Noms dbus
-BUSNAME = 'org.frugalware.fpmd.deamon'
-OBJPATH = '/org/frugalware/fpmd/deamon/object'
+BUSNAME = 'org.frugalware.fpmd.Instance'
+OBJPATH = '/org/frugalware/fpmd/Instance/object'
 
 
 class Pacman (object):
@@ -49,22 +49,18 @@ class Pacman (object):
         pacmanBus = dbus.SystemBus()
 
         try:
-            proxy = pacmanBus.get_object('org.frugalware.fpmd.deamon','/org/frugalware/fpmd/deamon/object', introspect=False)
+            proxy = pacmanBus.get_object(BUSNAME, OBJPATH, introspect=False)
         except dbus.DBusException:
             sys.exit(_("DBus interface is not available"))
 
         # Fonction interne a Fpmd
         self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', 'org.frugalware.fpmd.deamon')
 
-        # Assignation des signaux
-        utils.printDebug("DEBUG", "Récupération des signaux")
-        pacmanBus.add_signal_receiver(self.signal, dbus_interface=BUSNAME, signal_name='sendSignal')
-
         # ------------------------------------------------------------------
         #       Fenetre
         # ------------------------------------------------------------------
 
-        self.fenetre = gtk.Dialog("", None, gtk.DIALOG_MODAL)
+        self.fenetre = gtk.Window()
         self.grille = gtk.Table(2,3)
 
         # ------------------------------------------------------------------
@@ -76,11 +72,12 @@ class Pacman (object):
         self.progressionInfo = gtk.ProgressBar()
         self.labelInfo = gtk.Label("")
         self.boutons = gtk.HButtonBox()
-        #~ self.boutonTmp = gtk.Button(stock=gtk.STOCK_NEW)
         self.boutonClose = gtk.Button(stock=gtk.STOCK_CLOSE)
 
         self.titre = titre
         self.mode = mode
+        self.info = {"action": "", "state": False, "data": "", "event": ""}
+        self.end = False
 
 
     def mainWindow (self):
@@ -108,7 +105,7 @@ class Pacman (object):
         self.labelAction.set_alignment(0.025,0)
 
         # Image
-        logo = gtk.gdk.pixbuf_new_from_file("/usr/share/icons/Frugalware/status/48/aptdaemon-update-cache.png")
+        logo = gtk.gdk.pixbuf_new_from_file("data/icons/48x48/aptdaemon-update-cache.png")
         self.image.set_from_pixbuf(logo)
 
         # Barre de progression générale
@@ -137,13 +134,25 @@ class Pacman (object):
         self.grille.set_col_spacings(10)
         self.grille.set_row_spacings(10)
 
-        self.fenetre.vbox.pack_start(self.grille, expand=False)
+        #~ self.fenetre.vbox.pack_start(self.grille, expand=False)
+        self.fenetre.add(self.grille)
         self.fenetre.show_all()
+        self.refresh()
 
+        # Envoie un signal à FPMd demandant l'execution de self.mode
+        utils.printDebug("DEBUG", "Envoie du signal " + str(self.mode))
         Package.emitSignal(["run", self.mode])
+        self.refresh()
 
         utils.printDebug("DEBUG", "Lancement de l'interface")
-        self.fenetre.run()
+
+        # On récupère les informations
+        self.info = Package.getActionInformations()
+
+        task = self.getInformationsFromAction()
+        gobject.idle_add(task.next)
+
+        self.getCloseButton()
 
 
     def quitWindow (self, *args):
@@ -154,32 +163,47 @@ class Pacman (object):
         self.fenetre.destroy()
 
 
-    def signal (self, chaine):
+    def refresh (self):
         """
-        Récupère le signal émis
+        Met à jour la fenêtre
         """
 
-        utils.printDebug("DBUS", str(chaine))
+        while gtk.events_pending():
+            gtk.main_iteration()
 
-        if self.mode == "update":
+
+    def getInformationsFromAction (self):
+        """
+        Récupération des informations concernant l'action
+        """
+
+        # On reste dans la boucle tant que l'action n'est pas terminée
+        while not self.end:
+            print str(self.mode)
+
+            if self.mode == "update":
             # Lancement de la mise à jour des dépôts
-            if chaine[0] == "repo":
-                if len(chaine) > 2:
-                    if chaine[2] == "failed":
+                if len(self.info.get("event")) > 0:
+                    if self.info.get("event") == "failed":
                         # Erreur de connexion
-                        self.writeEntry(_("Cannot connect to %s") % str(chaine[1]))
-                    elif chaine[2] == "uptodate":
+                        self.writeEntry(_("Cannot connect to %s") % str(self.info.get("data")))
+                    elif self.info.get("event") == "uptodate":
                         # Le dépôt est déjà à jour
-                        self.writeEntry(_("%s is up-to-date") % str(chaine[1]))
+                        self.writeEntry(_("%s is up-to-date") % str(self.info.get("data")))
                 else:
                     # Synchronisation du dépôt
-                    self.writeEntry(_("Synchronizing package databases..."), str(chaine[1]) + "...")
+                    self.writeEntry(_("Synchronizing package databases..."), str(self.info.get("data")) + "...")
 
-            elif chaine[0] == "action" and chaine[1] == "end":
-                # L'action est terminée
-                self.writeEntry(_("Synchronizing package databases..."), _("Done"))
-                self.progressionInfo.set_fraction(1.0)
-                self.getCloseButton()
+            # Dés que l'action est terminé on peut quitter la boucle
+            if not self.info.get("state"):
+                self.writeEntry("Complete")
+                self.end = True
+            else:
+                self.info = Package.getActionInformations()
+                self.refresh()
+                yield True
+
+        yield False
 
 
     def getCloseButton (self):
@@ -190,11 +214,11 @@ class Pacman (object):
         self.boutonClose.set_sensitive(True)
 
 
-    def writeEntry (self, titre, texte):
+    def writeEntry (self, titre, texte=""):
         """
         Ecris une entrée dans la zone d'informations
         """
 
         self.labelInfo.set_markup_with_mnemonic("<big><b>" + titre + "</b></big>\n" + texte + "")
-
+        self.refresh()
 

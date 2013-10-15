@@ -73,3 +73,23 @@ class File (object):
 
         return trouve
 
+
+    def getFolderSize (self, dossier):
+        """
+        Récupère la taille en Mb d'un dossier
+        """
+
+        total_size = os.path.getsize(dossier)
+
+        for item in os.listdir(dossier):
+
+            itempath = os.path.join(dossier, item)
+
+            if os.path.isfile(itempath):
+                total_size += os.path.getsize(itempath)
+            elif os.path.isdir(itempath):
+                total_size += getFolderSize(itempath)
+
+        return total_size
+
+

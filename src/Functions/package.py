@@ -16,8 +16,8 @@ gettext.textdomain('pyfpm')
 _ = gettext.gettext
 
 # Noms dbus
-BUSNAME = 'org.frugalware.fpmd.deamon'
-OBJPATH = '/org/frugalware/fpmd/deamon/object'
+BUSNAME = 'org.frugalware.fpmd.Instance'
+OBJPATH = '/org/frugalware/fpmd/Instance/object'
 
 
 class Package (object):
@@ -39,11 +39,10 @@ class Package (object):
             sys.exit(_("DBus interface is not available"))
 
         # Fonction interne a Fpmd
-        self.fpmd_closeDeamon = proxy.get_dbus_method('closeDeamon', BUSNAME)
         self.fpmd_resetPacman = proxy.get_dbus_method('resetPacman', BUSNAME)
         self.fpmd_emitSignal = proxy.get_dbus_method('emitSignal', BUSNAME)
 
-        # Fonciton de pacman-g2
+        # Fonction de pacman-g2
         self.fpmd_getRepoList = proxy.get_dbus_method('getRepoList', BUSNAME)
         self.fpmd_searchRepoPackage = proxy.get_dbus_method('searchRepoPackage', BUSNAME)
         self.fpmd_getGroupsList = proxy.get_dbus_method('getGroupsList', BUSNAME)
@@ -56,6 +55,7 @@ class Package (object):
         self.fpmd_checkPackageInstalled = proxy.get_dbus_method('checkPackageInstalled', BUSNAME)
         self.fpmd_getFileFromPackage = proxy.get_dbus_method('getFileFromPackage', BUSNAME)
         self.fpmd_getInstalledList = proxy.get_dbus_method('getInstalledList', BUSNAME)
+        self.fpmd_getActionInformations = proxy.get_dbus_method('getActionInformations', BUSNAME)
 
 
     def resetPacman (self):
@@ -98,6 +98,14 @@ class Package (object):
             #~ self.initPacman()
             #~ self.printDebug("DEBUG", "Installation de paquets")
             #~ self.installPackage(interface, listeInstallation)
+
+
+    def getActionInformations (self):
+        """
+        Récupère les informations sur l'action en cours
+        """
+
+        return self.fpmd_getActionInformations()
 
 
     def getInstalledPackage (self, nomPaquet):
