@@ -11,6 +11,7 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
     [TODO]  - Activer le mode debug via les paramètres (--debug)
         -> Affiche les sorties DEBUG
     [TODO]  - Afficher les informations système via les paramètres (--show-system)
+	-> En cours (Pingax)
 
 
 --- Affichage (display.py) -----------------------------------------------------
