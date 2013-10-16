@@ -12,7 +12,8 @@ Meilleur lissibilité en mode txt2tags et avec une police mono
         -> Affiche les sorties DEBUG
     [TODO]  - Afficher les informations système via les paramètres (--show-system)
 	-> En cours (Pingax)
-
+    [TODO] - Ajouter un fonctionnalité pour le rapport d'erreur automatique
+             (sur le FBTS de Frugalware ou ailleurs...)
 
 --- Affichage (display.py) -----------------------------------------------------
 
